@@ -242,10 +242,6 @@ void PaletteHost::StaticInitialization()
 
 PaletteHost::PaletteHost()
 {	
-	// The search for ffgl.json is as follows:
-	// - look in %CommonProgramFiles%
-	// - last resort is temp dir
-
 	std::string configfile;
 
 	std::string datapath = PaletteDataPath();

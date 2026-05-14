@@ -5,6 +5,9 @@
     --highlight: #006666;
     --title-border: #c90;
     --button-border: #0aa;
+    --app-title-height: 58px;
+    --ritual-nav-height: 68px;
+    --top-chrome-height: calc(var(--app-title-height) + var(--ritual-nav-height));
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -20,69 +23,164 @@ body {
     overflow: hidden;
 }
 
+body.initial-pro {
+    --app-title-height: 0px;
+    --ritual-nav-height: 0px;
+}
+
+body.initial-bss2 {
+    --ritual-nav-height: 0px;
+}
+
+body.initial-pro #app-title,
+body.initial-pro #ritual-nav {
+    display: none;
+}
+
+body.initial-bss2 #ritual-nav {
+    display: none;
+}
+
 .hidden { display: none !important; }
 
-#adventure-screen,
-#sigil-screen {
+#app-title {
     width: 100%;
-    height: 100vh;
-    background: #000;
-}
-
-#adventure-screen {
+    height: var(--app-title-height);
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8vh;
-    padding: 5vh 5vw;
-}
-
-#adventure-screen h1,
-.sigil-header h1 {
+    flex: 0 0 auto;
+    background: #000;
     color: #fff;
-    font-size: clamp(34px, 6vw, 58px);
-    font-weight: 700;
+    border-bottom: 3px solid #333;
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 800;
     line-height: 1;
     text-align: center;
 }
 
-.adventure-options {
+#ritual-nav {
+    width: 100%;
+    height: var(--ritual-nav-height);
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 3vw;
-    width: min(1180px, 100%);
+    background: #000;
+    border-bottom: 4px solid var(--button-border);
+    flex: 0 0 auto;
+    z-index: 250;
 }
 
-.adventure-btn {
-    min-height: 34vh;
+.ritual-nav-btn {
+    min-width: 0;
     background: #202020;
     color: #fff;
-    border: 4px solid var(--button-border);
+    border: none;
+    border-right: 2px solid var(--button-border);
     cursor: pointer;
-    font-size: clamp(30px, 5vw, 72px);
+    font-size: clamp(22px, 4.2vw, 44px);
     font-weight: 800;
-    line-height: 1.04;
-    padding: 4vh 3vw;
+    line-height: 1;
+    padding: 10px 12px;
     text-align: center;
 }
 
-.adventure-btn:hover,
-.adventure-btn:focus {
+.ritual-nav-btn:last-child {
+    border-right: none;
+}
+
+.ritual-nav-btn.active {
+    background: var(--highlight);
+    color: #fff;
+}
+
+.ritual-nav-btn:hover,
+.ritual-nav-btn:focus {
     background: var(--highlight);
     outline: none;
 }
 
-.sigil-header {
+#sigil-screen {
+    width: 100%;
+    height: calc(100vh - var(--top-chrome-height));
+    background: #000;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 10px 22px;
-    border-bottom: 4px solid var(--button-border);
+    gap: 8px;
 }
 
-.sigil-header h1 {
-    text-align: center;
+.sigil-band {
+    width: min(920px, calc(100% - 72px));
+    flex: 0 0 101px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    justify-items: center;
+    gap: 18px;
+    padding: 8px 0;
+}
+
+.sigil-band img {
+    max-width: min(309px, 42vw);
+    max-height: 111px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    opacity: 0.82;
+    transform: scale(1);
+    padding: 10px;
+    border-radius: 50%;
+    background: transparent;
+    transition: opacity 120ms ease-out, transform 120ms ease-out, filter 120ms ease-out;
+}
+
+.sigil-band-top img {
+    margin-top: 18px;
+}
+
+.sigil-band img.flash {
+    animation: sigil-flash 420ms ease-out;
+}
+
+@keyframes sigil-flash {
+    0% {
+        opacity: 0.82;
+        transform: scale(2.04);
+        filter: none;
+        background: transparent;
+    }
+    100% {
+        opacity: 0.82;
+        transform: scale(1);
+        filter: none;
+        background: transparent;
+    }
+}
+
+.tempo-control {
+    width: min(1040px, calc(100% - 72px));
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(104px, auto);
+    align-items: center;
+    gap: 22px;
+    padding: 4px 14px 12px;
+    color: #fff;
+    font-size: clamp(16px, 2vw, 24px);
+    font-weight: 800;
+}
+
+.tempo-control input[type="range"] {
+    width: 100%;
+    height: 42px;
+    cursor: pointer;
+    accent-color: #0aa;
+}
+
+.tempo-control output {
+    text-align: right;
+    color: #0ff;
 }
 
 .start-over-btn {
@@ -104,16 +202,17 @@ body {
 }
 
 .sigil-sequencer {
-    height: calc(100vh - 168px);
+    width: min(1040px, calc(100% - 72px));
+    flex: 0 0 auto;
     display: grid;
-    grid-template-rows: 18px repeat(4, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-rows: 16px repeat(4, minmax(74px, 11vh));
+    gap: 24px;
     padding: 14px;
 }
 
 .stepper-position {
     display: grid;
-    grid-template-columns: minmax(132px, 15vw) repeat(16, minmax(0, 1fr));
+    grid-template-columns: minmax(132px, 15vw) repeat(8, minmax(0, 1fr));
     gap: 6px;
     min-width: 0;
 }
@@ -133,24 +232,6 @@ body {
     border-color: #9fffff;
 }
 
-.sigil-footer {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, min(320px, 50%)));
-    justify-content: center;
-    gap: 12px;
-    padding: 8px 14px 10px;
-    border-top: 4px solid var(--button-border);
-}
-
-.sigil-footer .start-over-btn {
-    width: 100%;
-}
-
-.stepper-play-btn.active {
-    background: #006666;
-    border-color: #0ff;
-}
-
 .sigil-row {
     display: grid;
     grid-template-columns: minmax(132px, 15vw) 1fr;
@@ -160,7 +241,7 @@ body {
 
 .sigil-row-controls {
     display: grid;
-    grid-template-rows: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
     gap: 4px;
     min-height: 0;
 }
@@ -223,7 +304,7 @@ body {
 
 .sigil-steps {
     display: grid;
-    grid-template-columns: repeat(16, minmax(0, 1fr));
+    grid-template-columns: repeat(8, minmax(0, 1fr));
     gap: 6px;
     min-width: 0;
 }
@@ -256,10 +337,10 @@ body {
 /* Attract mode overlay */
 #attract-overlay {
     position: fixed;
-    top: 0;
+    top: var(--top-chrome-height);
     left: 0;
     width: 100%;
-    height: 100%;
+    height: calc(100% - var(--top-chrome-height));
     background: #000;
     z-index: 200;
     display: flex;
@@ -476,6 +557,168 @@ body {
     overflow: hidden;
 }
 
+#palette-pad-stage {
+    display: none;
+}
+
+body.initial-bss2 #main-container {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 0.78fr) auto;
+}
+
+body.initial-bss2 #palette-pad-stage {
+    display: flex;
+    min-height: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 22px 32px 18px;
+    border-bottom: 4px solid #1a6767;
+}
+
+.palette-pad-layout {
+    --lower-pad-inset: clamp(24px, 3.8vw, 52px);
+    --upper-pad-spread: clamp(18px, 3vw, 44px);
+    width: min(615px, 86%);
+    height: min(232px, 100%);
+    display: grid;
+    grid-template-columns: minmax(90px, 1fr) minmax(90px, 1fr);
+    grid-template-rows: repeat(2, minmax(69px, 1fr));
+    column-gap: clamp(54px, 10.5vw, 126px);
+    row-gap: clamp(14px, 3vh, 32px);
+}
+
+.palette-pad {
+    position: relative;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    align-items: center;
+    justify-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    border: 3px solid #0aa;
+    background: radial-gradient(circle at 50% 42%, #404040, #151515 68%);
+    color: #fff;
+    cursor: pointer;
+    padding: 8px 10px 7px;
+    box-shadow: inset 0 0 22px rgba(0, 255, 255, 0.18);
+    overflow: hidden;
+}
+
+.palette-pad:hover,
+.palette-pad:focus {
+    background: radial-gradient(circle at 50% 42%, #4b4b4b, #161616 68%);
+    outline: none;
+}
+
+.palette-pad.sample {
+    border-color: #0aa;
+}
+
+.palette-pad.synth {
+    border-color: #c90;
+}
+
+.palette-pad-sigil {
+    max-width: 76%;
+    max-height: 66px;
+    min-height: 0;
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.18));
+    transform: scale(1);
+    transition: transform 140ms ease-out, filter 140ms ease-out, opacity 140ms ease-out;
+}
+
+.palette-pad-route {
+    display: block;
+    width: 100%;
+    color: #fff;
+    font-size: clamp(11px, 1.8vh, 18px);
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    letter-spacing: 0;
+}
+
+.palette-pad.morph-active .palette-pad-sigil {
+    animation: palette-pad-morph 420ms ease-out;
+}
+
+@keyframes palette-pad-morph {
+    0% {
+        transform: scale(1.42) rotate(-2deg);
+        filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 28px rgba(0, 255, 255, 0.45));
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.18));
+        opacity: 1;
+    }
+}
+
+.palette-pad-b {
+    transform: translateX(var(--lower-pad-inset));
+}
+
+.palette-pad-c {
+    transform: translateX(calc(-1 * var(--lower-pad-inset)));
+}
+
+.palette-pad-a {
+    transform: translateX(calc(-1 * var(--upper-pad-spread)));
+}
+
+.palette-pad-d {
+    transform: translateX(var(--upper-pad-spread));
+}
+
+#preset-selector-panel {
+    display: contents;
+}
+
+#preset-selector-title {
+    display: none;
+}
+
+body.initial-bss2 #preset-selector-panel {
+    width: min(75%, 900px);
+    height: calc(100% - 28px);
+    min-height: 0;
+    align-self: center;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+body.initial-bss2 #preset-selector-title {
+    display: block;
+    flex: 0 0 auto;
+    margin: 0 0 8px;
+    color: #fff;
+    font-size: clamp(18px, 2.7vh, 28px);
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+}
+
+body.initial-bss2 #preset-grid {
+    flex: 1;
+    min-height: 0;
+}
+
+body.initial-bss2 #preset-grid.grid-mode {
+    grid-auto-rows: minmax(46px, auto);
+    gap: 6px;
+    padding: 8px;
+}
+
+body.initial-bss2 #preset-grid .preset-btn {
+    font-size: clamp(14px, 2.7vw, 20px);
+    line-height: 1.08;
+}
+
 #preset-grid {
     flex: 1;
     display: flex;
@@ -487,7 +730,7 @@ body {
 }
 
 #preset-grid::-webkit-scrollbar {
-    width: 96px;
+    width: 77px;
 }
 
 #preset-grid::-webkit-scrollbar-track {
@@ -560,26 +803,40 @@ body {
 }
 
 @media (max-width: 680px) {
-    .adventure-options {
-        grid-template-columns: 1fr;
-        gap: 16px;
+    :root {
+        --app-title-height: 50px;
+        --ritual-nav-height: 60px;
     }
 
-    .adventure-btn {
-        min-height: 24vh;
+    #app-title {
+        font-size: clamp(22px, 6.2vw, 32px);
     }
 
-    .sigil-header {
-        padding: 12px;
+    .ritual-nav-btn {
+        font-size: clamp(18px, 6vw, 30px);
+        padding: 8px 6px;
     }
 
     .start-over-btn {
         min-height: 52px;
     }
 
+    .sigil-band {
+        width: calc(100% - 32px);
+        flex-basis: 73px;
+        gap: 16px;
+        padding: 4px 0;
+    }
+
+    .sigil-band img {
+        max-height: 87px;
+        max-width: min(248px, 42vw);
+    }
+
     .sigil-sequencer {
-        height: calc(100vh - 216px);
-        gap: 8px;
+        width: calc(100% - 32px);
+        grid-template-rows: 14px repeat(4, minmax(64px, 10vh));
+        gap: 18px;
         padding: 8px;
     }
 
@@ -589,7 +846,7 @@ body {
     }
 
     .stepper-position {
-        grid-template-columns: minmax(86px, 22vw) repeat(16, minmax(0, 1fr));
+        grid-template-columns: minmax(86px, 22vw) repeat(8, minmax(0, 1fr));
         gap: 3px;
     }
 
@@ -603,6 +860,14 @@ body {
 
     .sigil-step {
         font-size: 11px;
+    }
+
+    .tempo-control {
+        width: calc(100% - 32px);
+        grid-template-columns: auto minmax(0, 1fr) minmax(86px, auto);
+        gap: 10px;
+        padding: 0 8px 8px;
+        font-size: 16px;
     }
 
     #title-bar {

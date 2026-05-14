@@ -35,7 +35,7 @@ ChangesEnvironment=yes
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-; Things in Common Files/Local AppData are made writable for local changes and config
+; Things in Local AppData are made writable for local changes and config
 [Dirs]
 Name: "{code:PaletteDataBase}"; Permissions: users-modify
 Name: "{code:PaletteDataBase}\logs"; Permissions: users-modify
@@ -57,10 +57,9 @@ Source: "ship\samplesplitter\*"; DestDir: "{app}\samplesplitter"; Flags: ignorev
 Source: "vc15\bin\VC_redist.x64.exe"; DestDir: {app}\bin
 
 [Run]
-Filename: cmd.exe; Parameters: "/C taskkill /F /IM palette_engine.exe >NUL 2>NUL || exit /B 0"; StatusMsg: "Making sure palette_engine is not running..."; Flags: waituntilterminated
-Filename: cmd.exe; Parameters: "/C taskkill /F /IM palette_monitor.exe >NUL 2>NUL || exit /B 0"; StatusMsg: "Making sure palette_monitor is not running..."; Flags: waituntilterminated
-Filename: powershell.exe; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""Get-CimInstance Win32_Process | Where-Object {{ $_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py' } | ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"""; StatusMsg: "Making sure Sample Splitter is not running..."; Flags: waituntilterminated
-Filename: cmd.exe; Parameters: "/C call ""{app}\samplesplitter\install_windows.bat"" --quiet > ""{code:PaletteDataBase}\logs\samplesplitter_install.log"" 2>&1"; WorkingDir: "{app}\samplesplitter"; StatusMsg: "Installing Sample Splitter Python dependencies..."; Flags: waituntilterminated runhidden
+Filename: cmd.exe; Parameters: "/C taskkill /F /IM palette_engine.exe >NUL 2>NUL || exit /B 0"; StatusMsg: "Making sure palette_engine is not running..."; Flags: waituntilterminated runhidden
+Filename: cmd.exe; Parameters: "/C taskkill /F /IM palette_monitor.exe >NUL 2>NUL || exit /B 0"; StatusMsg: "Making sure palette_monitor is not running..."; Flags: waituntilterminated runhidden
+Filename: powershell.exe; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""Get-CimInstance Win32_Process | Where-Object {{ $_.Name -ieq 'samplesplitter.exe' -or ($_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py') }} | ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }}"""; StatusMsg: "Making sure Sample Splitter is not running..."; Flags: waituntilterminated runhidden
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
@@ -93,7 +92,7 @@ begin
     MsgBox(
       'A previous all-users Palette install was detected.' + #13#10 + #13#10 +
       'This per-user installer will exit without installing anything so the two install styles are not mixed.' + #13#10 + #13#10 +
-      'Run scripts\cleanup_system_palette_install.bat as Administrator to remove old Program Files, Common Files, and HKLM environment settings, then run this installer again.',
+      'Run scripts\cleanup_system_palette_install.bat as Administrator to remove old all-users install files and HKLM environment settings, then run this installer again.',
       mbCriticalError, MB_OK);
     Result := False;
   end;
@@ -121,7 +120,7 @@ begin
      ewWaitUntilTerminated, ResultCode);
   Exec('>', 'cmd.exe /C taskkill /IM palette_monitor.exe /T /F >NUL 2>NUL', '', SW_HIDE,
      ewWaitUntilTerminated, ResultCode);
-  Exec('>', 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -match ''samplesplitter\.py'' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"', '', SW_HIDE,
+  Exec('>', 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq ''samplesplitter.exe'' -or ($_.CommandLine -and $_.CommandLine -match ''samplesplitter\.py'') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"', '', SW_HIDE,
      ewWaitUntilTerminated, ResultCode);
 
   // Proceed Setup

@@ -79,6 +79,12 @@ go build palette_hub.go >> %buildcmdsout% 2>&1
 move palette_hub.exe %bin%\palette_hub.exe > nul
 popd
 
+echo ================ Compiling samplesplitter
+pushd %PALETTE_SOURCE%\cmd\samplesplitter
+go build . >> %buildcmdsout% 2>&1
+move samplesplitter.exe %bin%\samplesplitter.exe > nul
+popd
+
 rem print any error messages from compiling cmds
 type %buildcmdsout%
 
@@ -115,15 +121,22 @@ copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
 copy %PALETTE_SOURCE%\binaries\nats\nats.exe %bin% >nul
 
 echo ================ Copying samplesplitter
-if not exist "%PALETTE_SOURCE%\samplesplitter\samplesplitter.py" (
-	echo The samplesplitter submodule is missing. Run:
-	echo     git submodule update --init --recursive
+if not exist "%PALETTE_SOURCE%\cmd\samplesplitter\samplesplitter.py" (
+	echo The samplesplitter source is missing under:
+	echo     %PALETTE_SOURCE%\cmd\samplesplitter
 	goto getout
 )
-robocopy "%PALETTE_SOURCE%\samplesplitter" "%ship%\samplesplitter" /E /XD .git __pycache__ /XF *.pyc >nul
+robocopy "%PALETTE_SOURCE%\cmd\samplesplitter" "%ship%\samplesplitter" /E /XD .git __pycache__ /XF *.pyc *.exe >nul
 if errorlevel 8 (
 	echo Failed to copy samplesplitter.
 	goto getout
+)
+if exist "%PALETTE_SOURCE%\data_default\samplesplitter" (
+	robocopy "%PALETTE_SOURCE%\data_default\samplesplitter" "%ship%\samplesplitter" /E >nul
+	if errorlevel 8 (
+		echo Failed to copy samplesplitter default data.
+		goto getout
+	)
 )
 
 rem echo ================ Copying keykit things

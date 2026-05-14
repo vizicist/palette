@@ -168,6 +168,10 @@ func (logic *PatchLogic) liveStepperRoute() string {
 	return theStepper.routeForPatch(logic.patch.Name())
 }
 
+func (logic *PatchLogic) bss2SampleMode() bool {
+	return IsBSS2InitialPage() && logic.liveStepperRoute() == "samplesplitter"
+}
+
 func (logic *PatchLogic) liveRouteIncludesBidule() bool {
 	route := logic.liveStepperRoute()
 	return route == "bidule" || route == "both"
@@ -197,6 +201,61 @@ func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atCl
 	}
 }
 
+func (logic *PatchLogic) bss2SampleNoteOn(ce CursorEvent) *NoteOn {
+	if theStepper == nil {
+		return nil
+	}
+	synth := theStepper.samplesplitterSynthForPatch(logic.patch.Name())
+	if synth == nil {
+		return nil
+	}
+	x := boundValueZeroToOne(ce.Pos.X)
+	pitch := uint8(math.Min(47, math.Floor(x*48.0)))
+	velocity := logic.cursorToVelocity(ce)
+	if velocity < StepperSamplesplitterVelocity {
+		velocity = StepperSamplesplitterVelocity
+	}
+	return NewNoteOn(synth, pitch, velocity)
+}
+
+func (logic *PatchLogic) bss2SamplePitchBendValue(ce CursorEvent) int {
+	p := boundValueZeroToOne(ce.Pos.Y)
+	return int(math.Round(p * 16383.0))
+}
+
+func (logic *PatchLogic) bss2SampleQuant() Clicks {
+	factor := TempoFactor
+	if factor <= 0 {
+		factor = 1
+	}
+	return Clicks(math.Max(1, float64(OneBeat/2)/factor))
+}
+
+func (logic *PatchLogic) nextBSS2SampleQuant(t Clicks) Clicks {
+	return logic.nextQuant(t, logic.bss2SampleQuant())
+}
+
+func (logic *PatchLogic) scheduleBSS2SampleNoteOn(ac *ActiveCursor, ce CursorEvent, noteOn *NoteOn, atClick Clicks) {
+	if theStepper == nil || noteOn == nil {
+		return
+	}
+	previous, current := theStepper.setActiveSamplesplitterVoice(logic.patch.Name(), noteOn.Synth, noteOn.Pitch, noteOn.Velocity)
+	if previous != nil {
+		ScheduleAt(atClick, ce.Tag, NewNoteOff(previous.Synth, previous.Pitch, previous.Velocity))
+	}
+	ScheduleAt(atClick, ce.Tag, NewPitchBend(noteOn.Synth, logic.bss2SamplePitchBendValue(ce)))
+	ScheduleAt(atClick, ce.Tag, noteOn)
+	ac.SampleVoice = &current
+}
+
+func (logic *PatchLogic) scheduleBSS2SampleNoteOff(ac *ActiveCursor, ce CursorEvent, atClick Clicks) {
+	if ac.SampleVoice != nil {
+		ScheduleAt(atClick, ce.Tag, NewNoteOff(ac.SampleVoice.Synth, ac.SampleVoice.Pitch, ac.SampleVoice.Velocity))
+		ScheduleAt(atClick+1, ce.Tag, NewPitchBend(ac.SampleVoice.Synth, MidiPitchBendCenter))
+		ac.SampleVoice = nil
+	}
+}
+
 func (logic *PatchLogic) scheduleLiveNoteOff(ce CursorEvent, noteOff *NoteOff, atClick Clicks) {
 	if logic.liveRouteIncludesBidule() {
 		ScheduleAt(atClick, ce.Tag, noteOff)
@@ -214,6 +273,11 @@ func (logic *PatchLogic) generateSoundFromCursor(ce CursorEvent, cursorStyle str
 
 	LogOfType("gensound", "generateSoundFromCursor", "cursor", ce.GID, "ce", ce)
 
+	if logic.bss2SampleMode() {
+		logic.generateBSS2SampleFromCursor(ce)
+		return
+	}
+
 	switch cursorStyle {
 	case "downonly":
 		logic.generateSoundFromCursorDownOnly(ce)
@@ -222,6 +286,73 @@ func (logic *PatchLogic) generateSoundFromCursor(ce CursorEvent, cursorStyle str
 	default:
 		LogWarn("Unrecognized cursorStyle", "cursorStyle", cursorStyle)
 		logic.generateSoundFromCursorDownOnly(ce)
+	}
+}
+
+func (logic *PatchLogic) generateBSS2SampleFromCursor(ce CursorEvent) {
+	logic.mutex.Lock()
+	defer logic.mutex.Unlock()
+
+	ac, ok := theCursorManager.getActiveCursorFor(ce.GID)
+	if !ok {
+		LogWarn("generateBSS2SampleFromCursor: no active cursor", "gid", ce.GID)
+		return
+	}
+
+	switch ce.Ddu {
+	case "down":
+		noteOn := logic.bss2SampleNoteOn(ce)
+		if noteOn == nil {
+			return
+		}
+		atClick := logic.nextBSS2SampleQuant(CurrentClick())
+		logic.scheduleBSS2SampleNoteOn(ac, ce, noteOn, atClick)
+		ac.NoteOn = noteOn
+		ac.NoteOnClick = atClick
+
+	case "drag":
+		oldNoteOn := ac.NoteOn
+		if oldNoteOn == nil {
+			noteOn := logic.bss2SampleNoteOn(ce)
+			if noteOn == nil {
+				return
+			}
+			atClick := logic.nextBSS2SampleQuant(CurrentClick())
+			logic.scheduleBSS2SampleNoteOn(ac, ce, noteOn, atClick)
+			ac.NoteOn = noteOn
+			ac.NoteOnClick = atClick
+			return
+		}
+		newNoteOn := logic.bss2SampleNoteOn(ce)
+		if newNoteOn == nil {
+			return
+		}
+		if newNoteOn.Pitch != oldNoteOn.Pitch {
+			offClick := ac.NoteOnClick + 1
+			now := CurrentClick()
+			if offClick < now {
+				offClick = now
+			}
+			logic.scheduleBSS2SampleNoteOff(ac, ce, offClick)
+			onClick := logic.nextBSS2SampleQuant(now)
+			if onClick <= offClick {
+				onClick = offClick + 1
+			}
+			logic.scheduleBSS2SampleNoteOn(ac, ce, newNoteOn, onClick)
+			ac.NoteOn = newNoteOn
+			ac.NoteOnClick = onClick
+		} else {
+			ScheduleAt(CurrentClick(), ce.Tag, NewPitchBend(oldNoteOn.Synth, logic.bss2SamplePitchBendValue(ce)))
+		}
+
+	case "up":
+		offClick := ac.NoteOnClick + 1
+		now := CurrentClick()
+		if offClick < now {
+			offClick = now
+		}
+		logic.scheduleBSS2SampleNoteOff(ac, ce, offClick)
+		ac.NoteOn = nil
 	}
 }
 
@@ -237,16 +368,17 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {
 		if noteOn == nil {
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
-		atClick := logic.nextQuant(CurrentClick(), logic.patch.CursorToQuant(ce))
+		quant := logic.patch.CursorToQuant(ce)
+		atClick := logic.nextQuant(CurrentClick(), quant)
 		// LogInfo("logic.down", "current", CurrentClick(), "atClick", atClick, "noteOn", noteOn)
 		logic.scheduleLiveNoteOn(ce, noteOn, atClick)
-		if theStepper != nil {
-			theStepper.RecordNoteOn(ce.Tag, noteOn, ce.Pos.Z, atClick)
+		if theStepper != nil && !IsBSS2InitialPage() {
+			theStepper.RecordNoteOn(ce.Tag, noteOn, ce.Pos.Z, atClick, quant)
 		}
 		noteOff := NewNoteOffFromNoteOn(noteOn)
 		atClick += QuarterNote
 		logic.scheduleLiveNoteOff(ce, noteOff, atClick)
-		if theStepper != nil {
+		if theStepper != nil && !IsBSS2InitialPage() {
 			theStepper.RecordNoteOff(ce.Tag, noteOff, atClick)
 		}
 
@@ -280,19 +412,20 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			// LogWarn("generateSoundFromCursor: oldNote already exists", "gid", ce.Gid)
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			logic.scheduleLiveNoteOff(ce, noteOff, CurrentClick())
-			if theStepper != nil {
+			if theStepper != nil && !IsBSS2InitialPage() {
 				theStepper.RecordNoteOff(ce.Tag, noteOff, CurrentClick())
 			}
 		}
-		atClick := logic.nextQuant(CurrentClick(), patch.CursorToQuant(ce))
+		quant := patch.CursorToQuant(ce)
+		atClick := logic.nextQuant(CurrentClick(), quant)
 		noteOn := logic.cursorToNoteOn(ce)
 		if noteOn == nil {
 			LogWarn("Hmmm, retrigger, noteOn for down is nil?")
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
 		logic.scheduleLiveNoteOn(ce, noteOn, atClick)
-		if theStepper != nil {
-			theStepper.RecordNoteOn(ce.Tag, noteOn, ce.Pos.Z, atClick)
+		if theStepper != nil && !IsBSS2InitialPage() {
+			theStepper.RecordNoteOn(ce.Tag, noteOn, ce.Pos.Z, atClick, quant)
 		}
 		ac.NoteOn = noteOn
 		ac.NoteOnClick = atClick
@@ -350,7 +483,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
 			logic.scheduleLiveNoteOff(ce, noteOff, offClick)
-			if theStepper != nil {
+			if theStepper != nil && !IsBSS2InitialPage() {
 				theStepper.RecordNoteOff(ce.Tag, noteOff, offClick)
 			}
 
@@ -360,8 +493,8 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			}
 
 			logic.scheduleLiveNoteOn(ce, newNoteOn, thisClick)
-			if theStepper != nil {
-				theStepper.RecordNoteOn(ce.Tag, newNoteOn, ce.Pos.Z, thisClick)
+			if theStepper != nil && !IsBSS2InitialPage() {
+				theStepper.RecordNoteOn(ce.Tag, newNoteOn, ce.Pos.Z, thisClick, c2q)
 			}
 			ac.NoteOn = newNoteOn
 			ac.NoteOnClick = thisClick
@@ -377,7 +510,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
 			logic.scheduleLiveNoteOff(ce, noteOff, offClick+1)
-			if theStepper != nil {
+			if theStepper != nil && !IsBSS2InitialPage() {
 				theStepper.RecordNoteOff(ce.Tag, noteOff, offClick+1)
 			}
 			// delete(logic.cursorNote, ce.Gid)

@@ -61,9 +61,17 @@ func KillExecutable(exe string) {
 }
 
 func IsSamplesplitterRunning() (bool, error) {
-	err := exec.Command("pgrep", "-f", "samplesplitter.py").Run()
+	processRunning, err := IsSamplesplitterProcessRunning()
+	if err != nil || !processRunning {
+		return processRunning, err
+	}
+	return samplesplitterWebIsListening(), nil
+}
+
+func IsSamplesplitterProcessRunning() (bool, error) {
+	err := exec.Command("pgrep", "-f", "samplesplitter($| )|samplesplitter.py").Run()
 	if err == nil {
-		return samplesplitterWebIsListening(), nil
+		return true, nil
 	}
 	if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
 		return false, nil
@@ -72,7 +80,7 @@ func IsSamplesplitterRunning() (bool, error) {
 }
 
 func KillSamplesplitter() {
-	_ = exec.Command("pkill", "-f", "samplesplitter.py").Run()
+	_ = exec.Command("pkill", "-f", "samplesplitter($| )|samplesplitter.py").Run()
 }
 
 // KillByPid kills a process by its PID

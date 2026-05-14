@@ -7642,7 +7642,7 @@
 		<Clip name="Clip" uniqueId="1643404540240" layerIndex="3" columnIndex="1"/>
 		<Clip name="Clip" uniqueId="1655769169910" layerIndex="4" columnIndex="1">
 			<PreloadData>
-				<VideoFile value="C:\Program Files\Common Files\Palette\data_default\config\sppro_startingup.png"/>
+				<VideoFile value="%LOCALAPPDATA%\Palette\data_default\config\sppro_startingup.png"/>
 			</PreloadData>
 			<Params name="Params">
 				<Param name="Name" T="STRING" default="sppro_startingup" value="sppro_startingup"/>
@@ -7693,7 +7693,7 @@
 				</ChoosableMixer>
 				<PrimarySource>
 					<VideoSource name="VideoSource" width="1920" height="1080" type="VideoFormatReaderSource">
-						<VideoFormatReaderSource fileName="C:\Program Files\Common Files\Palette\data_default\config\sppro_startingup.png"/>
+						<VideoFormatReaderSource fileName="%LOCALAPPDATA%\Palette\data_default\config\sppro_startingup.png"/>
 					</VideoSource>
 				</PrimarySource>
 				<ChoosableMixer name="Blend">
@@ -7707,7 +7707,7 @@
 		<Clip name="Clip" uniqueId="1643404540241" layerIndex="3" columnIndex="2"/>
 		<Clip name="Clip" uniqueId="1655769169911" layerIndex="4" columnIndex="2">
 			<PreloadData>
-				<VideoFile value="C:\Program Files\Common Files\Palette\data_default\config\sppro_rebooting.png"/>
+				<VideoFile value="%LOCALAPPDATA%\Palette\data_default\config\sppro_rebooting.png"/>
 			</PreloadData>
 			<Params name="Params">
 				<Param name="Name" T="STRING" default="sppro_rebooting" value="sppro_rebooting"/>
@@ -7755,7 +7755,7 @@
 				</ChoosableMixer>
 				<PrimarySource>
 					<VideoSource name="VideoSource" width="1920" height="1080" type="VideoFormatReaderSource">
-						<VideoFormatReaderSource fileName="C:\Program Files\Common Files\Palette\data_default\config\sppro_rebooting.png"/>
+						<VideoFormatReaderSource fileName="%LOCALAPPDATA%\Palette\data_default\config\sppro_rebooting.png"/>
 					</VideoSource>
 				</PrimarySource>
 				<ChoosableMixer name="Blend">
@@ -7769,7 +7769,7 @@
 		<Clip name="Clip" uniqueId="1655159519144" layerIndex="3" columnIndex="3"/>
 		<Clip name="Clip" uniqueId="1655769169912" layerIndex="4" columnIndex="3">
 			<PreloadData>
-				<VideoFile value="C:\Program Files\Common Files\Palette\data_default\config\sppro_restarting.png"/>
+				<VideoFile value="%LOCALAPPDATA%\Palette\data_default\config\sppro_restarting.png"/>
 			</PreloadData>
 			<Params name="Params">
 				<Param name="Name" T="STRING" default="sppro_restarting" value="sppro_restarting"/>
@@ -7817,7 +7817,7 @@
 				</ChoosableMixer>
 				<PrimarySource>
 					<VideoSource name="VideoSource" width="1920" height="1080" type="VideoFormatReaderSource">
-						<VideoFormatReaderSource fileName="C:\Program Files\Common Files\Palette\data_default\config\sppro_restarting.png"/>
+						<VideoFormatReaderSource fileName="%LOCALAPPDATA%\Palette\data_default\config\sppro_restarting.png"/>
 					</VideoSource>
 				</PrimarySource>
 				<ChoosableMixer name="Blend">

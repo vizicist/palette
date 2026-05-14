@@ -147,7 +147,7 @@ std::string PaletteDataPath(std::string fname)
 
 	std::string parent;
 	
-	// This weird name is to get the 64-bit Common Files directory
+		// This weird name is to get the 64-bit shared-program-data directory
 	// (where the Palette stuff is kept) from a 32-bit program.
 	char *p = getenv("CommonProgramW6432");
 	if ( p == NULL ) {

@@ -3,15 +3,30 @@ package kit
 import (
 	"fmt"
 	"strconv"
+
+	json "github.com/goccy/go-json"
 )
 
 func ExecuteCursorAPI(api string, apiargs map[string]string) (string, error) {
 	switch api {
 	case "event":
 		return cursorEventAPI(api, apiargs)
+	case "activity":
+		return cursorActivityAPI(api, apiargs)
 	default:
 		return "", fmt.Errorf("ExecuteCursorAPI: unrecognized api=%s", api)
 	}
+}
+
+func cursorActivityAPI(api string, apiargs map[string]string) (string, error) {
+	if theCursorManager == nil {
+		return "", fmt.Errorf("cursor.activity: cursor manager is not initialized")
+	}
+	bytes, err := json.Marshal(theCursorManager.ActivitySnapshot())
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
 }
 
 func cursorEventAPI(api string, apiargs map[string]string) (string, error) {

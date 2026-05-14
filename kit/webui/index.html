@@ -6,23 +6,27 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <section id="adventure-screen">
-        <h1>Choose Your Adventure</h1>
-        <div class="adventure-options">
-            <button class="adventure-btn" id="btn-adventure-space">Space Palette Pro</button>
-            <button class="adventure-btn" id="btn-adventure-sigil">Sigil Sequencer</button>
-        </div>
-    </section>
+    <header id="app-title">Transmission Recontextualizer</header>
+    <nav id="ritual-nav">
+        <button class="ritual-nav-btn" id="btn-nav-space" data-screen="space">Palette</button>
+        <button class="ritual-nav-btn" id="btn-nav-sigil" data-screen="sigil">Sequencer</button>
+    </nav>
 
     <section id="sigil-screen" class="hidden">
-        <header class="sigil-header">
-            <h1>Sigil Sequencer</h1>
-        </header>
+        <div class="sigil-band sigil-band-top" aria-hidden="true">
+            <img src="sigil-chaos.png" alt="" data-sigil="chaos">
+            <img src="sigil-directive.png" alt="" data-sigil="directive">
+        </div>
         <main class="sigil-sequencer" id="sigil-sequencer"></main>
-        <footer class="sigil-footer">
-            <button class="start-over-btn stepper-play-btn" id="btn-stepper-play">PLAY</button>
-            <button class="start-over-btn" id="btn-sigil-start-over-bottom">HOME</button>
-        </footer>
+        <div class="sigil-band sigil-band-bottom" aria-hidden="true">
+            <img src="sigil-oracle.png" alt="" data-sigil="oracle">
+            <img src="sigil-sacred.png" alt="" data-sigil="sacred">
+        </div>
+        <div class="tempo-control">
+            <label for="tempo-slider">Tempo</label>
+            <input id="tempo-slider" type="range" min="60" max="180" step="1" value="120">
+            <output id="tempo-value" for="tempo-slider">120 BPM</output>
+        </div>
     </section>
 
     <!-- Attract mode overlay -->
@@ -72,7 +76,31 @@
     </nav>
 
     <div id="main-container" class="hidden">
-        <main id="preset-grid"></main>
+        <section id="palette-pad-stage" aria-label="Palette pads">
+            <div class="palette-pad-layout">
+                <button class="palette-pad palette-pad-a" type="button" data-pad="A">
+                    <img class="palette-pad-sigil" src="sigil-chaos.png" alt="">
+                    <span class="palette-pad-route">TRANSMISSION</span>
+                </button>
+                <button class="palette-pad palette-pad-d" type="button" data-pad="D">
+                    <img class="palette-pad-sigil" src="sigil-directive.png" alt="">
+                    <span class="palette-pad-route">TRANSMISSION</span>
+                </button>
+                <button class="palette-pad palette-pad-b" type="button" data-pad="B">
+                    <img class="palette-pad-sigil" src="sigil-oracle.png" alt="">
+                    <span class="palette-pad-route">TRANSMISSION</span>
+                </button>
+                <button class="palette-pad palette-pad-c" type="button" data-pad="C">
+                    <img class="palette-pad-sigil" src="sigil-sacred.png" alt="">
+                    <span class="palette-pad-route">TRANSMISSION</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="preset-selector-panel" aria-labelledby="preset-selector-title">
+            <h2 id="preset-selector-title">Synth Presets</h2>
+            <main id="preset-grid"></main>
+        </section>
 
         <!-- Advanced mode: patch selector -->
         <div id="patch-selector">
@@ -90,7 +118,6 @@
         </div>
 
         <footer id="controls">
-            <button id="btn-start-over">HOME</button>
             <button id="btn-complete-reset">RESET</button>
             <button id="btn-record" style="display:none">RECORD</button>
             <button id="btn-help">HELP</button>

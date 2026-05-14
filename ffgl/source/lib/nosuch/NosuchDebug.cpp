@@ -134,25 +134,35 @@ PaletteDataPath()
 	char* source = NULL;
 	char *dataval = NULL;
 	char *value = NULL;
+	char *dataRoot = NULL;
+	char *localAppData = NULL;
 	std::string sourcepath = "";
 	std::string datapath;
 	size_t len;
 
-	// construct datapath from PALETTE and PALETTE_DATA
-	err = _dupenv_s( &palette, &len, "PALETTE" );
-	if( err || palette == NULL )
-	{
-		NosuchDebug( "No value for PALETTE environment variable!?\n" );
-		return NULL;
-	}
-
 	err = _dupenv_s( &dataval, &len, "PALETTE_DATA" );
-	if ( err == 0 && dataval != NULL ) {
+	if ( err != 0 || dataval == NULL ) {
 		dataval = "default"; // default value
 	}
 	std::string datadir = "data_" + std::string( dataval );	
 
-	datapath = std::string("c:\\Program Files\\Common Files\\Palette") + "\\" + datadir ;
+	err = _dupenv_s( &dataRoot, &len, "PALETTE_DATAROOT" );
+	if ( err == 0 && dataRoot != NULL && dataRoot[0] != '\0' ) {
+		datapath = std::string(dataRoot) + "\\" + datadir;
+	} else {
+		err = _dupenv_s( &localAppData, &len, "LOCALAPPDATA" );
+		if ( err == 0 && localAppData != NULL && localAppData[0] != '\0' ) {
+			datapath = std::string(localAppData) + "\\Palette\\" + datadir;
+		} else {
+			err = _dupenv_s( &palette, &len, "PALETTE" );
+			if( err || palette == NULL )
+			{
+				NosuchDebug( "No value for PALETTE environment variable!?\n" );
+				return NULL;
+			}
+			datapath = std::string(palette) + "\\" + datadir;
+		}
+	}
 
 	NosuchDebug( "NosuchDebugInit: Level=%d Cursor=%d Param=%d API=%d\n", NosuchDebugLevel, NosuchDebugCursor , NosuchDebugParam, NosuchDebugAPI);
 	return datapath;

@@ -5,7 +5,23 @@ let advancedMode = false;
 let lastSinglePatch = 'A'; // Track last single selection for toggle
 let showingParams = false; // Toggle between presets and parameters view
 let activeAdventure = null;
+let initialPage = 'bss2';
 const selectedPresets = new Map();
+const stepperNumSteps = 8;
+const cursorActivityCounts = { A: 0, B: 0, C: 0, D: 0 };
+const patchSigils = {
+    A: 'chaos',
+    B: 'oracle',
+    C: 'sacred',
+    D: 'directive'
+};
+const stepperTiming = {
+    playing: false,
+    click: 0,
+    clicksPerSecond: 0,
+    stepLength: 1,
+    receivedAt: 0
+};
 
 // Cached parameter definitions and enums for string param dropdowns
 let cachedParamDefs = null;
@@ -36,14 +52,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         attractAllowGui = val === 'true' || val === true;
     } catch (e) { /* default to false */ }
 
-    setupAdventureScreen();
+    try {
+        const page = await API.call('global.get', { name: 'global.initialpage' });
+        initialPage = normalizeInitialPage(page);
+    } catch (e) { /* default to bss2 */ }
+
+    applyInitialPageMode();
+    setupRitualNav();
     setupControls();
     setupHelpOverlay();
     setupAttractOverlay();
     setupCategoryTabs();
     setupPatchSelector();
     setupSigilSequencer();
-    showAdventureScreen();
+    setupPalettePads();
+    setupTempoControl();
+    await startInitialPage();
 
     // Hide the Record button until we confirm OBS is reachable.
     updateRecordButtonVisibility();
@@ -51,49 +75,60 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Start polling engine status every 2 seconds
     setInterval(pollStatus, 2000);
-    setInterval(refreshStepperStatus, 250);
+    setInterval(refreshStepperStatus, 1000);
+    setInterval(refreshCursorActivity, 200);
+    requestAnimationFrame(updateStepperIndicator);
 });
 
-function setupAdventureScreen() {
-    document.getElementById('btn-adventure-space').addEventListener('click', startSpacePalette);
-    document.getElementById('btn-adventure-sigil').addEventListener('click', showSigilSequencer);
-    document.getElementById('btn-sigil-start-over-bottom').addEventListener('click', showAdventureScreen);
+function normalizeInitialPage(page) {
+    const value = String(page || '').trim().toLowerCase();
+    return ['pro', 'bss1', 'bss2'].includes(value) ? value : 'bss2';
+}
+
+function applyInitialPageMode() {
+    document.body.classList.remove('initial-pro', 'initial-bss1', 'initial-bss2');
+    document.body.classList.add(`initial-${initialPage}`);
+}
+
+async function startInitialPage() {
+    await startSpacePalette();
+}
+
+function setupRitualNav() {
+    document.getElementById('btn-nav-space').addEventListener('click', startSpacePalette);
+    document.getElementById('btn-nav-sigil').addEventListener('click', showSigilSequencer);
+}
+
+function updateRitualNav() {
+    document.querySelectorAll('.ritual-nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.screen === activeAdventure);
+    });
 }
 
 async function startSpacePalette() {
     await stopStepperQuietly();
     activeAdventure = 'space';
-    document.getElementById('adventure-screen').classList.add('hidden');
+    updateRitualNav();
     document.getElementById('sigil-screen').classList.add('hidden');
     document.getElementById('main-container').classList.remove('hidden');
     setAdvancedMode(advancedMode, false);
     await loadPresets();
+    await refreshStepperStatus();
     await pollStatus();
-}
-
-async function showAdventureScreen() {
-    await stopStepperQuietly();
-    activeAdventure = null;
-    hideAttract();
-    hideHelp();
-    document.getElementById('adventure-screen').classList.remove('hidden');
-    document.getElementById('sigil-screen').classList.add('hidden');
-    document.getElementById('main-container').classList.add('hidden');
-    document.getElementById('title-bar').classList.add('hidden');
-    document.getElementById('category-tabs').classList.add('hidden');
-    document.getElementById('patch-selector').classList.add('hidden');
 }
 
 async function showSigilSequencer() {
     activeAdventure = 'sigil';
+    updateRitualNav();
     hideAttract();
     hideHelp();
-    document.getElementById('adventure-screen').classList.add('hidden');
     document.getElementById('main-container').classList.add('hidden');
     document.getElementById('title-bar').classList.add('hidden');
     document.getElementById('category-tabs').classList.add('hidden');
     document.getElementById('patch-selector').classList.add('hidden');
     document.getElementById('sigil-screen').classList.remove('hidden');
+    await API.stepperPlay().catch(err => console.error('Failed to start stepper playback:', err));
+    await setStepperDefaults();
     await refreshStepperStatus();
 }
 
@@ -161,10 +196,17 @@ async function stopStepperQuietly() {
     } catch (e) { /* Stepper may be unavailable during startup */ }
 }
 
+async function setStepperDefaults() {
+    await Promise.all(['A', 'B', 'C', 'D'].flatMap(patch => [
+        API.stepperSetRecord(patch, true).catch(err => console.error(`Failed to enable stepper recording for ${patch}:`, err)),
+        API.stepperSetRoute(patch, 'samplesplitter').catch(err => console.error(`Failed to set stepper route for ${patch}:`, err))
+    ]));
+}
+
 function setupSigilSequencer() {
     const sequencer = document.getElementById('sigil-sequencer');
     let html = '<div class="stepper-position" id="stepper-position">';
-    for (let step = 0; step < 16; step++) {
+    for (let step = 0; step < stepperNumSteps; step++) {
         html += `<div class="stepper-position-cell" data-step="${step}"></div>`;
     }
     html += '</div>';
@@ -173,17 +215,16 @@ function setupSigilSequencer() {
         html += `<section class="sigil-row" data-row="${row}">`;
         html += '<div class="sigil-row-controls">';
         html += `<div class="sigil-row-label">${label}</div>`;
-        html += '<button class="sigil-control sigil-record" data-action="record">Record</button>';
         html += '<button class="sigil-control sigil-clear" data-action="clear">Clear</button>';
         html += '<select class="sigil-route" aria-label="MIDI route">';
+        html += '<option value="samplesplitter">Transmission</option>';
         html += '<option value="off">Off</option>';
         html += '<option value="bidule">Bidule</option>';
-        html += '<option value="samplesplitter">Samples</option>';
         html += '<option value="both">Both</option>';
         html += '</select>';
         html += '</div>';
         html += '<div class="sigil-steps">';
-        for (let step = 0; step < 16; step++) {
+        for (let step = 0; step < stepperNumSteps; step++) {
             html += `<button class="sigil-step" data-step="${step}" aria-label="Row ${label} step ${step + 1}">${step + 1}</button>`;
         }
         html += '</div>';
@@ -210,15 +251,7 @@ function setupSigilSequencer() {
 
         const row = control.closest('.sigil-row');
         const patch = row.dataset.patch;
-        if (control.dataset.action === 'record') {
-            const recording = !control.classList.contains('active');
-            try {
-                await API.stepperSetRecord(patch, recording);
-                await refreshStepperStatus();
-            } catch (err) {
-                console.error('Failed to set stepper record:', err);
-            }
-        } else if (control.dataset.action === 'clear') {
+        if (control.dataset.action === 'clear') {
             try {
                 await API.stepperClear(patch);
                 await refreshStepperStatus();
@@ -245,23 +278,60 @@ function setupSigilSequencer() {
         });
     });
 
-    document.getElementById('btn-stepper-play').addEventListener('click', async () => {
-        const btn = document.getElementById('btn-stepper-play');
+}
+
+function setupPalettePads() {
+    const stage = document.getElementById('palette-pad-stage');
+    if (!stage) return;
+    stage.addEventListener('click', async (e) => {
+        const pad = e.target.closest('.palette-pad');
+        if (!pad) return;
+        const patch = pad.dataset.pad;
+        const isSample = pad.dataset.route === 'samplesplitter';
+        const route = isSample ? 'bidule' : 'samplesplitter';
         try {
-            if (btn.classList.contains('active')) {
-                await API.stepperStop();
-            } else {
-                await API.stepperPlay();
-            }
+            await API.stepperSetRoute(patch, route);
+            updatePalettePadRoute(patch, route);
             await refreshStepperStatus();
         } catch (err) {
-            console.error('Failed to change stepper playback:', err);
+            console.error('Failed to toggle palette pad route:', err);
         }
     });
 }
 
+function setupTempoControl() {
+    const slider = document.getElementById('tempo-slider');
+    const value = document.getElementById('tempo-value');
+    if (!slider || !value) return;
+
+    let tempoTimer = null;
+    const updateDisplay = () => {
+        const bpm = Number(slider.value) || 120;
+        value.textContent = `${bpm} BPM`;
+    };
+    const sendTempo = () => {
+        updateDisplay();
+        clearTimeout(tempoTimer);
+        tempoTimer = setTimeout(async () => {
+            const bpm = Number(slider.value) || 120;
+            const factor = bpm / 120;
+            try {
+                await API.setTempoFactor(factor.toFixed(4));
+                await refreshStepperStatus();
+            } catch (err) {
+                console.error('Failed to set tempo:', err);
+            }
+        }, 80);
+    };
+
+    updateDisplay();
+    slider.addEventListener('input', sendTempo);
+    slider.addEventListener('change', sendTempo);
+}
+
 async function refreshStepperStatus() {
-    if (activeAdventure !== 'sigil') return;
+    const wantsStatus = activeAdventure === 'sigil' || (activeAdventure === 'space' && initialPage === 'bss2');
+    if (!wantsStatus) return;
     let status;
     try {
         status = await API.stepperStatus();
@@ -270,26 +340,18 @@ async function refreshStepperStatus() {
     }
     if (!status || !status.tracks) return;
 
-    const playBtn = document.getElementById('btn-stepper-play');
-    if (playBtn) {
-        playBtn.classList.toggle('active', !!status.playing);
-        playBtn.textContent = status.playing ? 'STOP' : 'PLAY';
-    }
-
-    document.querySelectorAll('.stepper-position-cell').forEach(cell => {
-        cell.classList.toggle('active', !!status.playing && Number(cell.dataset.step) === Number(status.step));
-    });
+    syncStepperTiming(status);
+    renderStepperIndicator();
 
     for (const patch of ['A', 'B', 'C', 'D']) {
         const track = status.tracks[patch];
+        if (!track) continue;
+        updatePalettePadRoute(patch, track.route || 'samplesplitter');
         const row = document.querySelector(`.sigil-row[data-patch="${patch}"]`);
-        if (!track || !row) continue;
-        const recordBtn = row.querySelector('.sigil-record');
-        recordBtn.classList.toggle('active', !!track.recording);
-        recordBtn.textContent = track.recording ? 'Recording' : 'Record';
+        if (!row) continue;
         const route = row.querySelector('.sigil-route');
         if (route && route.value !== track.route) {
-            route.value = track.route || 'bidule';
+            route.value = track.route || 'samplesplitter';
         }
         row.querySelectorAll('.sigil-step').forEach(btn => {
             const step = Number(btn.dataset.step);
@@ -298,6 +360,43 @@ async function refreshStepperStatus() {
             btn.dataset.count = String(events.length);
         });
     }
+}
+
+function updatePalettePadRoute(patch, route) {
+    const pad = document.querySelector(`.palette-pad[data-pad="${patch}"]`);
+    if (!pad) return;
+    const normalized = route === 'samplesplitter' || route === 'both' ? 'samplesplitter' : 'bidule';
+    pad.dataset.route = normalized;
+    pad.classList.toggle('sample', normalized === 'samplesplitter');
+    pad.classList.toggle('synth', normalized !== 'samplesplitter');
+    const label = pad.querySelector('.palette-pad-route');
+    if (label) label.textContent = normalized === 'samplesplitter' ? 'TRANSMISSION' : 'SYNTH';
+}
+
+function syncStepperTiming(status) {
+    stepperTiming.playing = !!status.playing;
+    stepperTiming.click = Number(status.click) || 0;
+    stepperTiming.clicksPerSecond = Number(status.clicks_per_second) || 0;
+    stepperTiming.stepLength = Math.max(1, Number(status.step_length) || 1);
+    stepperTiming.receivedAt = performance.now();
+}
+
+function updateStepperIndicator() {
+    renderStepperIndicator();
+    requestAnimationFrame(updateStepperIndicator);
+}
+
+function renderStepperIndicator() {
+    if (activeAdventure !== 'sigil') return;
+    let step = 0;
+    if (stepperTiming.playing && stepperTiming.clicksPerSecond > 0) {
+        const elapsedMs = performance.now() - stepperTiming.receivedAt;
+        const estimatedClick = stepperTiming.click + (elapsedMs * stepperTiming.clicksPerSecond / 1000);
+        step = Math.floor(estimatedClick / stepperTiming.stepLength) % stepperNumSteps;
+    }
+    document.querySelectorAll('.stepper-position-cell').forEach(cell => {
+        cell.classList.toggle('active', stepperTiming.playing && Number(cell.dataset.step) === step);
+    });
 }
 
 async function loadParams() {
@@ -728,6 +827,41 @@ async function loadPreset(name) {
     }
 }
 
+async function refreshCursorActivity() {
+    const wantsActivity = activeAdventure === 'sigil' || (activeAdventure === 'space' && initialPage === 'bss2');
+    if (!wantsActivity) return;
+    let activity;
+    try {
+        activity = await API.cursorActivity();
+    } catch (err) {
+        return;
+    }
+    for (const patch of ['A', 'B', 'C', 'D']) {
+        const count = Number(activity && activity[patch]) || 0;
+        if (count > cursorActivityCounts[patch]) {
+            flashSigilForPatch(patch);
+        }
+        cursorActivityCounts[patch] = count;
+    }
+}
+
+function flashSigilForPatch(patch) {
+    const sigil = patchSigils[patch];
+    if (!sigil) return;
+    const img = document.querySelector(`.sigil-band img[data-sigil="${sigil}"]`);
+    if (img) {
+        img.classList.remove('flash');
+        void img.offsetWidth;
+        img.classList.add('flash');
+    }
+    const pad = document.querySelector(`.palette-pad[data-pad="${patch}"]`);
+    if (pad) {
+        pad.classList.remove('morph-active');
+        void pad.offsetWidth;
+        pad.classList.add('morph-active');
+    }
+}
+
 function currentPresetKey() {
     const patch = currentCategory === 'global' ? '*' : currentPatch;
     return `${currentCategory}:${patch}`;
@@ -754,8 +888,6 @@ async function syncPresetSelectionFromEngine() {
 }
 
 function setupControls() {
-    document.getElementById('btn-start-over').addEventListener('click', showAdventureScreen);
-
     document.getElementById('btn-complete-reset').addEventListener('click', async () => {
         // In advanced mode, COMPLETE RESET returns to normal mode
         if (advancedMode) {
@@ -835,7 +967,7 @@ function setAdvancedMode(enabled, shouldLoadPresets = true) {
     } else {
         categoryTabs.classList.add('hidden');
         patchSelector.classList.add('hidden');
-        titleBar.classList.remove('hidden');
+        titleBar.classList.add('hidden');
         // Reset to quad category in normal mode
         currentCategory = 'quad';
         currentPatch = '*';

@@ -91,11 +91,11 @@ def savedPath():
     return os.path.join(PaletteDataPath(),"saved")
 
 def localPaletteDir():
-    common = os.environ.get("CommonProgramFiles")
-    if common == None:
-        log("Expecting CommonProgramFiles to be set, assuming .")
-        common = "."
-    return os.path.join(common,"Palette")
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data != None:
+        return os.path.join(local_app_data, "Palette")
+    home = os.environ.get("HOME", ".")
+    return os.path.join(home, ".palette")
 
 def paletteSubDir(subdir):
     return os.path.join(localPaletteDir(), subdir)
@@ -141,8 +141,7 @@ def savedListAll(savedType,showall):
         sortvals.append(v)
     return sortvals
 
-# This one always returns the local (first) directory in the savedpath,
-# which is usually the user's CommonProgramFiles version
+# This one always returns the local (first) directory in the savedpath.
 def localSavedFilePath(savedType, nm, suffix=".json"):
     savedpath = savedPath()
     paths = savedpath.split(";")

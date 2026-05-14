@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sample Splitter</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'SF Mono', 'Consolas', monospace;
+    background: #0f0f0f;
+    color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  header {
+    padding: 10px 16px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #2a2a2a;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  header h1 { font-size: 21px; color: #aaa; letter-spacing: 2px; text-transform: uppercase; }
+
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ---- Left panel: file list ---- */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: #141414;
+    border-right: 1px solid #2a2a2a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-title {
+    padding: 8px 12px;
+    font-size: 16.5px;
+    color: #8a8a8a;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #222;
+  }
+
+  #file-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+
+  #file-list::-webkit-scrollbar { width: 4px; }
+  #file-list::-webkit-scrollbar-track { background: #141414; }
+  #file-list::-webkit-scrollbar-thumb { background: #333; }
+
+  .file-item {
+    padding: 7px 12px;
+    font-size: 18px;
+    cursor: pointer;
+    color: #aaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-left: 2px solid transparent;
+  }
+
+  .file-item:hover { background: #1e1e1e; color: #ddd; }
+  .file-item.active { color: #4af; border-left-color: #4af; background: #1a2a3a; }
+
+  /* ---- Right panel: waveform + controls ---- */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 16px;
+    gap: 14px;
+  }
+
+  /* ---- Controls row ---- */
+  .controls {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .control-inline {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  label {
+    font-size: 15px;
+    color: #9a9a9a;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  label.midi-flash {
+    color: #3d3;
+    text-shadow: 0 0 8px rgba(80, 255, 120, 0.9);
+  }
+
+  select, input[type="number"], input[type="range"] {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    color: #ddd;
+    padding: 5px 8px;
+    font-size: 18px;
+    font-family: inherit;
+    border-radius: 3px;
+    outline: none;
+    min-width: 140px;
+  }
+
+  select:focus, input:focus { border-color: #4af; }
+
+  input[type="range"] {
+    padding: 0;
+    min-width: 100px;
+    accent-color: #4af;
+  }
+
+  #pitch-bend {
+    width: 150px;
+    min-width: 150px;
+  }
+
+  .toggle-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 28px;
+  }
+
+  .toggle-control input {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    accent-color: #4af;
+  }
+
+  button {
+    background: #1e1e1e;
+    border: 1px solid #444;
+    color: #ccc;
+    padding: 6px 14px;
+    font-size: 18px;
+    font-family: inherit;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  button:hover { background: #2a2a2a; border-color: #4af; color: #4af; }
+  button.primary { background: #1a3a5a; border-color: #4af; color: #4af; }
+  button.primary:hover { background: #1f4a6f; }
+
+  .icon-btn {
+    width: 40px;
+    min-width: 40px;
+    height: 36px;
+    padding: 0;
+    text-align: center;
+  }
+
+  .mode-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .mode-btn {
+    padding: 4px 10px;
+    font-size: 16.5px;
+    border-radius: 3px;
+  }
+
+  .mode-btn.active { background: #1a3a5a; border-color: #4af; color: #4af; }
+  .mode-btn.random-active { background: #4a2f12; border-color: #e8a020; color: #ffd28a; }
+
+  /* ---- Waveform ---- */
+  .waveform-wrap {
+    flex: 1;
+    position: relative;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 4px;
+    overflow: hidden;
+    min-height: 120px;
+    cursor: crosshair;
+  }
+
+  #waveform-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .waveform-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #777;
+    font-size: 19.5px;
+    pointer-events: none;
+  }
+
+  /* ---- Split list ---- */
+  .split-info {
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 18px;
+    color: #8a8a8a;
+  }
+
+  .random-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .random-controls label {
+    font-size: 13.5px;
+  }
+
+  .random-controls input {
+    min-width: 72px;
+    width: 72px;
+    padding: 4px 6px;
+  }
+
+  .split-time {
+    color: #9a9a9a;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  /* ---- Status bar ---- */
+  .status-bar {
+    flex-shrink: 0;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 16.5px;
+    color: #8a8a8a;
+    padding-top: 4px;
+    border-top: 1px solid #1e1e1e;
+  }
+
+  .status-bar .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #333;
+    display: inline-block;
+  }
+  .status-bar .dot.green { background: #3d3; }
+  .status-bar .dot.yellow { background: #da3; }
+
+  #status-midi { color: #888; }
+  #status-file { color: #888; }
+
+  #midi-port-select { width: 240px; min-width: 0; }
+  #audio-output-select { width: 340px; min-width: 0; }
+
+  .voice-indicator {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .voice-pip {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #222;
+    transition: background 0.1s;
+  }
+  .voice-pip.active { background: #4af; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sample Splitter</h1>
+  <div class="control-group">
+    <label id="midi-input-label">MIDI Input</label>
+    <div class="control-inline">
+      <select id="midi-port-select" onchange="setMidiPort(this.value)">
+        <option value="">— select input —</option>
+      </select>
+      <button class="icon-btn" type="button" title="Refresh MIDI inputs" onclick="loadMidiPorts()">⟳</button>
+    </div>
+  </div>
+  <div class="control-group">
+    <label>Audio Output</label>
+    <div class="control-inline">
+      <select id="audio-output-select" onchange="setAudioOutput(this.value)">
+        <option value="">— select output —</option>
+      </select>
+      <button class="icon-btn" type="button" title="Refresh audio outputs" onclick="loadAudioOutputs()">⟳</button>
+    </div>
+  </div>
+  <div class="control-group">
+    <label>Base Note</label>
+    <select id="base-note" onchange="setBaseNote(this.value)" style="width:86px;min-width:86px"></select>
+  </div>
+  <div class="control-group">
+    <label>Pitch Bend <span id="pitch-bend-val">0.0</span></label>
+    <input type="range" id="pitch-bend" min="-12" max="12" step="0.1" value="0"
+           oninput="setPitchBend(this.value)">
+  </div>
+</header>
+
+<div class="main">
+
+  <div class="sidebar">
+    <div class="sidebar-title">MP3 Files</div>
+    <div id="file-list"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="control-group">
+        <label>Split Mode</label>
+        <div class="mode-row">
+          <button class="mode-btn" id="mode-silence" onclick="setMode('silence')">Silence</button>
+          <button class="mode-btn" id="mode-fixed" onclick="setMode('fixed')">Fixed</button>
+          <button class="mode-btn active" id="mode-words" onclick="setMode('words')">Words</button>
+        </div>
+      </div>
+
+      <div class="control-group" id="ctrl-interval" style="display:none">
+        <label>Interval (sec)</label>
+        <input type="number" id="interval" value="1" min="0.5" max="60" step="0.5" style="min-width:80px;width:80px">
+      </div>
+
+      <div class="control-group" id="ctrl-thresh">
+        <label>Silence Thresh <span id="thresh-val">0.100</span></label>
+        <input type="range" id="silence-thresh" min="0.001" max="0.3" step="0.001" value="0.1"
+               oninput="document.getElementById('thresh-val').textContent=parseFloat(this.value).toFixed(3)">
+      </div>
+
+      <div class="control-group" id="ctrl-min">
+        <label id="min-label">Min Gap (sec)</label>
+        <input type="number" id="silence-min" value="0.1" min="0.1" max="5" step="0.1" style="min-width:80px;width:80px">
+      </div>
+
+      <div class="control-group" id="ctrl-words-per-split">
+        <label>Words / Split</label>
+        <input type="number" id="words-per-split" value="2" min="1" max="16" step="1" style="min-width:80px;width:80px">
+      </div>
+
+      <div class="control-group" id="ctrl-peak-start">
+        <label>Peak Start</label>
+        <div class="toggle-control">
+          <input type="checkbox" id="peak-start" onchange="setPeakStart(this.checked)" checked>
+        </div>
+      </div>
+
+      <button class="primary" onclick="reSplit()" style="align-self:flex-end">⟳ Re-split</button>
+    </div>
+
+    <!-- Split controls + status -->
+    <div class="split-info">
+      <div class="random-controls">
+        <label for="random-rate">Rate</label>
+        <input type="number" id="random-rate" min="1" max="20" step="1" value="4" title="Random notes per second">
+        <label for="random-length">Length</label>
+        <input type="number" id="random-length" min="0.25" max="10" step="0.25" value="0.5" title="Seconds from note down to note up">
+        <button class="mode-btn" id="random-play-btn" type="button" onclick="toggleRandomPlayback()" disabled>Random</button>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span><span class="dot" id="dot-midi"></span> MIDI: <span id="status-midi">not connected</span></span>
+      <span><span class="dot" id="dot-audio"></span> Audio: <span id="status-audio">idle</span></span>
+      <span id="status-file">No file loaded</span>
+      <div style="flex:1"></div>
+      <div class="voice-indicator" id="voice-pips"></div>
+    </div>
+
+    <!-- Waveform -->
+    <div class="waveform-wrap" id="waveform-wrap">
+      <canvas id="waveform-canvas"></canvas>
+      <div class="waveform-placeholder" id="waveform-placeholder">Select an MP3 file to begin</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+let currentFile = null;
+let cueData = null;
+let waveformData = null;
+let splitMode = 'words';
+let pollInterval = null;
+let manualStopTimer = null;
+let manualPlayingIndex = null;
+let manualStartedAt = 0;
+let randomPlayback = false;
+let randomTimer = null;
+let randomVoiceCounter = 0;
+let randomVoiceTimers = new Map();
+let randomVoiceSplits = new Map();
+let activeRandomSplitCounts = new Map();
+let lastMidiActivityCount = null;
+let midiFlashTimer = null;
+const MAX_VOICES = 8;
+const MIN_PREVIEW_MS = 250;
+
+// ---------------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------------
+window.addEventListener('load', () => {
+  buildBaseNoteOptions();
+  loadFiles();
+  loadMidiPorts();
+  loadAudioOutputs();
+  buildVoicePips();
+  setPeakStart(document.getElementById('peak-start').checked);
+  setupWaveformPlayback();
+  startPolling();
+  resizeCanvas();
+  window.addEventListener('resize', () => { resizeCanvas(); drawWaveform(); });
+});
+
+function buildVoicePips() {
+  const wrap = document.getElementById('voice-pips');
+  wrap.innerHTML = '';
+  for (let i = 0; i < MAX_VOICES; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'voice-pip';
+    pip.id = `pip-${i}`;
+    wrap.appendChild(pip);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// File list
+// ---------------------------------------------------------------------------
+async function loadFiles() {
+  const resp = await fetch('/api/files');
+  const data = await resp.json();
+  const list = document.getElementById('file-list');
+  list.innerHTML = '';
+  let firstItem = null;
+  let firstFile = null;
+  data.files.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.textContent = f;
+    div.title = f;
+    div.onclick = () => selectFile(f, div);
+    list.appendChild(div);
+    if (!firstItem) {
+      firstItem = div;
+      firstFile = f;
+    }
+  });
+  if (!currentFile && firstItem) {
+    await selectFile(firstFile, firstItem);
+  }
+}
+
+async function selectFile(filename, el) {
+  stopRandomPlayback();
+  document.querySelectorAll('.file-item').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  currentFile = filename;
+  document.getElementById('status-file').textContent = filename;
+  document.getElementById('waveform-placeholder').style.display = 'none';
+  await analyze();
+}
+
+// ---------------------------------------------------------------------------
+// MIDI
+// ---------------------------------------------------------------------------
+async function loadMidiPorts() {
+  const sel = document.getElementById('midi-port-select');
+  sel.disabled = true;
+  sel.innerHTML = '<option value="">Scanning…</option>';
+
+  let data;
+  let state = {};
+  try {
+    const [portsResp, stateResp] = await Promise.all([
+      fetch('/api/midi_ports'),
+      fetch('/api/state')
+    ]);
+    data = await portsResp.json();
+    state = await stateResp.json();
+  } catch (e) {
+    sel.innerHTML = '<option value="">— unavailable —</option>';
+    updateMidiStatus(null, e.message);
+    return;
+  }
+
+  const current = data.current || state.midi_port || '';
+  sel.innerHTML = '<option value="">— select input —</option>';
+  data.ports.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    if (p === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  if (current && !data.ports.includes(current)) {
+    const opt = document.createElement('option');
+    opt.value = current;
+    opt.textContent = current;
+    opt.selected = true;
+    sel.appendChild(opt);
+  }
+  if (data.ports.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'No MIDI inputs found';
+    opt.disabled = true;
+    sel.appendChild(opt);
+  }
+  if (current) sel.value = current;
+  sel.disabled = Boolean(data.error);
+  updateMidiStatus(current, data.error || state.midi_error);
+}
+
+function buildBaseNoteOptions() {
+  const sel = document.getElementById('base-note');
+  sel.innerHTML = '';
+  for (let note = 0; note <= 127; note++) {
+    const opt = document.createElement('option');
+    opt.value = note;
+    opt.textContent = `${note} · ${midiNoteName(note)}`;
+    if (note === 48) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+async function setMidiPort(port) {
+  if (!port) {
+    updateMidiStatus(null);
+    return;
+  }
+
+  const resp = await fetch(`/api/set_midi?port=${encodeURIComponent(port)}`);
+  const data = await resp.json();
+  if (data.error) {
+    updateMidiStatus(null, data.error);
+    return;
+  }
+  updateMidiStatus(data.port);
+}
+
+function updateMidiStatus(port, error = null) {
+  const dot = document.getElementById('dot-midi');
+  const lbl = document.getElementById('status-midi');
+  if (error) {
+    dot.classList.remove('green');
+    dot.classList.add('yellow');
+    lbl.textContent = 'unavailable';
+    lbl.title = error;
+  } else if (port) {
+    dot.classList.add('green');
+    dot.classList.remove('yellow');
+    lbl.textContent = port;
+    lbl.title = port;
+  } else {
+    dot.classList.remove('green');
+    dot.classList.remove('yellow');
+    lbl.textContent = 'not connected';
+    lbl.title = '';
+  }
+}
+
+function flashMidiInputLabel() {
+  const label = document.getElementById('midi-input-label');
+  label.classList.add('midi-flash');
+  if (midiFlashTimer) clearTimeout(midiFlashTimer);
+  midiFlashTimer = setTimeout(() => {
+    label.classList.remove('midi-flash');
+  }, 120);
+}
+
+async function loadAudioOutputs() {
+  const sel = document.getElementById('audio-output-select');
+  sel.disabled = true;
+  sel.innerHTML = '<option value="">Scanning…</option>';
+
+  let data;
+  try {
+    const resp = await fetch('/api/audio_outputs');
+    data = await resp.json();
+  } catch (e) {
+    sel.innerHTML = '<option value="">— unavailable —</option>';
+    setAudioStatus('unavailable', false, e.message);
+    return;
+  }
+
+  sel.innerHTML = '<option value="">— select output —</option>';
+  data.devices.forEach(device => {
+    const opt = document.createElement('option');
+    opt.value = device.id;
+    opt.textContent = `${device.id}. ${device.name}`;
+    if (device.id === data.current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  if (data.devices.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'No audio outputs found';
+    opt.disabled = true;
+    sel.appendChild(opt);
+  }
+  sel.disabled = Boolean(data.error);
+  if (data.error) {
+    setAudioStatus('unavailable', false, data.error);
+  } else if (data.current_name) {
+    setAudioStatus(data.current_name);
+  }
+}
+
+async function setAudioOutput(outputId) {
+  if (!outputId) return;
+
+  setAudioStatus('switching…');
+  const resp = await fetch(`/api/set_audio_output?id=${encodeURIComponent(outputId)}`);
+  const data = await resp.json();
+  if (data.error) {
+    setAudioStatus('unavailable', false, data.error);
+    return;
+  }
+  setAudioStatus(data.name || `output ${data.id}`);
+  await loadAudioOutputs();
+}
+
+async function setBaseNote(val) {
+  const note = Math.max(0, Math.min(127, parseInt(val) || 0));
+  document.getElementById('base-note').value = note;
+  await fetch(`/api/set_base_note?note=${encodeURIComponent(note)}`);
+  drawWaveform();
+}
+
+async function setPitchBend(val) {
+  const semitones = Math.max(-12, Math.min(12, parseFloat(val) || 0));
+  document.getElementById('pitch-bend').value = semitones;
+  document.getElementById('pitch-bend-val').textContent = semitones.toFixed(1);
+  await fetch(`/api/set_pitch_bend?semitones=${encodeURIComponent(semitones)}`);
+}
+
+async function setPeakStart(enabled) {
+  await fetch(`/api/set_peak_start?enabled=${enabled ? 1 : 0}`);
+  drawWaveform();
+}
+
+// ---------------------------------------------------------------------------
+// Split mode
+// ---------------------------------------------------------------------------
+function setMode(mode) {
+  splitMode = mode;
+  const minInput = document.getElementById('silence-min');
+  document.getElementById('mode-silence').classList.toggle('active', mode === 'silence');
+  document.getElementById('mode-fixed').classList.toggle('active', mode === 'fixed');
+  document.getElementById('mode-words').classList.toggle('active', mode === 'words');
+  document.getElementById('ctrl-interval').style.display = mode === 'fixed' ? '' : 'none';
+  document.getElementById('ctrl-thresh').style.display = mode === 'fixed' ? 'none' : '';
+  document.getElementById('ctrl-min').style.display = mode === 'fixed' ? 'none' : '';
+  document.getElementById('ctrl-words-per-split').style.display = mode === 'words' ? '' : 'none';
+  document.getElementById('ctrl-peak-start').style.display = mode === 'words' ? '' : 'none';
+  document.getElementById('min-label').textContent =
+    mode === 'words' ? 'Min Gap (sec)' : 'Min Silence (sec)';
+  if (mode === 'words' && parseFloat(minInput.value) >= 0.5) {
+    minInput.value = '0.1';
+  } else if (mode === 'silence' && parseFloat(minInput.value) <= 0.1) {
+    minInput.value = '0.5';
+  }
+  if (currentFile) analyze();
+}
+
+async function reSplit() {
+  if (currentFile) await analyze();
+}
+
+// ---------------------------------------------------------------------------
+// Analyze
+// ---------------------------------------------------------------------------
+async function analyze() {
+  if (!currentFile) return;
+  stopRandomPlayback();
+
+  const mode = splitMode;
+  const interval = document.getElementById('interval').value;
+  const thresh = document.getElementById('silence-thresh').value;
+  const silenceMin = document.getElementById('silence-min').value;
+  const wordsPerSplit = document.getElementById('words-per-split').value;
+
+  document.getElementById('waveform-placeholder').style.display = 'none';
+
+  const params = new URLSearchParams({
+    file: currentFile,
+    mode,
+    interval,
+    silence_thresh: thresh,
+    silence_min: silenceMin,
+    words_per_split: wordsPerSplit,
+  });
+
+  const resp = await fetch(`/api/analyze?${params}`);
+  const data = await resp.json();
+
+  if (data.error) {
+    alert('Error: ' + data.error);
+    return;
+  }
+
+  cueData = data.cue_data;
+  waveformData = data.waveform;
+
+  updateRandomButton();
+  drawWaveform();
+}
+
+// ---------------------------------------------------------------------------
+// Manual browser playback
+// ---------------------------------------------------------------------------
+function setManualButtonActive(index) {
+  drawWaveform();
+}
+
+function setupWaveformPlayback() {
+  const wrap = document.getElementById('waveform-wrap');
+  wrap.addEventListener('pointerdown', (e) => {
+    const splitIndex = getSplitIndexFromWaveformEvent(e);
+    if (splitIndex === null) return;
+    e.preventDefault();
+    wrap.setPointerCapture(e.pointerId);
+    playSplit(splitIndex);
+  });
+  wrap.addEventListener('pointerup', (e) => {
+    if (wrap.hasPointerCapture(e.pointerId)) {
+      wrap.releasePointerCapture(e.pointerId);
+    }
+    stopManualPlaybackAfterMinimum();
+  });
+  wrap.addEventListener('pointercancel', () => stopManualPlayback());
+  wrap.addEventListener('lostpointercapture', () => {
+    if (manualPlayingIndex !== null) stopManualPlayback();
+  });
+}
+
+function getSplitIndexFromWaveformEvent(e) {
+  if (!cueData || !cueData.splits || cueData.splits.length === 0 || cueData.duration <= 0) {
+    return null;
+  }
+  const rect = document.getElementById('waveform-wrap').getBoundingClientRect();
+  const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+  const time = (x / rect.width) * cueData.duration;
+  let splitIndex = 0;
+  for (let i = 0; i < cueData.splits.length; i++) {
+    if (cueData.splits[i] <= time) {
+      splitIndex = i;
+    } else {
+      break;
+    }
+  }
+  return splitIndex;
+}
+
+function setAudioStatus(text, active = false, title = '') {
+  const dot = document.getElementById('dot-audio');
+  const lbl = document.getElementById('status-audio');
+  dot.classList.toggle('green', active);
+  dot.classList.remove('yellow');
+  lbl.textContent = text;
+  lbl.title = title || text;
+}
+
+function stopManualPlayback(redraw = true) {
+  if (manualStopTimer) {
+    clearTimeout(manualStopTimer);
+    manualStopTimer = null;
+  }
+  fetch('/api/preview_off').catch(() => {});
+  manualPlayingIndex = null;
+  setManualButtonActive(null);
+  setAudioStatus('idle');
+  if (redraw) drawWaveform();
+}
+
+function updateRandomButton() {
+  const btn = document.getElementById('random-play-btn');
+  const hasSplits = Boolean(currentFile && cueData && cueData.splits && cueData.splits.length);
+  btn.disabled = !hasSplits;
+  btn.classList.toggle('random-active', randomPlayback);
+  btn.textContent = randomPlayback ? 'Stop Random' : 'Random';
+}
+
+function toggleRandomPlayback() {
+  if (randomPlayback) {
+    stopRandomPlayback();
+  } else {
+    startRandomPlayback();
+  }
+}
+
+function startRandomPlayback() {
+  if (!currentFile || !cueData || !cueData.splits || cueData.splits.length === 0) return;
+  randomPlayback = true;
+  updateRandomButton();
+  playRandomSplit();
+}
+
+function stopRandomPlayback(redraw = true, stopAudio = true) {
+  randomPlayback = false;
+  if (randomTimer) {
+    clearTimeout(randomTimer);
+    randomTimer = null;
+  }
+  randomVoiceTimers.forEach((timer, voiceKey) => {
+    clearTimeout(timer);
+    if (stopAudio) {
+      fetch(`/api/preview_off?voice=${encodeURIComponent(voiceKey)}`).catch(() => {});
+    }
+  });
+  randomVoiceTimers.clear();
+  randomVoiceSplits.clear();
+  activeRandomSplitCounts.clear();
+  if (stopAudio) {
+    fetch('/api/preview_off').catch(() => {});
+  }
+  updateRandomButton();
+  if (stopAudio) {
+    manualPlayingIndex = null;
+    setManualButtonActive(null);
+    setAudioStatus('idle');
+    if (redraw) drawWaveform();
+  } else if (redraw) {
+    drawWaveform();
+  }
+}
+
+function playRandomSplit() {
+  if (!randomPlayback || !cueData || !cueData.splits || cueData.splits.length === 0) return;
+  randomTimer = setTimeout(playRandomSplit, getRandomIntervalMs());
+
+  let index = Math.floor(Math.random() * cueData.splits.length);
+  if (cueData.splits.length > 1 && (index === manualPlayingIndex || activeRandomSplitCounts.has(index))) {
+    index = (index + 1 + Math.floor(Math.random() * (cueData.splits.length - 1))) % cueData.splits.length;
+  }
+  playSplit(index, { random: true });
+}
+
+function addRandomSplitHighlight(index) {
+  activeRandomSplitCounts.set(index, (activeRandomSplitCounts.get(index) || 0) + 1);
+  setManualButtonActive(manualPlayingIndex);
+  drawWaveform();
+}
+
+function removeRandomVoice(voiceKey) {
+  const timer = randomVoiceTimers.get(voiceKey);
+  if (timer) clearTimeout(timer);
+  randomVoiceTimers.delete(voiceKey);
+
+  const splitIndex = randomVoiceSplits.get(voiceKey);
+  randomVoiceSplits.delete(voiceKey);
+  if (splitIndex !== undefined) {
+    const count = (activeRandomSplitCounts.get(splitIndex) || 1) - 1;
+    if (count > 0) {
+      activeRandomSplitCounts.set(splitIndex, count);
+    } else {
+      activeRandomSplitCounts.delete(splitIndex);
+    }
+  }
+  setManualButtonActive(manualPlayingIndex);
+  drawWaveform();
+}
+
+function getRandomIntervalMs() {
+  const input = document.getElementById('random-rate');
+  const rate = Math.max(1, Math.min(20, parseInt(input.value, 10) || 4));
+  input.value = rate;
+  return 1000 / rate;
+}
+
+function getRandomLengthMs() {
+  const seconds = Math.max(0.25, Math.min(10, parseFloat(document.getElementById('random-length').value) || 0.5));
+  return seconds * 1000;
+}
+
+function stopManualPlaybackAfterMinimum() {
+  const elapsed = performance.now() - manualStartedAt;
+  if (manualStartedAt && elapsed < MIN_PREVIEW_MS) {
+    if (manualStopTimer) clearTimeout(manualStopTimer);
+    manualStopTimer = setTimeout(stopManualPlayback, MIN_PREVIEW_MS - elapsed);
+  } else {
+    stopManualPlayback();
+  }
+}
+
+async function playSplit(index, options = {}) {
+  if (!currentFile || !cueData || !cueData.splits) return;
+  const splitIndex = Number(index);
+  if (!Number.isInteger(splitIndex) || splitIndex < 0 || splitIndex >= cueData.splits.length) {
+    if (options.random) {
+      stopRandomPlayback();
+    } else {
+      stopManualPlayback();
+    }
+    alert(`Playback failed: split index ${index} is out of range for ${cueData.splits.length} splits`);
+    return;
+  }
+  if (!options.random && randomPlayback) {
+    stopRandomPlayback(false, true);
+  }
+
+  const start = cueData.splits[splitIndex];
+  const end = splitIndex + 1 < cueData.splits.length ? cueData.splits[splitIndex + 1] : cueData.duration;
+  const duration = Math.max(0, end - start);
+
+  let voiceKey = "preview";
+  if (options.random) {
+    voiceKey = `random-${Date.now()}-${randomVoiceCounter++}`;
+  } else {
+    stopManualPlayback(false);
+    manualPlayingIndex = splitIndex;
+    manualStartedAt = performance.now();
+    setManualButtonActive(splitIndex);
+  }
+  const noteName = midiNoteName((parseInt(document.getElementById('base-note').value) || 48) + splitIndex);
+  setAudioStatus(`${options.random ? 'random' : 'preview'} ${noteName}`, true);
+  if (!options.random) drawWaveform();
+
+  try {
+    const params = new URLSearchParams({ file: currentFile, index: splitIndex, voice: voiceKey });
+    const resp = await fetch(`/api/preview_on?${params}`);
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    if (options.random) {
+      const playMs = getRandomLengthMs();
+      randomVoiceSplits.set(voiceKey, splitIndex);
+      addRandomSplitHighlight(splitIndex);
+      const noteOffTimer = setTimeout(() => {
+        fetch(`/api/preview_off?voice=${encodeURIComponent(voiceKey)}`).catch(() => {});
+        removeRandomVoice(voiceKey);
+      }, playMs);
+      randomVoiceTimers.set(voiceKey, noteOffTimer);
+    } else {
+      if (manualPlayingIndex !== splitIndex) return;
+      manualStopTimer = setTimeout(stopManualPlayback, duration * 1000);
+    }
+  } catch (e) {
+    if (options.random) {
+      stopRandomPlayback();
+    } else {
+      stopManualPlayback();
+    }
+    alert('Playback failed: ' + e.message);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Waveform canvas
+// ---------------------------------------------------------------------------
+function resizeCanvas() {
+  const canvas = document.getElementById('waveform-canvas');
+  const wrap = document.getElementById('waveform-wrap');
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+}
+
+function drawWaveform() {
+  const canvas = document.getElementById('waveform-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (!waveformData || waveformData.length === 0) return;
+
+  const mid = H / 2;
+  const data = waveformData;
+  const n = data.length;
+
+  // Draw split regions (alternating shaded bands)
+  if (cueData && cueData.splits && cueData.duration > 0) {
+    const splits = cueData.splits;
+    const dur = cueData.duration;
+    for (let i = 0; i < splits.length; i++) {
+      const x0 = Math.floor((splits[i] / dur) * W);
+      const x1 = i + 1 < splits.length
+        ? Math.floor((splits[i + 1] / dur) * W)
+        : W;
+      ctx.fillStyle = i % 2 === 0
+        ? 'rgba(60, 120, 200, 0.06)'
+        : 'rgba(60, 200, 120, 0.06)';
+      ctx.fillRect(x0, 0, x1 - x0, H);
+    }
+  }
+
+  // Draw waveform
+  ctx.beginPath();
+  ctx.strokeStyle = '#3a7fc1';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < n; i++) {
+    const x = (i / n) * W;
+    const amp = data[i] * mid * 0.9;
+    ctx.moveTo(x, mid - amp);
+    ctx.lineTo(x, mid + amp);
+  }
+  ctx.stroke();
+
+  // Draw active playback highlights over the waveform.
+  if (cueData && cueData.splits && cueData.duration > 0) {
+    const splits = cueData.splits;
+    const dur = cueData.duration;
+    const activeSplits = new Set(activeRandomSplitCounts.keys());
+    if (
+      manualPlayingIndex !== null &&
+      manualPlayingIndex >= 0 &&
+      manualPlayingIndex < splits.length
+    ) {
+      activeSplits.add(manualPlayingIndex);
+    }
+
+    activeSplits.forEach((splitIndex) => {
+      const start = splits[splitIndex];
+      const end = splitIndex + 1 < splits.length
+        ? splits[splitIndex + 1]
+        : dur;
+      const x0 = Math.floor((start / dur) * W);
+      const x1 = Math.max(x0 + 2, Math.floor((end / dur) * W));
+
+      ctx.fillStyle = 'rgba(232, 160, 32, 0.34)';
+      ctx.fillRect(x0, 0, x1 - x0, H);
+      ctx.strokeStyle = '#e8a020';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x0 + 1, 1, Math.max(0, x1 - x0 - 2), H - 2);
+    });
+  }
+
+  // Draw split point lines + note labels
+  if (cueData && cueData.splits && cueData.duration > 0) {
+    const splits = cueData.splits;
+    const dur = cueData.duration;
+    const baseNote = parseInt(document.getElementById('base-note').value) || 48;
+
+    splits.forEach((t, i) => {
+      const x = Math.floor((t / dur) * W);
+
+      // Line
+      ctx.beginPath();
+      ctx.strokeStyle = i === 0 ? 'rgba(255,255,255,0.15)' : '#e8a020';
+      ctx.lineWidth = i === 0 ? 1 : 1.5;
+      ctx.setLineDash([]);
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Label (note name + split index)
+      if (i < 128) {
+        const noteName = midiNoteName(baseNote + i);
+        ctx.fillStyle = '#e8a020';
+        ctx.font = '15px SF Mono, Consolas, monospace';
+        ctx.fillText(noteName, x + 3, 18);
+        ctx.fillStyle = '#555';
+        ctx.fillText(`${t.toFixed(2)}s`, x + 3, 36);
+      }
+    });
+
+    if (
+      document.getElementById('peak-start')?.checked &&
+      cueData.peak_starts &&
+      cueData.peak_starts.length === splits.length
+    ) {
+      cueData.peak_starts.forEach((t, i) => {
+        if (t <= splits[i] + 0.0001) return;
+        const x = Math.floor((t / dur) * W);
+        const y = Math.max(48, Math.min(H - 8, 48 + (i % 4) * 18));
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(244, 240, 106, 0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 5]);
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(244, 240, 106, 0.65)';
+        ctx.moveTo(x, 4);
+        ctx.lineTo(x - 5, 13);
+        ctx.lineTo(x + 5, 13);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(244, 240, 106, 0.75)';
+        ctx.font = '15px SF Mono, Consolas, monospace';
+        ctx.fillText('peak', x + 4, y);
+      });
+    }
+  }
+}
+
+function midiNoteName(n) {
+  const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const oct = Math.floor(n / 12) - 1;
+  return names[n % 12] + oct;
+}
+
+// ---------------------------------------------------------------------------
+// Polling (active voices)
+// ---------------------------------------------------------------------------
+function startPolling() {
+  pollInterval = setInterval(async () => {
+    let data;
+    try {
+      const resp = await fetch('/api/state');
+      data = await resp.json();
+    } catch (e) {
+      return;
+    }
+
+    // Voice pips
+    const voices = data.active_voices || [];
+    for (let i = 0; i < MAX_VOICES; i++) {
+      const pip = document.getElementById(`pip-${i}`);
+      if (pip) pip.classList.toggle('active', i < voices.length);
+    }
+
+    if (data.midi_activity_count !== undefined && data.midi_activity_count !== lastMidiActivityCount) {
+      if (lastMidiActivityCount !== null) flashMidiInputLabel();
+      lastMidiActivityCount = data.midi_activity_count;
+    }
+
+    if (data.peak_start_enabled !== undefined) {
+      const peakStart = document.getElementById('peak-start');
+      if (peakStart && peakStart.checked !== data.peak_start_enabled) {
+        peakStart.checked = data.peak_start_enabled;
+      }
+    }
+
+    if (data.pitch_bend_semitones !== undefined) {
+      const pitchBend = document.getElementById('pitch-bend');
+      const pitchBendVal = document.getElementById('pitch-bend-val');
+      const bend = Number(data.pitch_bend_semitones) || 0;
+      if (pitchBend && document.activeElement !== pitchBend) {
+        pitchBend.value = bend;
+      }
+      if (pitchBendVal) {
+        pitchBendVal.textContent = bend.toFixed(1);
+      }
+    }
+
+    // Audio status
+    const audioDot = document.getElementById('dot-audio');
+    const audioLbl = document.getElementById('status-audio');
+    if (manualPlayingIndex !== null) {
+      audioDot.classList.add('green');
+      audioDot.classList.remove('yellow');
+    } else if (data.audio_error) {
+      audioDot.classList.remove('green');
+      audioDot.classList.add('yellow');
+      audioLbl.textContent = 'unavailable';
+      audioLbl.title = data.audio_error;
+    } else if (voices.length > 0) {
+      audioDot.classList.add('green');
+      audioDot.classList.remove('yellow');
+      audioLbl.textContent = `${voices.length} voice${voices.length > 1 ? 's' : ''} active`;
+      audioLbl.title = '';
+    } else {
+      audioDot.classList.remove('green');
+      audioDot.classList.remove('yellow');
+      audioLbl.textContent = data.audio_output_name || 'idle';
+      audioLbl.title = data.audio_output_name || '';
+    }
+
+    // Re-draw if base note changed
+    drawWaveform();
+
+  }, 200);
+}
+</script>
+</body>
+</html>

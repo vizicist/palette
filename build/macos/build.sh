@@ -51,6 +51,7 @@ build_cmd palette_chat
 build_cmd palette_hub
 build_cmd palette_remote -ldflags "-extldflags=-Wl,-no_warn_duplicate_libraries"
 build_cmd palette_natsmon
+build_cmd samplesplitter
 
 copy_data_dir() {
     local name="$1"
@@ -68,12 +69,15 @@ copy_data_dir() {
 copy_data_dir data_default
 copy_data_dir data_dexed
 
-if [ -f "$PALETTE_SOURCE/samplesplitter/samplesplitter.py" ]; then
+if [ -f "$PALETTE_SOURCE/cmd/samplesplitter/samplesplitter.py" ]; then
     echo "================ Copying samplesplitter"
-    /usr/bin/ditto "$PALETTE_SOURCE/samplesplitter" "$SHIP/samplesplitter"
+    /usr/bin/ditto "$PALETTE_SOURCE/cmd/samplesplitter" "$SHIP/samplesplitter"
     rm -rf "$SHIP/samplesplitter/.git" "$SHIP/samplesplitter/__pycache__"
+    if [ -d "$PALETTE_SOURCE/data_default/samplesplitter" ]; then
+        /usr/bin/ditto "$PALETTE_SOURCE/data_default/samplesplitter" "$SHIP/samplesplitter"
+    fi
 else
-    echo "Error: samplesplitter submodule is missing. Run: git submodule update --init --recursive" >&2
+    echo "Error: samplesplitter source is missing under cmd/samplesplitter" >&2
     exit 1
 fi
 

@@ -173,7 +173,11 @@ func PaletteDataPath() (datapath string) {
 	if dataRoot := os.Getenv("PALETTE_DATAROOT"); dataRoot != "" {
 		basePath = dataRoot
 	} else if runtime.GOOS == "windows" {
-		basePath = "C:\\Program Files\\Common Files\\Palette"
+		if localAppData := os.Getenv("LOCALAPPDATA"); localAppData != "" {
+			basePath = filepath.Join(localAppData, "Palette")
+		} else {
+			basePath = filepath.Join(PaletteDir(), "data")
+		}
 	} else if paletteDir := PaletteDir(); paletteDir != "" {
 		basePath = paletteDir
 	} else {
@@ -191,20 +195,18 @@ func MIDIFilePath(nm string) string {
 
 // LocalPaletteDir gets used for local (and changed) things in saved and config
 func LocalPaletteDir() string {
-	commonfilepath := os.Getenv("CommonProgramFiles")
-	if commonfilepath == "" {
-		home := os.Getenv("HOME")
-		commonfilepath = filepath.Join(home, "commonfiles")
-		palettedir := filepath.Join(commonfilepath, "Palette")
-		if err := os.MkdirAll(palettedir, os.ModePerm); err != nil {
-			fmt.Printf("Unable to create %s\n", palettedir)
-			panic(err)
-		}
-		// DO NOT USE Log* functions here
-		fmt.Printf("HOME palettedir = %s\n", palettedir)
-		return palettedir
+	if localAppData := os.Getenv("LOCALAPPDATA"); localAppData != "" {
+		return filepath.Join(localAppData, "Palette")
 	}
-	return filepath.Join(commonfilepath, "Palette")
+	home := os.Getenv("HOME")
+	palettedir := filepath.Join(home, ".palette")
+	if err := os.MkdirAll(palettedir, os.ModePerm); err != nil {
+		fmt.Printf("Unable to create %s\n", palettedir)
+		panic(err)
+	}
+	// DO NOT USE Log* functions here
+	fmt.Printf("HOME palettedir = %s\n", palettedir)
+	return palettedir
 }
 
 func TwitchUser() (username string, authtoken string) {

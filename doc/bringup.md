@@ -14,7 +14,7 @@
 
 - Install Bidule, license it
 
-- Create c:\Program Files\Common Files\VST2 and VST3
+- Create C:\VST2 and C:\VST3
 
 - Update Bidule to use those directories (VST3 first), and enable OSC
 
@@ -28,7 +28,7 @@
 
 - Install desired Palette data (e.g. for data_omnisphere or data_sfmoma)
 
-- Set Resolume ffgl folder to c:\program files\Palette\ffgl, enable OSC, open c:\program files\common files\Palette\data\config\PaletteDefault.avc
+- Set Resolume ffgl folder to c:\program files\Palette\ffgl, enable OSC, open %LOCALAPPDATA%\Palette\data_default\config\PaletteDefault.avc
 
 - Pin Start Palette and Stop Palette to the taskbar
 

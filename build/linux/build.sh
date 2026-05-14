@@ -21,12 +21,15 @@ mkdir -p "$BIN"
 # Copy VERSION file
 cp "$PALETTE_SOURCE/VERSION" "$SHIP/"
 
-if [ -f "$PALETTE_SOURCE/samplesplitter/samplesplitter.py" ]; then
+if [ -f "$PALETTE_SOURCE/cmd/samplesplitter/samplesplitter.py" ]; then
     echo "================ Copying samplesplitter"
-    cp -R "$PALETTE_SOURCE/samplesplitter" "$SHIP/samplesplitter"
+    cp -R "$PALETTE_SOURCE/cmd/samplesplitter" "$SHIP/samplesplitter"
     rm -rf "$SHIP/samplesplitter/.git" "$SHIP/samplesplitter/__pycache__"
+    if [ -d "$PALETTE_SOURCE/data_default/samplesplitter" ]; then
+        cp -R "$PALETTE_SOURCE/data_default/samplesplitter/." "$SHIP/samplesplitter/"
+    fi
 else
-    echo "Error: samplesplitter submodule is missing. Run: git submodule update --init --recursive" >&2
+    echo "Error: samplesplitter source is missing under cmd/samplesplitter" >&2
     exit 1
 fi
 
@@ -43,6 +46,11 @@ popd > /dev/null
 echo "================ Building palette_engine"
 pushd "$PALETTE_SOURCE/cmd/palette_engine" > /dev/null
 go build -o "$BIN/palette_engine" .
+popd > /dev/null
+
+echo "================ Building samplesplitter"
+pushd "$PALETTE_SOURCE/cmd/samplesplitter" > /dev/null
+go build -o "$BIN/samplesplitter" .
 popd > /dev/null
 
 # Create release directory if it doesn't exist

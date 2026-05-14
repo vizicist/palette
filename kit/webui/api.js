@@ -76,5 +76,7 @@ const API = {
     stepperSetRecord(patch, onoff) { return this.call('stepper.setrecord', { patch, onoff: String(onoff) }); },
     stepperClear(patch) { return this.call('stepper.clear', { patch }); },
     stepperToggle(patch, step) { return this.call('stepper.toggle', { patch, step: String(step) }); },
-    stepperSetRoute(patch, route) { return this.call('stepper.setroute', { patch, route }); }
+    stepperSetRoute(patch, route) { return this.call('stepper.setroute', { patch, route }); },
+    setTempoFactor(value) { return this.call('global.set_tempo_factor', { value: String(value) }); },
+    cursorActivity() { return this.call('cursor.activity'); }
 };

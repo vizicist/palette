@@ -28,11 +28,19 @@ func KillExecutable(executable string) {
 }
 
 func IsSamplesplitterRunning() (bool, error) {
+	processRunning, err := IsSamplesplitterProcessRunning()
+	if err != nil || !processRunning {
+		return processRunning, err
+	}
+	return samplesplitterWebIsListening(), nil
+}
+
+func IsSamplesplitterProcessRunning() (bool, error) {
 	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
-		`$p = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py' }; if ($p) { exit 0 } else { exit 1 }`)
+		`$p = Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq 'samplesplitter.exe' -or ($_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py') }; if ($p) { exit 0 } else { exit 1 }`)
 	err := cmd.Run()
 	if err == nil {
-		return samplesplitterWebIsListening(), nil
+		return true, nil
 	}
 	if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
 		return false, nil
@@ -42,7 +50,7 @@ func IsSamplesplitterRunning() (bool, error) {
 
 func KillSamplesplitter() {
 	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
-		`Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`)
+		`Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq 'samplesplitter.exe' -or ($_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`)
 	_ = cmd.Run()
 }
 
