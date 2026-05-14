@@ -73,8 +73,10 @@ func usage() string {
 	palette osc listen {port@host}
 	palette osc send {port@host} {addr} ...
 	palette hub [ streams | listen | ... ]
-	palette [-nats {hostname}] get {name}
+	palette [-nats {hostname}] get [ {name} ]
+	palette [-nats {hostname}] patchget {ABCD...} [ {nameprefix} ]
 	palette [-nats {hostname}] set {name} {value}
+	palette [-nats {hostname}] patchset {ABCD...} {name} {value}
 	palette [-nats {hostname}] setboot {name} {value}
 	palette [-nats {hostname}] {category}.{api} [ {argname} {argvalue} ] ...
 
@@ -201,11 +203,58 @@ func CliCommand(args []string) (map[string]string, error) {
 		}
 
 	case "get", "getboot":
-		if len(args) != 2 {
+		if len(args) > 2 {
 			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
 		}
+		name := ""
+		if len(args) == 2 {
+			name = args[1]
+		}
 		// Use the ...withprefix apis to get all matching parameters
-		return EngineAPI("global."+api+"withprefix", "name", args[1])
+		return EngineAPI("global."+api+"withprefix", "name", name)
+
+	case "patchget":
+		if len(args) < 2 || len(args) > 3 {
+			return nil, fmt.Errorf("bad patchget command, expected usage:\n%s", usage())
+		}
+		category := ""
+		if len(args) == 3 {
+			category = args[2]
+		}
+		if args[1] == "*" {
+			result := strings.Builder{}
+			for _, patchName := range []string{"A", "B", "C", "D"} {
+				if result.Len() > 0 {
+					result.WriteString("\n")
+				}
+				patchResult, err := patchGetOutput(patchName, category)
+				if err != nil {
+					return nil, err
+				}
+				result.WriteString(patchResult)
+			}
+			return map[string]string{"result": strings.TrimSuffix(result.String(), "\n")}, nil
+		}
+		result, err := patchGetOutput(args[1], category)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]string{"result": result}, nil
+
+	case "patchset":
+		if len(args) != 4 {
+			return nil, fmt.Errorf("bad patchset command, expected usage:\n%s", usage())
+		}
+		if args[1] == "*" {
+			for _, patchName := range []string{"A", "B", "C", "D"} {
+				_, err := EngineAPI("patch.set", "patch", patchName, "name", args[2], "value", args[3])
+				if err != nil {
+					return nil, err
+				}
+			}
+			return map[string]string{"result": ""}, nil
+		}
+		return EngineAPI("patch.set", "patch", args[1], "name", args[2], "value", args[3])
 
 	case "set", "setboot":
 		if len(args) != 3 {
@@ -393,6 +442,25 @@ func CliCommand(args []string) (map[string]string, error) {
 	}
 }
 
+func patchGetOutput(patchName string, category string) (string, error) {
+	out, err := EngineAPI("patch.getparams", "patch", patchName, "category", category)
+	if err != nil {
+		return "", err
+	}
+	lines := strings.Split(out["result"], "\n")
+	result := strings.Builder{}
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		result.WriteString(patchName)
+		result.WriteString(".")
+		result.WriteString(line)
+		result.WriteString("\n")
+	}
+	return strings.TrimSuffix(result.String(), "\n"), nil
+}
+
 func getPortHost(porthost string) (port int, host string, err error) {
 	words := strings.Split(porthost, "@")
 	switch len(words) {
@@ -470,7 +538,7 @@ func StatusOutput() (statusOut string, numRunning int) {
 	}
 	running, err = kit.IsSamplesplitterRunning()
 	if err == nil && running {
-		s += "Sample Splitter is running.\n"
+		s += "SampleSplitter is running.\n"
 		nrunning++
 	}
 

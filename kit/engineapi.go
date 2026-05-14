@@ -92,6 +92,7 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"debugsched":         globalDebugSched,
 	"debugpending":       globalDebugPending,
 	"status":             globalStatus,
+	"presetstatus":       globalPresetStatus,
 	"attract":            globalAttract,
 	"activate":           globalActivate,
 	"load":               globalLoad,
@@ -174,6 +175,14 @@ func globalStatus(api string, apiargs map[string]string) (string, error) {
 	), nil
 }
 
+func globalPresetStatus(api string, apiargs map[string]string) (string, error) {
+	bytes, err := json.Marshal(currentPresetSelectionSnapshot())
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
 func globalAttract(api string, apiargs map[string]string) (string, error) {
 	v, err := needStringArg("onoff", api, apiargs)
 	if err != nil {
@@ -196,7 +205,11 @@ func globalLoad(api string, apiargs map[string]string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "", LoadGlobalParamsFrom(fname, true)
+	err = LoadGlobalParamsFrom(fname, true)
+	if err == nil {
+		rememberPresetSelection("global", "*", fname)
+	}
+	return "", err
 }
 
 func globalGetBoot(api string, apiargs map[string]string) (string, error) {

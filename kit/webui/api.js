@@ -29,6 +29,7 @@ const API = {
     },
 
     getStatus() { return this.call('global.status'); },
+    getPresetStatus() { return this.call('global.presetstatus'); },
     getSavedList(category) { return this.call('saved.list', { category }); },
     getParamDefs(category) { return this.call('saved.paramdefs', { category }); },
     getParamDefsJson() { return this.call('saved.paramdefsjson'); },

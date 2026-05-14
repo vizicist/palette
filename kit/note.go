@@ -121,15 +121,20 @@ func (n *Controller) String() string {
 }
 
 type PitchBend struct {
-	data0 uint8
-	data1 uint8
-	data2 uint8
+	Synth *Synth
+	Value int
 }
 
-func NewPitchBend(data0, data1, data2 uint8) *PitchBend {
-	return &PitchBend{data0: data0, data1: data1, data2: data2}
+const MidiPitchBendCenter = 8192
+
+func NewPitchBend(synth *Synth, value int) *PitchBend {
+	return &PitchBend{Synth: synth, Value: value}
 }
 
 func (n *PitchBend) String() string {
-	return fmt.Sprintf("(PitchBend data1=%d data2=%d)", n.data1, n.data2)
+	synthName := ""
+	if n.Synth != nil {
+		synthName = n.Synth.name
+	}
+	return fmt.Sprintf("(PitchBend Synth=%s Value=%d)", synthName, n.Value)
 }

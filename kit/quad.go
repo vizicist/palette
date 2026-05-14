@@ -13,6 +13,12 @@ import (
 )
 
 var theQuad *Quad
+var currentPresetSelections = struct {
+	sync.RWMutex
+	values map[string]string
+}{
+	values: map[string]string{},
+}
 
 type Quad struct {
 
@@ -32,6 +38,28 @@ func NewQuad() *Quad {
 		rand:       rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	return quad
+}
+
+func rememberPresetSelection(category string, patch string, filename string) {
+	if filename == "_Current" {
+		return
+	}
+	if patch == "" {
+		patch = "*"
+	}
+	currentPresetSelections.Lock()
+	currentPresetSelections.values[category+":"+patch] = filename
+	currentPresetSelections.Unlock()
+}
+
+func currentPresetSelectionSnapshot() map[string]string {
+	currentPresetSelections.RLock()
+	defer currentPresetSelections.RUnlock()
+	snapshot := make(map[string]string, len(currentPresetSelections.values))
+	for key, value := range currentPresetSelections.values {
+		snapshot[key] = value
+	}
+	return snapshot
 }
 
 func (quad *Quad) Stop() {
@@ -323,6 +351,7 @@ func (quad *Quad) loadQuadRand(category string) (string, error) {
 		LogIfError(err)
 		return "", err
 	}
+	rememberPresetSelection(category, "*", arr[rn])
 
 	for _, patch := range quad.patch {
 		patch.RefreshAllPatchValues()
@@ -381,6 +410,9 @@ func (quad *Quad) Load(category string, filename string) error {
 	if err != nil {
 		LogIfError(err)
 		lasterr = err
+	}
+	if lasterr == nil {
+		rememberPresetSelection(category, "*", filename)
 	}
 	return lasterr
 }

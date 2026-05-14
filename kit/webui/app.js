@@ -5,6 +5,7 @@ let advancedMode = false;
 let lastSinglePatch = 'A'; // Track last single selection for toggle
 let showingParams = false; // Toggle between presets and parameters view
 let activeAdventure = null;
+const selectedPresets = new Map();
 
 // Cached parameter definitions and enums for string param dropdowns
 let cachedParamDefs = null;
@@ -60,6 +61,7 @@ function setupAdventureScreen() {
 }
 
 async function startSpacePalette() {
+    await stopStepperQuietly();
     activeAdventure = 'space';
     document.getElementById('adventure-screen').classList.add('hidden');
     document.getElementById('sigil-screen').classList.add('hidden');
@@ -70,6 +72,7 @@ async function startSpacePalette() {
 }
 
 async function showAdventureScreen() {
+    await stopStepperQuietly();
     activeAdventure = null;
     hideAttract();
     hideHelp();
@@ -146,9 +149,16 @@ async function loadPresets() {
         grid.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', () => loadPreset(btn.dataset.name));
         });
+        updatePresetButtons();
     } catch (e) {
         grid.innerHTML = `<div class="error">${e.message}</div>`;
     }
+}
+
+async function stopStepperQuietly() {
+    try {
+        await API.stepperStop();
+    } catch (e) { /* Stepper may be unavailable during startup */ }
 }
 
 function setupSigilSequencer() {
@@ -267,7 +277,7 @@ async function refreshStepperStatus() {
     }
 
     document.querySelectorAll('.stepper-position-cell').forEach(cell => {
-        cell.classList.toggle('active', Number(cell.dataset.step) === Number(status.step));
+        cell.classList.toggle('active', !!status.playing && Number(cell.dataset.step) === Number(status.step));
     });
 
     for (const patch of ['A', 'B', 'C', 'D']) {
@@ -711,8 +721,35 @@ async function loadPreset(name) {
         } else {
             await API.loadPatch(currentPatch, currentCategory, name);
         }
+        selectedPresets.set(currentPresetKey(), name);
+        updatePresetButtons();
     } catch (e) {
         alert('Load failed: ' + e.message);
+    }
+}
+
+function currentPresetKey() {
+    const patch = currentCategory === 'global' ? '*' : currentPatch;
+    return `${currentCategory}:${patch}`;
+}
+
+function updatePresetButtons() {
+    const selected = selectedPresets.get(currentPresetKey());
+    document.querySelectorAll('#preset-grid .preset-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.name === selected);
+    });
+}
+
+async function syncPresetSelectionFromEngine() {
+    try {
+        const selections = await API.getPresetStatus();
+        if (!selections || typeof selections !== 'object') return;
+        Object.entries(selections).forEach(([key, value]) => {
+            selectedPresets.set(key, value);
+        });
+        updatePresetButtons();
+    } catch (e) {
+        // Ignore polling errors
     }
 }
 
@@ -844,16 +881,19 @@ function setupPatchSelector() {
                     // Currently all selected, switch to single
                     currentPatch = lastSinglePatch;
                     updatePatchButtons();
+                    updatePresetButtons();
                 } else {
                     // Currently single, switch to all
                     currentPatch = '*';
                     updatePatchButtons();
+                    updatePresetButtons();
                 }
             } else {
                 // Single patch selected
                 lastSinglePatch = patch;
                 currentPatch = patch;
                 updatePatchButtons();
+                updatePresetButtons();
             }
         });
     });
@@ -929,6 +969,7 @@ async function pollStatus() {
         } else {
             hideAttract();
         }
+        await syncPresetSelectionFromEngine();
     } catch (e) {
         // Ignore polling errors
     }
