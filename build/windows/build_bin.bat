@@ -137,7 +137,7 @@ if not exist "%PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe" (
 )
 call :check_lfs_file "%PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe"
 if errorlevel 1 goto getout
-robocopy "%PALETTE_SOURCE%\cmd\samplesplitter" "%ship%\samplesplitter" /E /XD .git __pycache__ /XF *.pyc *.exe >nul
+robocopy "%PALETTE_SOURCE%\cmd\samplesplitter" "%ship%\samplesplitter" /E /XD .git __pycache__ /XF *.pyc samplesplitter.exe >nul
 if errorlevel 8 (
 	echo Failed to copy samplesplitter.
 	goto getout
