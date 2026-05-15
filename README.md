@@ -10,7 +10,11 @@ The main branch here is intended to be stable.  The dev branch is for active dev
 
 - <a href=doc/overview.md>Overview and implementation details</a>
 
-- <a href=doc/installation.md>Installation
+- <a href=doc/system_overview.md>High-level system overview and diagram</a>
+
+- <a href=doc/architecture.md>Current architecture summary and diagram</a>
+
+- <a href=doc/installation.md>Installation</a>
 
 - <a href=doc/starting_and_using.md>Starting and using it</a>
 
