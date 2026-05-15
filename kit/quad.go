@@ -376,11 +376,23 @@ func (quad *Quad) Load(category string, filename string) error {
 		LogError(err)
 		lasterr = err
 	} else {
+		preserveRoutes := filename != "_Current"
+		savedRoutes := map[string]string{}
+		if preserveRoutes {
+			for _, patch := range quad.patch {
+				savedRoutes[patch.Name()] = patch.Get("stepper.route")
+			}
+		}
 		for _, patch := range quad.patch {
 			err := patch.Load(category, paramsMap)
 			if err != nil {
 				LogIfError(err)
 				lasterr = err
+			}
+		}
+		if preserveRoutes {
+			for _, patch := range quad.patch {
+				patch.restoreStepperRoute(savedRoutes[patch.Name()])
 			}
 		}
 	}
@@ -453,19 +465,22 @@ func (quad *Quad) saveQuad(quadName string) error {
 	}
 	sort.Strings(sortedPatchNames)
 
-	s := "{\n    \"params\": {\n"
-	sep := ""
+	params := make(map[string]string)
 	for _, patchName := range sortedPatchNames {
 		patch := quad.patch[patchName]
 		sortedNames := patch.ParamNames()
 		for _, fullName := range sortedNames {
 			valstring := patch.Get(fullName)
-			s += fmt.Sprintf("%s        \"%s-%s\":\"%s\"", sep, patch.Name(), fullName, valstring)
-			sep = ",\n"
+			params[patch.Name()+"-"+fullName] = valstring
 		}
 	}
-	s += "\n    }\n}"
-	data := []byte(s)
+	data, err := json.MarshalIndent(struct {
+		Params map[string]string `json:"params"`
+	}{Params: params}, "", "    ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
 	return os.WriteFile(path, data, 0644)
 }
 

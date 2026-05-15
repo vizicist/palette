@@ -68,6 +68,9 @@ func NewService(options ServiceOptions) (*Service, error) {
 	} else {
 		svc.audio = audio
 		state.SetAudioStatus(true, nil)
+		if err := preloadAudio(audio, state); err != nil {
+			state.SetAudioStatus(false, err)
+		}
 		if options.SelectOutput {
 			if _, defaultID, err := audio.Devices(); err == nil {
 				_, _ = audio.SetOutput(defaultID)
@@ -137,6 +140,53 @@ func (s *Service) Start(ctx context.Context) error {
 		}()
 	}
 	return nil
+}
+
+func (s *Service) SetCompressed(enabled bool) {
+	if s == nil || s.state == nil {
+		return
+	}
+	s.state.SetCompressed(enabled)
+}
+
+func (s *Service) SetDefaultWords(words int) {
+	if s == nil || s.state == nil {
+		return
+	}
+	s.state.SetDefaultWords(words)
+}
+
+func (s *Service) ReloadSigilSamples() error {
+	if s == nil || s.state == nil {
+		return errors.New("samplesplitter service is not initialized")
+	}
+	s.state.SetBusy(true, "Loading transmissions")
+	defer s.state.SetBusy(false, "")
+	if s.audio != nil {
+		s.audio.StopAll()
+		s.audio.ClearCache()
+	}
+	s.state.LoadSigilDefaults(s.analyzer, rand.New(rand.NewSource(time.Now().UnixNano())))
+	s.state.LoadFirstIfEmpty(s.analyzer)
+	if s.audio != nil {
+		if err := preloadAudio(s.audio, s.state); err != nil {
+			s.state.SetAudioStatus(false, err)
+			return err
+		}
+		s.state.SetAudioStatus(true, nil)
+	}
+	return nil
+}
+
+func preloadAudio(audio *AudioManager, state *State) error {
+	if audio == nil || state == nil {
+		return nil
+	}
+	paths := state.StartupSamplePaths()
+	if state.Snapshot().Compressed {
+		return audio.PreloadCompressed(paths)
+	}
+	return audio.Preload(paths)
 }
 
 func (s *Service) Close() error {

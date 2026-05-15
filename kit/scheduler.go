@@ -202,12 +202,12 @@ func (sched *Scheduler) DeleteCursorEventsWhoseGIDIs(gid int) {
 	}
 }
 
-func (sched *Scheduler) DeleteSamplesplitterNoteOns(tag string, channel int) {
+func (sched *Scheduler) DeleteSamplePlaybackStarts(tag string, sigilChannel int) {
 	deleted := 0
 	sched.pendingMutex.Lock()
 	keptPending := sched.pendingScheduled[:0]
 	for _, se := range sched.pendingScheduled {
-		if se.Tag == tag && samplesplitterEventChannel(se.Value) == channel {
+		if se.Tag == tag && samplePlaybackEventChannel(se.Value) == sigilChannel {
 			deleted++
 			continue
 		}
@@ -223,22 +223,22 @@ func (sched *Scheduler) DeleteSamplesplitterNoteOns(tag string, channel int) {
 	for i := sched.schedList.Front(); i != nil; i = nexti {
 		nexti = i.Next()
 		se := i.Value.(*SchedElement)
-		if se.Tag == tag && samplesplitterEventChannel(se.Value) == channel {
+		if se.Tag == tag && samplePlaybackEventChannel(se.Value) == sigilChannel {
 			sched.schedList.Remove(i)
 			deleted++
 		}
 	}
 	if deleted > 0 {
-		LogInfo("DeleteSamplesplitterNoteOns", "tag", tag, "channel", channel, "deleted", deleted)
+		LogInfo("DeleteSamplePlaybackStarts", "tag", tag, "sigilChannel", sigilChannel, "deleted", deleted)
 	}
 }
 
-func samplesplitterEventChannel(value any) int {
+func samplePlaybackEventChannel(value any) int {
 	switch v := value.(type) {
-	case *SamplesplitterNoteOn:
-		return v.Channel
-	case *SamplesplitterPitchBend:
-		return v.Channel
+	case *SamplePlaybackStart:
+		return v.SigilChannel
+	case *SamplePlaybackPitch:
+		return v.SigilChannel
 	default:
 		return -1
 	}
@@ -369,25 +369,25 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 				v.Synth.SendPitchBend(v.Value)
 			}
 
-		case *StepperSampleNoteOff:
+		case *StepperSamplePlaybackStop:
 			if theStepper != nil {
-				noteOff := theStepper.SamplesplitterNoteOffIfCurrent(v)
+				noteOff := theStepper.SamplePlaybackStopIfCurrent(v)
 				if noteOff != nil {
-					LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: StepperSampleNoteOff", "note", noteOff.String())
+					LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: StepperSamplePlaybackStop", "note", noteOff.String())
 					noteOff.Synth.SendNoteToMidiOutput(noteOff)
 				}
 			}
 
-		case *SamplesplitterNoteOn:
-			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: SamplesplitterNoteOn", "patch", v.Patch, "channel", v.Channel, "note", v.Note)
+		case *SamplePlaybackStart:
+			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: SamplePlaybackStart", "patch", v.Patch, "sigilChannel", v.SigilChannel, "sampleSelector", v.SampleSelector)
 			v.Trigger()
 
-		case *SamplesplitterNoteOff:
-			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: SamplesplitterNoteOff", "patch", v.Patch, "channel", v.Channel, "note", v.Note)
+		case *SamplePlaybackStop:
+			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: SamplePlaybackStop", "patch", v.Patch, "sigilChannel", v.SigilChannel, "sampleSelector", v.SampleSelector)
 			v.Trigger()
 
-		case *SamplesplitterPitchBend:
-			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: SamplesplitterPitchBend", "patch", v.Patch, "channel", v.Channel, "value", v.Value)
+		case *SamplePlaybackPitch:
+			LogOfType("scheduler", "triggerItemsScheduledAtOrBefore: SamplePlaybackPitch", "patch", v.Patch, "sigilChannel", v.SigilChannel, "value", v.Value)
 			v.Trigger()
 
 		case midi.Message:

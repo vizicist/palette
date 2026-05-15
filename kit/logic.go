@@ -155,6 +155,22 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 	return uint8(vel)
 }
 
+func samplesplitterVelocityFromPressure(patch *Patch, pressure float64) uint8 {
+	const minTransmissionVelocity = 76
+
+	scaledPressure := boundValueZeroToOne(pressure)
+	if patch != nil {
+		zmin := patch.GetFloat("sound._controllerzmin")
+		zmax := patch.GetFloat("sound._controllerzmax")
+		scaledPressure = BoundAndScaleFloat(pressure, zmin, zmax, 0.0, 1.0)
+	}
+	velocity := minTransmissionVelocity + int(math.Round(scaledPressure*float64(127-minTransmissionVelocity)))
+	if velocity > 127 {
+		velocity = 127
+	}
+	return uint8(velocity)
+}
+
 func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 	// send an OSC message to Resolume
 	msg := CursorToOscMsg(ce)
@@ -191,29 +207,23 @@ func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atCl
 		if synth == nil {
 			return
 		}
-		velocity := noteOn.Velocity
-		if velocity < StepperSamplesplitterVelocity {
-			velocity = StepperSamplesplitterVelocity
-		}
+		velocity := samplesplitterVelocityFromPressure(logic.patch, ce.Pos.Z)
 		ScheduleAt(atClick, ce.Tag, NewPitchBend(synth, theStepper.pitchBendValue(ce.Pos.Z)))
 		ScheduleAt(atClick, ce.Tag, NewNoteOn(synth, noteOn.Pitch, velocity))
 		ScheduleAt(atClick+1, ce.Tag, NewPitchBend(synth, MidiPitchBendCenter))
 	}
 }
 
-func (logic *PatchLogic) bss2SampleNoteOn(ce CursorEvent) *SamplesplitterNoteOn {
+func (logic *PatchLogic) bss2SamplePlaybackStart(ce CursorEvent) *SamplePlaybackStart {
 	x := boundValueZeroToOne(ce.Pos.X)
-	note := int(math.Min(47, math.Floor(x*48.0)))
-	velocity := logic.cursorToVelocity(ce)
-	if velocity < StepperSamplesplitterVelocity {
-		velocity = StepperSamplesplitterVelocity
-	}
-	return &SamplesplitterNoteOn{
-		Patch:     logic.patch.Name(),
-		Channel:   SamplesplitterChannelForPatch(logic.patch.Name()),
-		Note:      note,
-		Velocity:  int(velocity),
-		PitchBend: logic.bss2SamplePitchBendValue(ce),
+	sampleSelector := int(math.Min(47, math.Floor(x*48.0)))
+	velocity := samplesplitterVelocityFromPressure(logic.patch, ce.Pos.Z)
+	return &SamplePlaybackStart{
+		Patch:          logic.patch.Name(),
+		SigilChannel:   SamplePlaybackChannelForPatch(logic.patch.Name()),
+		SampleSelector: sampleSelector,
+		Velocity:       int(velocity),
+		PitchBend:      logic.bss2SamplePitchBendValue(ce),
 	}
 }
 
@@ -223,33 +233,44 @@ func (logic *PatchLogic) bss2SamplePitchBendValue(ce CursorEvent) int {
 }
 
 func (logic *PatchLogic) bss2SampleQuant() Clicks {
+	quantBeats, err := GetParamFloat("global.transmissionquant")
+	if err != nil {
+		LogIfError(err)
+		quantBeats = 0.5
+	}
+	if quantBeats <= 0 {
+		return 1
+	}
+	if quantBeats > 1 {
+		quantBeats = 1
+	}
 	factor := TempoFactor
 	if factor <= 0 {
 		factor = 1
 	}
-	return Clicks(math.Max(1, float64(OneBeat/2)/factor))
+	return Clicks(math.Max(1, float64(OneBeat)*quantBeats/factor))
 }
 
 func (logic *PatchLogic) nextBSS2SampleQuant(t Clicks) Clicks {
 	return logic.nextQuant(t, logic.bss2SampleQuant())
 }
 
-func (logic *PatchLogic) scheduleBSS2SampleNoteOn(ac *ActiveCursor, ce CursorEvent, noteOn *SamplesplitterNoteOn, atClick Clicks) {
+func (logic *PatchLogic) scheduleBSS2SampleStart(ac *ActiveCursor, ce CursorEvent, noteOn *SamplePlaybackStart, atClick Clicks) {
 	if noteOn == nil {
 		return
 	}
-	if ac.SampleNote != nil {
-		ScheduleAt(atClick, ce.Tag, &SamplesplitterNoteOff{Patch: ac.SampleNote.Patch, Channel: ac.SampleNote.Channel, Note: ac.SampleNote.Note})
+	if ac.SamplePlayback != nil {
+		ScheduleAt(atClick, ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: -1})
 	}
 	ScheduleAt(atClick, ce.Tag, noteOn)
-	ac.SampleNote = noteOn
+	ac.SamplePlayback = noteOn
 }
 
-func (logic *PatchLogic) scheduleBSS2SampleNoteOff(ac *ActiveCursor, ce CursorEvent, atClick Clicks) {
-	if ac.SampleNote != nil {
-		ScheduleAt(atClick, ce.Tag, &SamplesplitterNoteOff{Patch: ac.SampleNote.Patch, Channel: ac.SampleNote.Channel, Note: ac.SampleNote.Note})
-		ScheduleAt(atClick+1, ce.Tag, &SamplesplitterPitchBend{Patch: ac.SampleNote.Patch, Channel: ac.SampleNote.Channel, Value: MidiPitchBendCenter})
-		ac.SampleNote = nil
+func (logic *PatchLogic) scheduleBSS2SampleStop(ac *ActiveCursor, ce CursorEvent, atClick Clicks) {
+	if ac.SamplePlayback != nil {
+		ScheduleAt(atClick, ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: -1})
+		ScheduleAt(atClick+1, ce.Tag, &SamplePlaybackPitch{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, Value: MidiPitchBendCenter})
+		ac.SamplePlayback = nil
 	}
 }
 
@@ -298,53 +319,53 @@ func (logic *PatchLogic) generateBSS2SampleFromCursor(ce CursorEvent) {
 
 	switch ce.Ddu {
 	case "down":
-		noteOn := logic.bss2SampleNoteOn(ce)
+		noteOn := logic.bss2SamplePlaybackStart(ce)
 		if noteOn == nil {
 			return
 		}
 		atClick := logic.nextBSS2SampleQuant(CurrentClick())
-		logic.scheduleBSS2SampleNoteOn(ac, ce, noteOn, atClick)
+		logic.scheduleBSS2SampleStart(ac, ce, noteOn, atClick)
 		ac.NoteOnClick = atClick
 
 	case "drag":
-		oldNoteOn := ac.SampleNote
+		oldNoteOn := ac.SamplePlayback
 		if oldNoteOn == nil {
-			noteOn := logic.bss2SampleNoteOn(ce)
+			noteOn := logic.bss2SamplePlaybackStart(ce)
 			if noteOn == nil {
 				return
 			}
 			atClick := logic.nextBSS2SampleQuant(CurrentClick())
-			logic.scheduleBSS2SampleNoteOn(ac, ce, noteOn, atClick)
+			logic.scheduleBSS2SampleStart(ac, ce, noteOn, atClick)
 			ac.NoteOnClick = atClick
 			return
 		}
-		newNoteOn := logic.bss2SampleNoteOn(ce)
+		newNoteOn := logic.bss2SamplePlaybackStart(ce)
 		if newNoteOn == nil {
 			return
 		}
-		if newNoteOn.Note != oldNoteOn.Note {
+		if newNoteOn.SampleSelector != oldNoteOn.SampleSelector {
 			now := CurrentClick()
 			onClick := logic.nextBSS2SampleQuant(now)
-			theScheduler.DeleteSamplesplitterNoteOns(ce.Tag, oldNoteOn.Channel)
-			logic.scheduleBSS2SampleNoteOn(ac, ce, newNoteOn, onClick)
+			theScheduler.DeleteSamplePlaybackStarts(ce.Tag, oldNoteOn.SigilChannel)
+			logic.scheduleBSS2SampleStart(ac, ce, newNoteOn, onClick)
 			ac.NoteOnClick = onClick
 		} else {
-			ScheduleAt(CurrentClick(), ce.Tag, &SamplesplitterPitchBend{Patch: oldNoteOn.Patch, Channel: oldNoteOn.Channel, Value: logic.bss2SamplePitchBendValue(ce)})
+			ScheduleAt(CurrentClick(), ce.Tag, &SamplePlaybackPitch{Patch: oldNoteOn.Patch, SigilChannel: oldNoteOn.SigilChannel, Value: logic.bss2SamplePitchBendValue(ce)})
 		}
 
 	case "up":
-		if ac.SampleNote != nil {
-			LogInfo("BSS2 sample cursor up", "patch", ac.SampleNote.Patch, "channel", ac.SampleNote.Channel, "note", ac.SampleNote.Note, "click", CurrentClick())
-			theScheduler.DeleteSamplesplitterNoteOns(ce.Tag, ac.SampleNote.Channel)
-			ScheduleAt(CurrentClick(), ce.Tag, &SamplesplitterNoteOff{Patch: ac.SampleNote.Patch, Channel: ac.SampleNote.Channel, Note: ac.SampleNote.Note})
-			ScheduleAt(CurrentClick()+1, ce.Tag, &SamplesplitterPitchBend{Patch: ac.SampleNote.Patch, Channel: ac.SampleNote.Channel, Value: MidiPitchBendCenter})
-			ac.SampleNote = nil
+		if ac.SamplePlayback != nil {
+			LogInfo("BSS2 sample cursor up", "patch", ac.SamplePlayback.Patch, "sigilChannel", ac.SamplePlayback.SigilChannel, "sampleSelector", ac.SamplePlayback.SampleSelector, "click", CurrentClick())
+			theScheduler.DeleteSamplePlaybackStarts(ce.Tag, ac.SamplePlayback.SigilChannel)
+			ScheduleAt(CurrentClick(), ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: -1})
+			ScheduleAt(CurrentClick()+1, ce.Tag, &SamplePlaybackPitch{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, Value: MidiPitchBendCenter})
+			ac.SamplePlayback = nil
 		} else {
-			channel := SamplesplitterChannelForPatch(logic.patch.Name())
-			LogInfo("BSS2 sample cursor up without active sample note", "patch", logic.patch.Name(), "channel", channel, "click", CurrentClick())
-			theScheduler.DeleteSamplesplitterNoteOns(ce.Tag, channel)
-			ScheduleAt(CurrentClick(), ce.Tag, &SamplesplitterNoteOff{Patch: logic.patch.Name(), Channel: channel, Note: -1})
-			ScheduleAt(CurrentClick()+1, ce.Tag, &SamplesplitterPitchBend{Patch: logic.patch.Name(), Channel: channel, Value: MidiPitchBendCenter})
+			sigilChannel := SamplePlaybackChannelForPatch(logic.patch.Name())
+			LogInfo("BSS2 sample cursor up without active sample playback", "patch", logic.patch.Name(), "sigilChannel", sigilChannel, "click", CurrentClick())
+			theScheduler.DeleteSamplePlaybackStarts(ce.Tag, sigilChannel)
+			ScheduleAt(CurrentClick(), ce.Tag, &SamplePlaybackStop{Patch: logic.patch.Name(), SigilChannel: sigilChannel, SampleSelector: -1})
+			ScheduleAt(CurrentClick()+1, ce.Tag, &SamplePlaybackPitch{Patch: logic.patch.Name(), SigilChannel: sigilChannel, Value: MidiPitchBendCenter})
 		}
 	}
 }

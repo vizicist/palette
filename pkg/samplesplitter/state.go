@@ -33,6 +33,8 @@ type State struct {
 	LastPlayback      *PlaybackRequest
 	ActiveVoices      []string
 	AudioError        string
+	Busy              bool
+	BusyMessage       string
 	PyoReady          bool
 	AudioOutputID     *int
 	AudioOutputName   *string
@@ -53,6 +55,7 @@ type PlaybackRequest struct {
 	PitchSemitones float64 `json:"pitch_semitones"`
 	PitchRatio     float64 `json:"pitch_ratio"`
 	Loop           bool    `json:"loop"`
+	Compressed     bool    `json:"compressed"`
 }
 
 type StateSnapshot struct {
@@ -69,6 +72,9 @@ type StateSnapshot struct {
 	PeakStartEnabled   bool                   `json:"peak_start_enabled"`
 	PitchBendSemitones float64                `json:"pitch_bend_semitones"`
 	ActiveVoices       []string               `json:"active_voices"`
+	Compressed         bool                   `json:"compressed"`
+	Busy               bool                   `json:"busy"`
+	BusyMessage        string                 `json:"busy_message,omitempty"`
 	PyoReady           bool                   `json:"pyo_ready"`
 	AudioError         string                 `json:"audio_error"`
 	AudioOutputID      *int                   `json:"audio_output_id"`
@@ -115,6 +121,9 @@ func (s *State) Snapshot() StateSnapshot {
 		PeakStartEnabled:   s.Config.PeakStartEnabled,
 		PitchBendSemitones: round4(s.PitchBendSemis[-1]),
 		ActiveVoices:       append([]string(nil), s.ActiveVoices...),
+		Compressed:         s.Config.Compressed,
+		Busy:               s.Busy,
+		BusyMessage:        s.BusyMessage,
 		PyoReady:           s.PyoReady,
 		AudioError:         s.AudioError,
 		AudioOutputID:      s.AudioOutputID,
@@ -132,6 +141,32 @@ func (s *State) SetPeakStart(enabled bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.Config.PeakStartEnabled = enabled
+}
+
+func (s *State) SetCompressed(enabled bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Config.Compressed = enabled
+}
+
+func (s *State) SetDefaultWords(words int) {
+	if words < 1 {
+		words = 1
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Config.DefaultWords = words
+}
+
+func (s *State) SetBusy(busy bool, message string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Busy = busy
+	if busy {
+		s.BusyMessage = message
+	} else {
+		s.BusyMessage = ""
+	}
 }
 
 func (s *State) SetAudioStatus(ready bool, err error) {
@@ -156,6 +191,31 @@ func (s *State) SetActiveVoices(voices []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ActiveVoices = append([]string(nil), voices...)
+}
+
+func (s *State) StartupSamplePaths() []string {
+	if s == nil {
+		return nil
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	seen := make(map[string]bool)
+	paths := make([]string, 0, len(s.SigilSamples)+1)
+	add := func(path string) {
+		if path == "" || seen[path] {
+			return
+		}
+		seen[path] = true
+		paths = append(paths, path)
+	}
+	for _, sigil := range Sigils {
+		if sample, ok := s.SigilSamples[sigil]; ok {
+			add(sample.CurrentFile)
+		}
+	}
+	add(s.CurrentFile)
+	return paths
 }
 
 func (s *State) SetMIDIStatus(portName string, err error) {
@@ -237,6 +297,7 @@ func (s *State) PlanNoteOn(note, velocity, channel int) (*PlaybackRequest, error
 		PitchSemitones: round4(semitones),
 		PitchRatio:     round4(math.Pow(2.0, semitones/12.0)),
 		Loop:           true,
+		Compressed:     s.Config.Compressed,
 	}
 	s.LastPlayback = request
 	return request, nil
@@ -282,6 +343,7 @@ func (s *State) PlanPreview(splitIndex int, voiceKey string, velocity int) (*Pla
 		EndSec:         round4(end),
 		PitchSemitones: round4(semitones),
 		PitchRatio:     round4(math.Pow(2.0, semitones/12.0)),
+		Compressed:     s.Config.Compressed,
 	}
 	s.LastPlayback = request
 	return request, nil
@@ -333,6 +395,9 @@ func maxFloat(a, b float64) float64 {
 }
 
 func (s *State) LoadSigilDefaults(analyzer Analyzer, rng *rand.Rand) {
+	if rng == nil {
+		rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+	}
 	loaded := make(map[string]SampleState)
 	var first *SampleState
 

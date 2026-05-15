@@ -35,6 +35,10 @@ func StartInEngineSamplesplitter() error {
 	config.MP3Dir = SamplesplitterMP3Dir(runtimeDir)
 	config.MIDIPortName = ""
 	config.FFmpegPath = ss.FindFFmpeg(runtimeDir)
+	config.Compressed, _ = GetParamBool("global.transmissioncompressed")
+	if words, err := GetParamInt("global.transmissionwords"); err == nil {
+		config.DefaultWords = words
+	}
 	service, err := ss.NewService(ss.ServiceOptions{
 		Config:       config,
 		StaticDir:    ss.ResolveStaticDir(runtimeDir),
@@ -78,6 +82,28 @@ func InEngineSamplesplitterRunning() bool {
 	return inEngineSamplesplitter.service != nil && inEngineSamplesplitter.service.Running()
 }
 
+func SetInEngineSamplesplitterCompressed(enabled bool) bool {
+	return withInEngineSamplesplitter(func(service *ss.Service) {
+		service.SetCompressed(enabled)
+	})
+}
+
+func SetInEngineSamplesplitterWords(words int) bool {
+	return withInEngineSamplesplitter(func(service *ss.Service) {
+		service.SetDefaultWords(words)
+	})
+}
+
+func ReloadInEngineSamplesplitterSamples() error {
+	var reloadErr error
+	if !withInEngineSamplesplitter(func(service *ss.Service) {
+		reloadErr = service.ReloadSigilSamples()
+	}) {
+		return fmt.Errorf("in-engine samplesplitter is not running")
+	}
+	return reloadErr
+}
+
 func withInEngineSamplesplitter(fn func(*ss.Service)) bool {
 	inEngineSamplesplitter.mutex.Lock()
 	service := inEngineSamplesplitter.service
@@ -89,27 +115,27 @@ func withInEngineSamplesplitter(fn func(*ss.Service)) bool {
 	return true
 }
 
-type SamplesplitterNoteOn struct {
-	Patch     string
-	Channel   int
-	Note      int
-	Velocity  int
-	PitchBend int
+type SamplePlaybackStart struct {
+	Patch          string
+	SigilChannel   int
+	SampleSelector int
+	Velocity       int
+	PitchBend      int
 }
 
-type SamplesplitterNoteOff struct {
-	Patch   string
-	Channel int
-	Note    int
+type SamplePlaybackStop struct {
+	Patch          string
+	SigilChannel   int
+	SampleSelector int
 }
 
-type SamplesplitterPitchBend struct {
-	Patch   string
-	Channel int
-	Value   int
+type SamplePlaybackPitch struct {
+	Patch        string
+	SigilChannel int
+	Value        int
 }
 
-func SamplesplitterChannelForPatch(patch string) int {
+func SamplePlaybackChannelForPatch(patch string) int {
 	switch patch {
 	case "A":
 		return 0
@@ -124,47 +150,48 @@ func SamplesplitterChannelForPatch(patch string) int {
 	}
 }
 
-func (event *SamplesplitterNoteOn) Trigger() {
+func (event *SamplePlaybackStart) Trigger() {
 	if event == nil {
 		return
 	}
 	if !withInEngineSamplesplitter(func(service *ss.Service) {
-		LogInfo("SamplesplitterNoteOn.Trigger", "patch", event.Patch, "channel", event.Channel, "note", event.Note, "velocity", event.Velocity, "pitchbend", event.PitchBend)
-		service.MIDIPitchBend(event.Channel, event.PitchBend)
-		if err := service.NoteOn(event.Channel, event.Note, event.Velocity); err != nil {
-			LogWarn("SamplesplitterNoteOn", "err", err, "patch", event.Patch, "channel", event.Channel, "note", event.Note)
+		LogInfo("SamplePlaybackStart.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "velocity", event.Velocity, "pitchbend", event.PitchBend)
+		service.StopChannel(event.SigilChannel)
+		service.MIDIPitchBend(event.SigilChannel, event.PitchBend)
+		if err := service.NoteOn(event.SigilChannel, event.SampleSelector, event.Velocity); err != nil {
+			LogWarn("SamplePlaybackStart", "err", err, "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector)
 		}
 	}) {
-		LogWarn("SamplesplitterNoteOn: in-engine service is not running", "patch", event.Patch)
+		LogWarn("SamplePlaybackStart: in-engine service is not running", "patch", event.Patch)
 	}
 }
 
-func (event *SamplesplitterNoteOff) Trigger() {
+func (event *SamplePlaybackStop) Trigger() {
 	if event == nil {
 		return
 	}
 	if !withInEngineSamplesplitter(func(service *ss.Service) {
-		if event.Note < 0 {
-			LogInfo("SamplesplitterNoteOff.Trigger StopChannel", "patch", event.Patch, "channel", event.Channel)
-			service.StopChannel(event.Channel)
+		if event.SampleSelector < 0 {
+			LogInfo("SamplePlaybackStop.Trigger StopChannel", "patch", event.Patch, "sigilChannel", event.SigilChannel)
+			service.StopChannel(event.SigilChannel)
 			return
 		}
-		LogInfo("SamplesplitterNoteOff.Trigger", "patch", event.Patch, "channel", event.Channel, "note", event.Note)
-		service.NoteOff(event.Channel, event.Note)
+		LogInfo("SamplePlaybackStop.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector)
+		service.NoteOff(event.SigilChannel, event.SampleSelector)
 	}) {
-		LogWarn("SamplesplitterNoteOff: in-engine service is not running", "patch", event.Patch)
+		LogWarn("SamplePlaybackStop: in-engine service is not running", "patch", event.Patch)
 	}
 }
 
-func (event *SamplesplitterPitchBend) Trigger() {
+func (event *SamplePlaybackPitch) Trigger() {
 	if event == nil {
 		return
 	}
 	if !withInEngineSamplesplitter(func(service *ss.Service) {
-		LogInfo("SamplesplitterPitchBend.Trigger", "patch", event.Patch, "channel", event.Channel, "value", event.Value)
-		service.MIDIPitchBend(event.Channel, event.Value)
+		LogInfo("SamplePlaybackPitch.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "value", event.Value)
+		service.MIDIPitchBend(event.SigilChannel, event.Value)
 	}) {
-		LogWarn("SamplesplitterPitchBend: in-engine service is not running", "patch", event.Patch)
+		LogWarn("SamplePlaybackPitch: in-engine service is not running", "patch", event.Patch)
 	}
 }
 

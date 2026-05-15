@@ -9,6 +9,8 @@ let initialPage = 'bss2';
 const selectedPresets = new Map();
 const stepperNumSteps = 8;
 const cursorActivityCounts = { A: 0, B: 0, C: 0, D: 0 };
+const transmissionQuantValues = [0, 0.25, 0.5, 1];
+const transmissionQuantLabels = ['Off', '16th', '8th', 'Quarter'];
 const patchSigils = {
     A: 'chaos',
     B: 'oracle',
@@ -58,6 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) { /* default to bss2 */ }
 
     applyInitialPageMode();
+    setupAppTitleFit();
     setupRitualNav();
     setupControls();
     setupHelpOverlay();
@@ -66,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupPatchSelector();
     setupSigilSequencer();
     setupPalettePads();
+    setupTransmissionControls();
     setupTempoControl();
     await startInitialPage();
 
@@ -79,6 +83,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(refreshCursorActivity, 200);
     requestAnimationFrame(updateStepperIndicator);
 });
+
+function setupAppTitleFit() {
+    fitAppTitle();
+    window.addEventListener('resize', fitAppTitle);
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(fitAppTitle).catch(() => {});
+    }
+}
+
+function fitAppTitle() {
+    const title = document.getElementById('app-title');
+    const text = document.getElementById('app-title-text');
+    if (!title || !text) return;
+
+    title.style.setProperty('--app-title-scale', '1');
+    const availableWidth = Math.max(1, title.clientWidth - 12);
+    const naturalWidth = Math.max(1, text.scrollWidth);
+    const scale = Math.min(1, availableWidth / naturalWidth);
+    title.style.setProperty('--app-title-scale', scale.toFixed(3));
+}
 
 function normalizeInitialPage(page) {
     const value = String(page || '').trim().toLowerCase();
@@ -283,20 +307,127 @@ function setupSigilSequencer() {
 function setupPalettePads() {
     const stage = document.getElementById('palette-pad-stage');
     if (!stage) return;
-    stage.addEventListener('click', async (e) => {
+    stage.addEventListener('click', (e) => {
         const pad = e.target.closest('.palette-pad');
         if (!pad) return;
         const patch = pad.dataset.pad;
-        const isSample = pad.dataset.route === 'samplesplitter';
-        const route = isSample ? 'bidule' : 'samplesplitter';
-        try {
-            await API.stepperSetRoute(patch, route);
-            updatePalettePadRoute(patch, route);
-            await refreshStepperStatus();
-        } catch (err) {
-            console.error('Failed to toggle palette pad route:', err);
-        }
+        const route = pad.dataset.route === 'samplesplitter' ? 'bidule' : 'samplesplitter';
+        updatePalettePadRoute(patch, route);
+        API.stepperSetRoute(patch, route)
+            .then(() => refreshStepperStatus())
+            .catch(err => {
+                console.error('Failed to set palette pad route:', err);
+                refreshStepperStatus().catch(() => updatePalettePadRoute(patch, pad.dataset.route || 'samplesplitter'));
+            });
     });
+}
+
+function setupTransmissionControls() {
+    const quant = document.getElementById('transmission-quant');
+    const words = document.getElementById('transmission-words');
+    const newSet = document.getElementById('transmission-newset');
+    if (!quant) return;
+
+    const indexForQuant = (value) => {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return 2;
+        let bestIndex = 0;
+        let bestDistance = Infinity;
+        transmissionQuantValues.forEach((candidate, index) => {
+            const distance = Math.abs(candidate - numeric);
+            if (distance < bestDistance) {
+                bestIndex = index;
+                bestDistance = distance;
+            }
+        });
+        return bestIndex;
+    };
+    const setFromValue = (value) => {
+        quant.value = String(transmissionQuantValues[indexForQuant(value)]);
+    };
+
+    API.call('global.get', { name: 'global.transmissionquant' })
+        .then(setFromValue)
+        .catch(() => setFromValue(0.5));
+
+    const sendQuant = () => {
+        const index = indexForQuant(quant.value);
+        quant.value = String(transmissionQuantValues[index]);
+        API.setGlobalParam('global.transmissionquant', String(transmissionQuantValues[index]))
+            .catch(err => console.error('Failed to set transmission quantize:', err));
+    };
+
+    quant.addEventListener('change', sendQuant);
+
+    if (words) {
+        const clampWords = (value) => {
+            const numeric = Math.round(Number(value));
+            if (!Number.isFinite(numeric)) return 2;
+            return Math.max(1, Math.min(5, numeric));
+        };
+        API.call('global.get', { name: 'global.transmissionwords' })
+            .then(value => {
+                words.value = String(clampWords(value));
+            })
+            .catch(() => {
+                words.value = '2';
+            });
+        words.addEventListener('change', async () => {
+            const selected = clampWords(words.value);
+            words.value = String(selected);
+            words.disabled = true;
+            if (newSet) {
+                newSet.disabled = true;
+                newSet.textContent = 'Busy';
+            }
+            try {
+                await API.setGlobalParam('global.transmissionwords', String(selected));
+                await refreshStepperStatus();
+                if (newSet) {
+                    newSet.textContent = 'Ready';
+                    setTimeout(() => {
+                        if (newSet.textContent === 'Ready') newSet.textContent = 'Receive New Transmission';
+                    }, 1200);
+                }
+            } catch (err) {
+                console.error('Failed to set transmission word count:', err);
+                if (newSet) newSet.textContent = 'Error';
+            } finally {
+                words.disabled = false;
+                if (newSet) newSet.disabled = false;
+            }
+        });
+    }
+
+    if (newSet) {
+        const newSetLabel = 'Receive New Transmission';
+        newSet.addEventListener('click', async () => {
+            newSet.disabled = true;
+            newSet.textContent = 'Busy';
+            const busyStartedAt = performance.now();
+            try {
+                await API.reloadTransmissionSet();
+                await refreshStepperStatus();
+                const remainingBusyMs = Math.max(0, 1000 - (performance.now() - busyStartedAt));
+                if (remainingBusyMs > 0) {
+                    await new Promise(resolve => setTimeout(resolve, remainingBusyMs));
+                }
+            } catch (err) {
+                console.error('Failed to load new transmission set:', err);
+                newSet.textContent = 'Error';
+                setTimeout(() => {
+                    if (newSet.textContent === 'Error') newSet.textContent = newSetLabel;
+                }, 2200);
+                return;
+            } finally {
+                newSet.disabled = false;
+            }
+            newSet.textContent = 'Ready';
+            setTimeout(() => {
+                if (newSet.textContent === 'Ready') newSet.textContent = newSetLabel;
+            }, 1200);
+        });
+    }
 }
 
 function setupTempoControl() {
@@ -368,8 +499,8 @@ function updatePalettePadRoute(patch, route) {
     const normalized = route === 'samplesplitter' || route === 'both' ? 'samplesplitter' : 'bidule';
     pad.dataset.route = normalized;
     pad.classList.remove('sample', 'synth');
-    const label = pad.querySelector('.palette-pad-route');
-    if (label) label.textContent = normalized === 'samplesplitter' ? 'TRANSMISSION' : 'SYNTH';
+    const button = pad.querySelector('.palette-pad-route');
+    if (button) button.textContent = normalized === 'samplesplitter' ? 'TRANSMISSION' : 'OSCILLATION';
 }
 
 function syncStepperTiming(status) {

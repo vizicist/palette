@@ -33,6 +33,7 @@ type Config struct {
 	BaseNote         int     `json:"base_note"`
 	MIDIPortName     string  `json:"midi_port_name,omitempty"`
 	PeakStartEnabled bool    `json:"peak_start_enabled"`
+	Compressed       bool    `json:"compressed"`
 	DefaultMode      string  `json:"default_mode"`
 	DefaultInterval  float64 `json:"default_interval"`
 	DefaultWords     int     `json:"default_words_per_split"`
