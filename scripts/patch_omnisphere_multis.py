@@ -29,6 +29,8 @@ BIDULE_BLOCK_RE = re.compile(
     r'<Bidule\b(?=[^>]*displayName="(Omnisphere_(\d+))")[\s\S]*?</Bidule>'
 )
 CUSTOM_DATA_RE = re.compile(r'<CustomData name="([^"]+)">([\s\S]*?)</CustomData>')
+VST3_HEADER_SIZE = 24
+VST3_TRAILER = (b"\0" * 20) + b"JUCEPrivateData"
 
 
 def default_config_dir() -> pathlib.Path:
@@ -42,13 +44,30 @@ def signed_byte_sum(data: bytes) -> int:
     return sum(byte if byte < 128 else byte - 256 for byte in data)
 
 
-def read_chunk(block: str) -> bytes | None:
+def decompress_custom_data(block: str, name: str) -> bytes | None:
     cdata = dict(CUSTOM_DATA_RE.findall(block))
-    encoded = cdata.get("VSTChunk")
+    encoded = cdata.get(name)
     if not encoded:
         return None
     raw = base64.b64decode("".join(encoded.split()))
     return zlib.decompress(raw)
+
+
+def read_chunk(block: str) -> bytes | None:
+    chunk = decompress_custom_data(block, "VSTChunk")
+    if chunk is not None:
+        return chunk
+
+    state = decompress_custom_data(block, "VST3ComponentState")
+    if state is None:
+        return None
+    xml_offset = state.find(b"<SynthMaster")
+    if xml_offset < 0:
+        return state
+    trailer_offset = state.find(b"JUCEPrivateData", xml_offset)
+    if trailer_offset < 0:
+        return state[xml_offset:]
+    return state[xml_offset:trailer_offset].rstrip(b"\0")
 
 
 def entry_name(chunk: bytes) -> str | None:
@@ -65,22 +84,52 @@ def replace_custom_data(block: str, name: str, value: str) -> str:
     return pattern.sub(rf"\g<1>{value}\g<3>", block, count=1)
 
 
+def encode_compressed(data: bytes) -> tuple[str, int, int]:
+    compressed = zlib.compress(data)
+    encoded = base64.b64encode(compressed).decode("ascii")
+    return encoded, len(data), signed_byte_sum(compressed)
+
+
 def make_vst_chunk(multi_path: pathlib.Path) -> tuple[str, int, int]:
     chunk = multi_path.read_bytes()
     if not chunk.endswith(b"\0"):
         chunk += b"\0"
-    compressed = zlib.compress(chunk)
-    encoded = base64.b64encode(compressed).decode("ascii")
-    return encoded, len(chunk), signed_byte_sum(compressed)
+    return encode_compressed(chunk)
+
+
+def make_vst3_component_state(block: str, multi_path: pathlib.Path) -> tuple[str, int, int]:
+    current_state = decompress_custom_data(block, "VST3ComponentState")
+    if current_state is None or len(current_state) < VST3_HEADER_SIZE:
+        raise ValueError("Omnisphere block is missing a valid VST3ComponentState")
+
+    chunk = multi_path.read_bytes()
+    if not chunk.endswith(b"\0"):
+        chunk += b"\0"
+
+    header = bytearray(current_state[:VST3_HEADER_SIZE])
+    header[16:20] = len(chunk).to_bytes(4, "little")
+    state = bytes(header) + chunk + VST3_TRAILER
+    return encode_compressed(state)
 
 
 def patch_block(block: str, multi_path: pathlib.Path) -> str:
-    encoded, size, checksum = make_vst_chunk(multi_path)
-    block = replace_custom_data(block, "VSTChunk", encoded)
-    block = replace_custom_data(block, "VSTChunkCompressed", "yes")
-    block = replace_custom_data(block, "VSTChunkSize", str(size))
-    block = replace_custom_data(block, "VSTChunkSum", str(checksum))
-    return block
+    cdata = dict(CUSTOM_DATA_RE.findall(block))
+    if "VSTChunk" in cdata:
+        encoded, size, checksum = make_vst_chunk(multi_path)
+        block = replace_custom_data(block, "VSTChunk", encoded)
+        block = replace_custom_data(block, "VSTChunkCompressed", "yes")
+        block = replace_custom_data(block, "VSTChunkSize", str(size))
+        block = replace_custom_data(block, "VSTChunkSum", str(checksum))
+        return block
+
+    if "VST3ComponentState" in cdata:
+        encoded, size, checksum = make_vst3_component_state(block, multi_path)
+        block = replace_custom_data(block, "VST3ComponentState", encoded)
+        block = replace_custom_data(block, "VST3ComponentStateCheckSum", str(checksum))
+        block = replace_custom_data(block, "VST3ComponentStateSize", str(size))
+        return block
+
+    raise ValueError("Omnisphere block is missing VSTChunk or VST3ComponentState")
 
 
 def is_process_running(name: str) -> bool:
