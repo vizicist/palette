@@ -29,19 +29,19 @@ type CursorEvent struct {
 
 // ActiveCursor is an OSC message
 type ActiveCursor struct {
-	Current     CursorEvent
-	Previous    CursorEvent
-	NoteOn      *NoteOn
-	NoteOnClick Clicks
-	Patch       *Patch
-	SampleVoice *StepperSampleVoice
-	SampleNote  *SamplesplitterNoteOn
-	Button      string
-	loopIt      bool
-	loopBeats   int
-	loopFade    float64
-	maxZ        float64
-	pitchOffset int32
+	Current        CursorEvent
+	Previous       CursorEvent
+	NoteOn         *NoteOn
+	NoteOnClick    Clicks
+	Patch          *Patch
+	SampleVoice    *StepperSampleVoice
+	SamplePlayback *SamplePlaybackStart
+	Button         string
+	loopIt         bool
+	loopBeats      int
+	loopFade       float64
+	maxZ           float64
+	pitchOffset    int32
 }
 
 type CursorManager struct {
@@ -123,11 +123,6 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 		ac.loopBeats = forcebeats
 		ac.loopFade = forcefade
 	}
-	if IsBSS2InitialPage() && ac.Patch != nil && theStepper != nil && theStepper.routeForPatch(ac.Patch.Name()) == "samplesplitter" {
-		ac.loopIt = false
-		ac.loopFade = 0.0
-	}
-
 	// LogInfo("NewactiveCursor", "ac", ac)
 
 	ac.pitchOffset = theEngine.currentPitchOffset.Load()
@@ -180,8 +175,14 @@ func (cm *CursorManager) ActivitySnapshot() map[string]int64 {
 	snapshot := map[string]int64{"A": 0, "B": 0, "C": 0, "D": 0}
 	cm.activeMutex.Lock()
 	defer cm.activeMutex.Unlock()
-	for patch := range snapshot {
-		snapshot[patch] = cm.activity[patch]
+	for _, ac := range cm.activeCursors {
+		if ac == nil || ac.Current.Ddu == "up" {
+			continue
+		}
+		tag := ac.Current.Tag
+		if _, ok := snapshot[tag]; ok {
+			snapshot[tag]++
+		}
 	}
 	return snapshot
 }

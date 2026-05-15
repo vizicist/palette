@@ -275,9 +275,17 @@ func (patch *Patch) API(api string, apiargs map[string]string) (string, error) {
 			return "", err
 		}
 
+		preserveRoute := filename != "_Current"
+		savedRoute := ""
+		if preserveRoute {
+			savedRoute = patch.Get("stepper.route")
+		}
 		err = patch.Load(category, paramsMap)
 		if err != nil {
 			return "", err
+		}
+		if preserveRoute {
+			patch.restoreStepperRoute(savedRoute)
 		}
 		err = patch.SaveQuadAndAlert()
 		if err == nil {
@@ -362,6 +370,18 @@ func (patch *Patch) API(api string, apiargs map[string]string) (string, error) {
 
 func (patch *Patch) SaveQuadAndAlert() error {
 	return theQuad.saveQuad("_Current")
+}
+
+func (patch *Patch) restoreStepperRoute(route string) {
+	if route == "" || !validStepperRoute(route) {
+		return
+	}
+	err := patch.SetParam("stepper.route", route)
+	if err != nil {
+		LogWarn("restoreStepperRoute", "patch", patch.Name(), "route", route, "err", err)
+		return
+	}
+	patch.noticeValueChange("visual.shape", patch.Get("visual.shape"))
 }
 
 func (patch *Patch) SetParam(paramName string, paramValue string) error {

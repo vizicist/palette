@@ -45,6 +45,8 @@ func (s Server) Handler() http.Handler {
 	mux.HandleFunc("/api/set_audio_output", s.handleSetAudioOutput)
 	mux.HandleFunc("/api/set_base_note", s.handleSetBaseNote)
 	mux.HandleFunc("/api/set_peak_start", s.handleSetPeakStart)
+	mux.HandleFunc("/api/set_compressed", s.handleSetCompressed)
+	mux.HandleFunc("/api/reload_sigils", s.handleReloadSigils)
 	mux.HandleFunc("/api/set_pitch_bend", s.handleSetPitchBend)
 	mux.HandleFunc("/api/stop_all", s.handleStopAll)
 	mux.HandleFunc("/api/preview_on", s.handlePreviewOn)
@@ -213,6 +215,42 @@ func (s Server) handleSetPeakStart(w http.ResponseWriter, r *http.Request) {
 	enabled := parseBool(r.URL.Query().Get("enabled"))
 	s.State.SetPeakStart(enabled)
 	writeJSON(w, map[string]any{"ok": true, "peak_start_enabled": enabled}, http.StatusOK)
+}
+
+func (s Server) handleSetCompressed(w http.ResponseWriter, r *http.Request) {
+	enabled := parseBool(r.URL.Query().Get("enabled"))
+	s.State.SetCompressed(enabled)
+	writeJSON(w, map[string]any{"ok": true, "compressed": enabled}, http.StatusOK)
+}
+
+func (s Server) handleReloadSigils(w http.ResponseWriter, r *http.Request) {
+	if s.State == nil {
+		writeError(w, errors.New("samplesplitter state is not initialized"), http.StatusNotImplemented)
+		return
+	}
+	s.State.SetBusy(true, "Loading transmissions")
+	defer s.State.SetBusy(false, "")
+	if s.Audio != nil {
+		s.Audio.StopAll()
+		s.Audio.ClearCache()
+	}
+	s.State.LoadSigilDefaults(s.Analyzer, nil)
+	s.State.LoadFirstIfEmpty(s.Analyzer)
+	if s.Audio != nil {
+		var err error
+		if s.State.Snapshot().Compressed {
+			err = s.Audio.PreloadCompressed(s.State.StartupSamplePaths())
+		} else {
+			err = s.Audio.Preload(s.State.StartupSamplePaths())
+		}
+		if err != nil {
+			s.State.SetAudioStatus(false, err)
+			writeError(w, err, http.StatusInternalServerError)
+			return
+		}
+		s.State.SetAudioStatus(true, nil)
+	}
+	writeJSON(w, s.State.Snapshot(), http.StatusOK)
 }
 
 func (s Server) handleSetPitchBend(w http.ResponseWriter, r *http.Request) {

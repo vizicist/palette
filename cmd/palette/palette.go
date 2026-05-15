@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	json "github.com/goccy/go-json"
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/joho/godotenv"
 	"github.com/vizicist/palette/kit"
@@ -100,13 +101,16 @@ func NatsEngineAPI(api string, args ...string) (map[string]string, error) {
 	}
 
 	// Build JSON request
-	apijson := fmt.Sprintf(`{"api": "%s"`, api)
+	request := map[string]string{"api": api}
 	for n := 0; n < len(args); n += 2 {
-		apijson += fmt.Sprintf(`, "%s": "%s"`, args[n], args[n+1])
+		request[args[n]] = args[n+1]
 	}
-	apijson += "}"
+	jsonBytes, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("NatsEngineAPI: failed to marshal request: %w", err)
+	}
 
-	result, err := kit.EngineNatsAPI(natsTarget, apijson, 10*time.Second)
+	result, err := kit.EngineNatsAPI(natsTarget, string(jsonBytes), 10*time.Second)
 	if err != nil {
 		return nil, err
 	}

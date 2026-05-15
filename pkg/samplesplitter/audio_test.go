@@ -11,7 +11,7 @@ func TestRenderSegmentAppliesPitchAndBounds(t *testing.T) {
 		buf.samples[i] = int16(i % 32767)
 	}
 
-	pcm, err := renderSegment(buf, 0, 1, 2, 127)
+	pcm, err := renderSegment(buf, 0, 1, 2, 127, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func TestRenderSegmentFadesEdges(t *testing.T) {
 		buf.samples[i] = 10000
 	}
 
-	pcm, err := renderSegment(buf, 0, 0.1, 1, 127)
+	pcm, err := renderSegment(buf, 0, 0.1, 1, 127, false)
 	if err != nil {
 		t.Fatal(err)
 	}

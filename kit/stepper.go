@@ -50,7 +50,7 @@ type StepperSampleVoice struct {
 	Token    uint64
 }
 
-type StepperSampleNoteOff struct {
+type StepperSamplePlaybackStop struct {
 	Voice StepperSampleVoice
 }
 
@@ -420,10 +420,7 @@ func (s *Stepper) playSamplesplitterEvent(synth *Synth, patch string, event Step
 	if synth == nil {
 		return
 	}
-	velocity := event.Velocity
-	if velocity < StepperSamplesplitterVelocity {
-		velocity = StepperSamplesplitterVelocity
-	}
+	velocity := samplesplitterVelocityFromPressure(GetPatch(patch), event.Pressure)
 	noteOn := NewNoteOn(synth, event.Pitch, velocity)
 	previous, current := s.setActiveSamplesplitterVoice(patch, synth, event.Pitch, velocity)
 	if previous != nil {
@@ -436,7 +433,7 @@ func (s *Stepper) playSamplesplitterEvent(synth *Synth, patch string, event Step
 	if duration < 1 {
 		duration = s.stepLength()
 	}
-	ScheduleAt(atClick+duration, patch, &StepperSampleNoteOff{Voice: current})
+	ScheduleAt(atClick+duration, patch, &StepperSamplePlaybackStop{Voice: current})
 }
 
 func (s *Stepper) setActiveSamplesplitterVoice(patch string, synth *Synth, pitch uint8, velocity uint8) (*StepperSampleVoice, StepperSampleVoice) {
@@ -459,7 +456,7 @@ func (s *Stepper) setActiveSamplesplitterVoice(patch string, synth *Synth, pitch
 	return previous, current
 }
 
-func (s *Stepper) SamplesplitterNoteOffIfCurrent(event *StepperSampleNoteOff) *NoteOff {
+func (s *Stepper) SamplePlaybackStopIfCurrent(event *StepperSamplePlaybackStop) *NoteOff {
 	if event == nil || event.Voice.Synth == nil {
 		return nil
 	}

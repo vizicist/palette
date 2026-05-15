@@ -292,8 +292,6 @@ func (vals *ParamValues) Save(category string, filename string) error {
 		return err
 	}
 
-	s := "{\n    \"params\": {\n"
-
 	// Print the parameter values sorted by name
 	fullNames := vals.values
 	sortedNames := make([]string, 0, len(fullNames))
@@ -312,7 +310,7 @@ func (vals *ParamValues) Save(category string, filename string) error {
 	}
 	sort.Strings(sortedNames)
 
-	sep := ""
+	params := make(map[string]string, len(sortedNames))
 	for _, fullName := range sortedNames {
 		// The names are of the form "category.name",
 		// and any parameters with a name starting with "_" are not saved.
@@ -324,11 +322,15 @@ func (vals *ParamValues) Save(category string, filename string) error {
 			LogIfError(e)
 			continue
 		}
-		s += fmt.Sprintf("%s        \"%s\":\"%s\"", sep, fullName, valstring)
-		sep = ",\n"
+		params[fullName] = valstring
 	}
-	s += "\n    }\n}\n"
-	data := []byte(s)
+	data, err := json.MarshalIndent(struct {
+		Params map[string]string `json:"params"`
+	}{Params: params}, "", "    ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
 	return os.WriteFile(path, data, 0644)
 }
 

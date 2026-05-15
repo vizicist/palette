@@ -117,6 +117,7 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"echo":               globalEcho,
 	"debug":              globalRemoved,
 	"set_tempo_factor":   globalSetTempoFactor,
+	"transmissionreload": globalTransmissionReload,
 	"playcursor":         globalPlayCursor,
 	"obsrecord":          globalObsRecord,
 	"obsrecordstop":      globalObsRecordStop,
@@ -448,6 +449,13 @@ func globalSetTempoFactor(api string, apiargs map[string]string) (string, error)
 	return "", nil
 }
 
+func globalTransmissionReload(api string, apiargs map[string]string) (string, error) {
+	if err := ReloadInEngineSamplesplitterSamples(); err != nil {
+		return "", err
+	}
+	return JSONObject("ok", "true"), nil
+}
+
 func globalPlayCursor(api string, apiargs map[string]string) (string, error) {
 	var dur = 500 * time.Millisecond // default
 	s, ok := apiargs["dur"]
@@ -623,6 +631,23 @@ func ApplyGlobalParam(name string, value string) (err error) {
 		if err != nil {
 			LogError(err)
 			return err
+		}
+
+	case "global.transmissioncompressed":
+		SetInEngineSamplesplitterCompressed(IsTrueValue(value))
+
+	case "global.transmissionwords":
+		words := int64(2)
+		if GetInt(value, &words) {
+			if words < 1 {
+				words = 1
+			} else if words > 5 {
+				words = 5
+			}
+			SetInEngineSamplesplitterWords(int(words))
+			if err := ReloadInEngineSamplesplitterSamples(); err != nil {
+				LogWarn("global.transmissionwords reload failed", "err", err)
+			}
 		}
 
 	case "global.midithru":

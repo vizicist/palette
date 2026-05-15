@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header id="app-title">Transmission Recontextualizer</header>
+    <header id="app-title"><span id="app-title-text">Transmission and Oscillation Recontextualizer</span></header>
     <nav id="ritual-nav">
         <button class="ritual-nav-btn" id="btn-nav-space" data-screen="space">Palette</button>
         <button class="ritual-nav-btn" id="btn-nav-sigil" data-screen="sigil">Sequencer</button>
@@ -78,31 +78,57 @@
     <div id="main-container" class="hidden">
         <section id="palette-pad-stage" aria-label="Palette pads">
             <div class="palette-pad-layout">
-                <button class="palette-pad palette-pad-a" type="button" data-pad="A">
-                    <span class="palette-pad-title">CHAOS</span>
+                <div class="palette-pad palette-pad-a" data-pad="A">
+                    <span class="palette-pad-title">Sigil: CHAOS</span>
                     <img class="palette-pad-sigil" src="sigil-chaos.png" alt="">
-                    <span class="palette-pad-route">TRANSMISSION</span>
-                </button>
-                <button class="palette-pad palette-pad-d" type="button" data-pad="D">
-                    <span class="palette-pad-title">DIRECTIVE</span>
+                    <button class="palette-pad-route" type="button">TRANSMISSION</button>
+                </div>
+                <div class="palette-pad palette-pad-d" data-pad="D">
+                    <span class="palette-pad-title">Sigil: DIRECTIVE</span>
                     <img class="palette-pad-sigil" src="sigil-directive.png" alt="">
-                    <span class="palette-pad-route">TRANSMISSION</span>
-                </button>
-                <button class="palette-pad palette-pad-b" type="button" data-pad="B">
-                    <span class="palette-pad-title">ORACLE</span>
+                    <button class="palette-pad-route" type="button">TRANSMISSION</button>
+                </div>
+                <div class="palette-pad palette-pad-b" data-pad="B">
+                    <span class="palette-pad-title">Sigil: ORACLE</span>
                     <img class="palette-pad-sigil" src="sigil-oracle.png" alt="">
-                    <span class="palette-pad-route">TRANSMISSION</span>
-                </button>
-                <button class="palette-pad palette-pad-c" type="button" data-pad="C">
-                    <span class="palette-pad-title">SACRED</span>
+                    <button class="palette-pad-route" type="button">TRANSMISSION</button>
+                </div>
+                <div class="palette-pad palette-pad-c" data-pad="C">
+                    <span class="palette-pad-title">Sigil: SACRED</span>
                     <img class="palette-pad-sigil" src="sigil-sacred.png" alt="">
-                    <span class="palette-pad-route">TRANSMISSION</span>
-                </button>
+                    <button class="palette-pad-route" type="button">TRANSMISSION</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="transmission-controls-panel" aria-label="Transmission controls">
+            <h2 id="transmission-controls-title">Transmission Control</h2>
+            <div class="palette-pad-controls" aria-label="Transmission controls">
+                <label class="pad-control" for="transmission-quant">
+                    <span class="pad-control-title">Quantize</span>
+                    <select id="transmission-quant">
+                        <option value="0">Off</option>
+                        <option value="0.25">16th</option>
+                        <option value="0.5" selected>8th</option>
+                        <option value="1">Quarter</option>
+                    </select>
+                </label>
+                <label class="pad-control" for="transmission-words">
+                    <span class="pad-control-title">Words<br>Per Chunk</span>
+                    <select id="transmission-words">
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </label>
+                <button class="pad-control-button" id="transmission-newset" type="button">Receive New Transmission</button>
             </div>
         </section>
 
         <section id="preset-selector-panel" aria-labelledby="preset-selector-title">
-            <h2 id="preset-selector-title">Synth Presets</h2>
+            <h2 id="preset-selector-title">Oscillation and Photonic Control</h2>
             <main id="preset-grid"></main>
         </section>
 

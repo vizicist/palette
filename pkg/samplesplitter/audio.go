@@ -45,7 +45,9 @@ type AudioDevice struct {
 }
 
 type audioBuffer struct {
-	samples []int16
+	samples        []int16
+	compressed     []int16
+	compressedOnce sync.Once
 }
 
 type audioVoice struct {
@@ -150,7 +152,7 @@ func (a *AudioManager) Play(req *PlaybackRequest) error {
 		a.setErr(err)
 		return err
 	}
-	pcm, err := renderSegment(buf, req.StartSec, req.EndSec, req.PitchRatio, req.Velocity)
+	pcm, err := renderSegment(buf, req.StartSec, req.EndSec, req.PitchRatio, req.Velocity, req.Compressed)
 	if err != nil {
 		a.setErr(err)
 		return err
@@ -183,6 +185,51 @@ func (a *AudioManager) Play(req *PlaybackRequest) error {
 	a.syncActiveVoicesLocked()
 	a.err = nil
 	return nil
+}
+
+func (a *AudioManager) Preload(paths []string) error {
+	if a == nil {
+		return errors.New("audio backend is not initialized")
+	}
+	for _, path := range paths {
+		if path == "" {
+			continue
+		}
+		if _, err := a.decode(path); err != nil {
+			a.setErr(err)
+			return err
+		}
+	}
+	a.setErr(nil)
+	return nil
+}
+
+func (a *AudioManager) PreloadCompressed(paths []string) error {
+	if a == nil {
+		return errors.New("audio backend is not initialized")
+	}
+	for _, path := range paths {
+		if path == "" {
+			continue
+		}
+		buf, err := a.decode(path)
+		if err != nil {
+			a.setErr(err)
+			return err
+		}
+		_ = buf.compressedSamples()
+	}
+	a.setErr(nil)
+	return nil
+}
+
+func (a *AudioManager) ClearCache() {
+	if a == nil {
+		return
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.cache = make(map[string]*audioBuffer)
 }
 
 func (a *AudioManager) StopVoice(voiceKey string) {
@@ -530,9 +577,13 @@ func (a *AudioManager) decode(path string) (*audioBuffer, error) {
 	return buf, nil
 }
 
-func renderSegment(buf *audioBuffer, startSec, endSec, pitchRatio float64, velocity int) ([]int16, error) {
+func renderSegment(buf *audioBuffer, startSec, endSec, pitchRatio float64, velocity int, compressed bool) ([]int16, error) {
 	if buf == nil || len(buf.samples) == 0 {
 		return nil, errors.New("empty audio buffer")
+	}
+	sourceSamples := buf.samples
+	if compressed {
+		sourceSamples = buf.compressedSamples()
 	}
 	if pitchRatio <= 0 {
 		pitchRatio = 1
@@ -540,9 +591,9 @@ func renderSegment(buf *audioBuffer, startSec, endSec, pitchRatio float64, veloc
 	if velocity <= 0 {
 		velocity = 110
 	}
-	startIdx := max(0, min(len(buf.samples), int(startSec*audioSampleRate)))
-	endIdx := max(startIdx+1, min(len(buf.samples), int(endSec*audioSampleRate)))
-	if startIdx >= len(buf.samples) || startIdx >= endIdx {
+	startIdx := max(0, min(len(sourceSamples), int(startSec*audioSampleRate)))
+	endIdx := max(startIdx+1, min(len(sourceSamples), int(endSec*audioSampleRate)))
+	if startIdx >= len(sourceSamples) || startIdx >= endIdx {
 		return nil, fmt.Errorf("invalid segment %.4f..%.4f", startSec, endSec)
 	}
 
@@ -553,7 +604,7 @@ func renderSegment(buf *audioBuffer, startSec, endSec, pitchRatio float64, veloc
 	pcm := make([]int16, outSamples)
 	for i := 0; i < outSamples; i++ {
 		sourceIdx := startIdx + min(endIdx-startIdx-1, int(float64(i)*pitchRatio))
-		sample := float64(buf.samples[sourceIdx]) * volume
+		sample := float64(sourceSamples[sourceIdx])
 		if fadeSamples > 0 {
 			if i < fadeSamples {
 				sample *= float64(i) / float64(fadeSamples)
@@ -564,7 +615,65 @@ func renderSegment(buf *audioBuffer, startSec, endSec, pitchRatio float64, veloc
 		}
 		pcm[i] = int16(math.Max(-32768, math.Min(32767, sample)))
 	}
+	if volume < 1 {
+		for i, sample := range pcm {
+			scaled := float64(sample) * volume
+			pcm[i] = int16(math.Max(-32768, math.Min(32767, scaled)))
+		}
+	}
 	return pcm, nil
+}
+
+func (buf *audioBuffer) compressedSamples() []int16 {
+	if buf == nil {
+		return nil
+	}
+	buf.compressedOnce.Do(func() {
+		buf.compressed = compressAndNormalizeCopy(buf.samples)
+	})
+	if len(buf.compressed) == 0 {
+		return buf.samples
+	}
+	return buf.compressed
+}
+
+func compressAndNormalizeCopy(pcm []int16) []int16 {
+	if len(pcm) == 0 {
+		return nil
+	}
+	const (
+		threshold = 0.35
+		ratio     = 4.0
+		target    = 0.92
+	)
+	peak := 0.0
+	values := make([]float64, len(pcm))
+	for i, sample := range pcm {
+		value := float64(sample) / 32768.0
+		sign := 1.0
+		if value < 0 {
+			sign = -1
+			value = -value
+		}
+		if value > threshold {
+			value = threshold + (value-threshold)/ratio
+		}
+		value *= sign
+		values[i] = value
+		if abs := math.Abs(value); abs > peak {
+			peak = abs
+		}
+	}
+	if peak <= 0 {
+		return append([]int16(nil), pcm...)
+	}
+	out := make([]int16, len(pcm))
+	gain := target / peak
+	for i, value := range values {
+		scaled := value * gain * 32767.0
+		out[i] = int16(math.Max(-32768, math.Min(32767, scaled)))
+	}
+	return out
 }
 
 func uniqueStrings(values []string) []string {

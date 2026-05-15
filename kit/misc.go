@@ -755,7 +755,17 @@ func JSONString(args ...string) string {
 	sep := ""
 	for n := range args {
 		if n%2 == 0 {
-			params = params + sep + "\"" + args[n] + "\": \"" + args[n+1] + "\""
+			name, err := json.Marshal(args[n])
+			if err != nil {
+				LogIfError(err)
+				continue
+			}
+			value, err := json.Marshal(args[n+1])
+			if err != nil {
+				LogIfError(err)
+				continue
+			}
+			params = params + sep + string(name) + ": " + string(value)
 		}
 		sep = ", "
 	}
