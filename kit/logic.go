@@ -155,22 +155,6 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 	return uint8(vel)
 }
 
-func samplesplitterVelocityFromPressure(patch *Patch, pressure float64) uint8 {
-	const minTransmissionVelocity = 76
-
-	scaledPressure := boundValueZeroToOne(pressure)
-	if patch != nil {
-		zmin := patch.GetFloat("sound._controllerzmin")
-		zmax := patch.GetFloat("sound._controllerzmax")
-		scaledPressure = BoundAndScaleFloat(pressure, zmin, zmax, 0.0, 1.0)
-	}
-	velocity := minTransmissionVelocity + int(math.Round(scaledPressure*float64(127-minTransmissionVelocity)))
-	if velocity > 127 {
-		velocity = 127
-	}
-	return uint8(velocity)
-}
-
 func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 	// send an OSC message to Resolume
 	msg := CursorToOscMsg(ce)
@@ -178,24 +162,19 @@ func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 }
 
 func (logic *PatchLogic) liveStepperRoute() string {
-	if theStepper == nil {
-		return "bidule"
-	}
-	return theStepper.routeForPatch(logic.patch.Name())
+	return NewTransmissionDomain(logic.patch).route()
 }
 
 func (logic *PatchLogic) bss2SampleMode() bool {
-	return IsBSS2InitialPage() && logic.liveStepperRoute() == "samplesplitter"
+	return NewTransmissionDomain(logic.patch).Enabled()
 }
 
 func (logic *PatchLogic) liveRouteIncludesBidule() bool {
-	route := logic.liveStepperRoute()
-	return route == "bidule" || route == "both"
+	return NewTransmissionDomain(logic.patch).RouteIncludesBidule()
 }
 
 func (logic *PatchLogic) liveRouteIncludesSamples() bool {
-	route := logic.liveStepperRoute()
-	return route == "samplesplitter" || route == "both"
+	return NewTransmissionDomain(logic.patch).RouteIncludesSamples()
 }
 
 func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atClick Clicks) {
@@ -203,79 +182,14 @@ func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atCl
 		ScheduleAt(atClick, ce.Tag, noteOn)
 	}
 	if logic.liveRouteIncludesSamples() && theStepper != nil {
-		synth := theStepper.samplesplitterSynthForPatch(logic.patch.Name())
+		synth := theStepper.config.SamplesplitterSynthForPatch(logic.patch.Name())
 		if synth == nil {
 			return
 		}
-		velocity := samplesplitterVelocityFromPressure(logic.patch, ce.Pos.Z)
+		velocity := transmissionVelocityFromPressure(logic.patch, ce.Pos.Z)
 		ScheduleAt(atClick, ce.Tag, NewPitchBend(synth, theStepper.pitchBendValue(ce.Pos.Z)))
 		ScheduleAt(atClick, ce.Tag, NewNoteOn(synth, noteOn.Pitch, velocity))
 		ScheduleAt(atClick+1, ce.Tag, NewPitchBend(synth, MidiPitchBendCenter))
-	}
-}
-
-func (logic *PatchLogic) bss2SamplePlaybackStart(ce CursorEvent) *SamplePlaybackStart {
-	x := boundValueZeroToOne(ce.Pos.X)
-	sampleSelector := int(math.Min(47, math.Floor(x*48.0)))
-	velocity := samplesplitterVelocityFromPressure(logic.patch, ce.Pos.Z)
-	return &SamplePlaybackStart{
-		Patch:          logic.patch.Name(),
-		SigilChannel:   SamplePlaybackChannelForPatch(logic.patch.Name()),
-		SampleSelector: sampleSelector,
-		Velocity:       int(velocity),
-		PitchBend:      logic.bss2SamplePitchBendValue(ce),
-		VoiceKey:       bss2SampleVoiceKey(ce),
-	}
-}
-
-func bss2SampleVoiceKey(ce CursorEvent) string {
-	return fmt.Sprintf("cursor-%s-%d", ce.Tag, ce.GID)
-}
-
-func (logic *PatchLogic) bss2SamplePitchBendValue(ce CursorEvent) int {
-	p := boundValueZeroToOne(ce.Pos.Y)
-	return int(math.Round(p * 16383.0))
-}
-
-func (logic *PatchLogic) bss2SampleQuant() Clicks {
-	quantBeats, err := GetParamFloat("global.transmissionquant")
-	if err != nil {
-		LogIfError(err)
-		quantBeats = 0.5
-	}
-	if quantBeats <= 0 {
-		return 1
-	}
-	if quantBeats > 1 {
-		quantBeats = 1
-	}
-	factor := TempoFactor
-	if factor <= 0 {
-		factor = 1
-	}
-	return Clicks(math.Max(1, float64(OneBeat)*quantBeats/factor))
-}
-
-func (logic *PatchLogic) nextBSS2SampleQuant(t Clicks) Clicks {
-	return logic.nextQuant(t, logic.bss2SampleQuant())
-}
-
-func (logic *PatchLogic) scheduleBSS2SampleStart(ac *ActiveCursor, ce CursorEvent, noteOn *SamplePlaybackStart, atClick Clicks) {
-	if noteOn == nil {
-		return
-	}
-	if ac.SamplePlayback != nil {
-		ScheduleAt(atClick, ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: ac.SamplePlayback.SampleSelector, VoiceKey: ac.SamplePlayback.VoiceKey})
-	}
-	ScheduleAt(atClick, ce.Tag, noteOn)
-	ac.SamplePlayback = noteOn
-}
-
-func (logic *PatchLogic) scheduleBSS2SampleStop(ac *ActiveCursor, ce CursorEvent, atClick Clicks) {
-	if ac.SamplePlayback != nil {
-		ScheduleAt(atClick, ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: ac.SamplePlayback.SampleSelector, VoiceKey: ac.SamplePlayback.VoiceKey})
-		ScheduleAt(atClick+1, ce.Tag, &SamplePlaybackPitch{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, Value: MidiPitchBendCenter})
-		ac.SamplePlayback = nil
 	}
 }
 
@@ -284,7 +198,7 @@ func (logic *PatchLogic) scheduleLiveNoteOff(ce CursorEvent, noteOff *NoteOff, a
 		ScheduleAt(atClick, ce.Tag, noteOff)
 	}
 	if logic.liveRouteIncludesSamples() && theStepper != nil {
-		synth := theStepper.samplesplitterSynthForPatch(logic.patch.Name())
+		synth := theStepper.config.SamplesplitterSynthForPatch(logic.patch.Name())
 		if synth == nil {
 			return
 		}
@@ -321,58 +235,7 @@ func (logic *PatchLogic) generateBSS2SampleFromCursor(ce CursorEvent) {
 		LogWarn("generateBSS2SampleFromCursor: no active cursor", "gid", ce.GID)
 		return
 	}
-
-	switch ce.Ddu {
-	case "down":
-		noteOn := logic.bss2SamplePlaybackStart(ce)
-		if noteOn == nil {
-			return
-		}
-		atClick := logic.nextBSS2SampleQuant(CurrentClick())
-		logic.scheduleBSS2SampleStart(ac, ce, noteOn, atClick)
-		ac.NoteOnClick = atClick
-
-	case "drag":
-		oldNoteOn := ac.SamplePlayback
-		if oldNoteOn == nil {
-			noteOn := logic.bss2SamplePlaybackStart(ce)
-			if noteOn == nil {
-				return
-			}
-			atClick := logic.nextBSS2SampleQuant(CurrentClick())
-			logic.scheduleBSS2SampleStart(ac, ce, noteOn, atClick)
-			ac.NoteOnClick = atClick
-			return
-		}
-		newNoteOn := logic.bss2SamplePlaybackStart(ce)
-		if newNoteOn == nil {
-			return
-		}
-		if newNoteOn.SampleSelector != oldNoteOn.SampleSelector {
-			now := CurrentClick()
-			onClick := logic.nextBSS2SampleQuant(now)
-			theScheduler.DeleteSamplePlaybackStarts(ce.Tag, oldNoteOn.SigilChannel)
-			logic.scheduleBSS2SampleStart(ac, ce, newNoteOn, onClick)
-			ac.NoteOnClick = onClick
-		} else {
-			ScheduleAt(CurrentClick(), ce.Tag, &SamplePlaybackPitch{Patch: oldNoteOn.Patch, SigilChannel: oldNoteOn.SigilChannel, Value: logic.bss2SamplePitchBendValue(ce)})
-		}
-
-	case "up":
-		if ac.SamplePlayback != nil {
-			LogInfo("BSS2 sample cursor up", "patch", ac.SamplePlayback.Patch, "sigilChannel", ac.SamplePlayback.SigilChannel, "sampleSelector", ac.SamplePlayback.SampleSelector, "click", CurrentClick())
-			theScheduler.DeleteSamplePlaybackStarts(ce.Tag, ac.SamplePlayback.SigilChannel)
-			ScheduleAt(CurrentClick(), ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: ac.SamplePlayback.SampleSelector, VoiceKey: ac.SamplePlayback.VoiceKey})
-			ScheduleAt(CurrentClick()+1, ce.Tag, &SamplePlaybackPitch{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, Value: MidiPitchBendCenter})
-			ac.SamplePlayback = nil
-		} else {
-			sigilChannel := SamplePlaybackChannelForPatch(logic.patch.Name())
-			LogInfo("BSS2 sample cursor up without active sample playback", "patch", logic.patch.Name(), "sigilChannel", sigilChannel, "click", CurrentClick())
-			theScheduler.DeleteSamplePlaybackStarts(ce.Tag, sigilChannel)
-			ScheduleAt(CurrentClick(), ce.Tag, &SamplePlaybackStop{Patch: logic.patch.Name(), SigilChannel: sigilChannel, SampleSelector: -1})
-			ScheduleAt(CurrentClick()+1, ce.Tag, &SamplePlaybackPitch{Patch: logic.patch.Name(), SigilChannel: sigilChannel, Value: MidiPitchBendCenter})
-		}
-	}
+	NewTransmissionDomain(logic.patch).HandleCursor(ce, ac)
 }
 
 func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {
@@ -561,21 +424,7 @@ func (logic *PatchLogic) generateController(ActiveCursor *ActiveCursor) {
 */
 
 func (logic *PatchLogic) nextQuant(t Clicks, q Clicks) Clicks {
-	// the algorithm below is the same as KeyKit's nextquant
-	if q <= 1 {
-		return t
-	}
-	tq := t
-	rem := tq % q
-	if (rem * 2) > q {
-		tq += (q - rem)
-	} else {
-		tq -= rem
-	}
-	if tq < t {
-		tq += q
-	}
-	return tq
+	return nextQuant(t, q)
 }
 
 /*

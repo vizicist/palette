@@ -15,14 +15,15 @@ const StepperSamplesplitterVelocity = 110
 var theStepper *Stepper
 
 type Stepper struct {
-	mutex              sync.RWMutex
-	playing            bool
-	lastStep           int
-	lastPlayCycle      Clicks
-	tracks             map[string]*StepperTrack
-	recordedNoteOnMap  map[string]*StepperEvent
-	activeSampleVoices map[string]StepperSampleVoice
-	sampleVoiceToken   uint64
+	mutex             sync.RWMutex
+	config            StepperConfig
+	playing           bool
+	lastStep          int
+	lastPlayCycle     Clicks
+	tracks            map[string]*StepperTrack
+	recordedNoteOnMap map[string]*StepperEvent
+	sampleVoices      *SampleVoiceLifecycle
+	player            *StepperPlayer
 }
 
 type StepperTrack struct {
@@ -42,18 +43,6 @@ type StepperEvent struct {
 	StartClick Clicks  `json:"-"`
 }
 
-type StepperSampleVoice struct {
-	Patch    string
-	Synth    *Synth
-	Pitch    uint8
-	Velocity uint8
-	Token    uint64
-}
-
-type StepperSamplePlaybackStop struct {
-	Voice StepperSampleVoice
-}
-
 type stepperStatus struct {
 	Playing         bool                    `json:"playing"`
 	Step            int                     `json:"step"`
@@ -70,14 +59,18 @@ type stepperTrack struct {
 }
 
 func NewStepper() *Stepper {
+	config := NewStepperConfig()
+	sampleVoices := NewSampleVoiceLifecycle()
 	s := &Stepper{
-		playing:            false,
-		lastStep:           -1,
-		lastPlayCycle:      -1,
-		tracks:             map[string]*StepperTrack{},
-		recordedNoteOnMap:  map[string]*StepperEvent{},
-		activeSampleVoices: map[string]StepperSampleVoice{},
+		config:            config,
+		playing:           false,
+		lastStep:          -1,
+		lastPlayCycle:     -1,
+		tracks:            map[string]*StepperTrack{},
+		recordedNoteOnMap: map[string]*StepperEvent{},
+		sampleVoices:      sampleVoices,
 	}
+	s.player = NewStepperPlayer(config, sampleVoices, s.stepLength, s.pitchBendValue)
 	for _, patch := range []string{"A", "B", "C", "D"} {
 		s.tracks[patch] = &StepperTrack{
 			Recording:       true,
@@ -147,9 +140,7 @@ func ExecuteStepperAPI(api string, apiargs map[string]string) (string, error) {
 }
 
 func (s *Stepper) SetPlaying(playing bool) {
-	if playing && IsBSS2InitialPage() {
-		playing = false
-	}
+	playing = s.config.CoercePlaying(playing)
 	s.mutex.Lock()
 	s.playing = playing
 	s.lastStep = -1
@@ -225,33 +216,11 @@ func (s *Stepper) ToggleStep(patch string, step int) (string, error) {
 }
 
 func (s *Stepper) SetRoute(patch string, route string) (string, error) {
-	if !validStepperRoute(route) {
-		return "", fmt.Errorf("stepper.setroute: bad route=%s", route)
-	}
-	p := GetPatch(patch)
-	if p == nil {
-		return "", fmt.Errorf("no such patch: %s", patch)
-	}
-	err := p.SetParam("stepper.route", route)
-	if err != nil {
+	if err := s.config.SetRoute(patch, route); err != nil {
 		return "", err
 	}
-	err = p.SaveQuadAndAlert()
-	if err != nil {
-		return "", err
-	}
-	p.noticeValueChange("visual.shape", p.Get("visual.shape"))
 	s.ResetPitchBends()
 	return s.Status()
-}
-
-func validStepperRoute(route string) bool {
-	switch route {
-	case "off", "bidule", "samplesplitter", "both":
-		return true
-	default:
-		return false
-	}
 }
 
 func (s *Stepper) Status() (string, error) {
@@ -274,7 +243,7 @@ func (s *Stepper) Status() (string, error) {
 		}
 		status.Tracks[patch] = stepperTrack{
 			Recording: track.Recording,
-			Route:     s.routeForPatch(patch),
+			Route:     string(s.config.RouteForPatch(patch)),
 			Steps:     steps,
 		}
 	}
@@ -286,7 +255,7 @@ func (s *Stepper) Status() (string, error) {
 }
 
 func (s *Stepper) RecordNoteOn(patch string, note *NoteOn, pressure float64, atClick Clicks, quant Clicks) {
-	if IsBSS2InitialPage() {
+	if !s.config.SequencingEnabled() {
 		return
 	}
 	if note == nil {
@@ -327,7 +296,7 @@ func (s *Stepper) RecordNoteOn(patch string, note *NoteOn, pressure float64, atC
 }
 
 func (s *Stepper) RecordNoteOff(patch string, note *NoteOff, atClick Clicks) {
-	if IsBSS2InitialPage() {
+	if !s.config.SequencingEnabled() {
 		return
 	}
 	if note == nil {
@@ -352,7 +321,7 @@ func (s *Stepper) RecordNoteOff(patch string, note *NoteOff, atClick Clicks) {
 }
 
 func (s *Stepper) AdvanceTo(click Clicks) {
-	if IsBSS2InitialPage() {
+	if !s.config.SequencingEnabled() {
 		return
 	}
 	s.mutex.Lock()
@@ -385,187 +354,27 @@ func (s *Stepper) AdvanceTo(click Clicks) {
 
 func (s *Stepper) playEvent(patch string, event StepperEvent, atClick Clicks) {
 	atClick = s.nextQuant(atClick, event.Quant)
-	route := s.routeForPatch(patch)
-	if route == "bidule" || route == "both" {
-		synth := s.biduleSynthForPatch(patch, event)
-		if synth != nil {
-			s.playTimedEvent(synth, patch, event, atClick)
-		}
-	}
-	if route == "samplesplitter" || route == "both" {
-		synth := s.samplesplitterSynthForPatch(patch)
-		if synth != nil {
-			s.playSamplesplitterEvent(synth, patch, event, atClick)
-		}
-	}
-}
-
-func (s *Stepper) playTimedEvent(synth *Synth, patch string, event StepperEvent, atClick Clicks) {
-	if synth == nil {
-		return
-	}
-	noteOn := NewNoteOn(synth, event.Pitch, event.Velocity)
-	noteOff := NewNoteOff(synth, event.Pitch, event.Velocity)
-	ScheduleAt(atClick, patch, NewPitchBend(synth, s.pitchBendValue(event.Pressure)))
-	ScheduleAt(atClick, patch, noteOn)
-	duration := event.Duration
-	if duration < 1 {
-		duration = s.stepLength()
-	}
-	ScheduleAt(atClick+duration, patch, noteOff)
-	ScheduleAt(atClick+duration+1, patch, NewPitchBend(synth, MidiPitchBendCenter))
-}
-
-func (s *Stepper) playSamplesplitterEvent(synth *Synth, patch string, event StepperEvent, atClick Clicks) {
-	if synth == nil {
-		return
-	}
-	velocity := samplesplitterVelocityFromPressure(GetPatch(patch), event.Pressure)
-	noteOn := NewNoteOn(synth, event.Pitch, velocity)
-	previous, current := s.setActiveSamplesplitterVoice(patch, synth, event.Pitch, velocity)
-	if previous != nil {
-		ScheduleAt(atClick, patch, NewNoteOff(previous.Synth, previous.Pitch, previous.Velocity))
-	}
-	ScheduleAt(atClick, patch, NewPitchBend(synth, s.pitchBendValue(event.Pressure)))
-	ScheduleAt(atClick, patch, noteOn)
-	ScheduleAt(atClick+1, patch, NewPitchBend(synth, MidiPitchBendCenter))
-	duration := event.Duration
-	if duration < 1 {
-		duration = s.stepLength()
-	}
-	ScheduleAt(atClick+duration, patch, &StepperSamplePlaybackStop{Voice: current})
+	s.player.PlayEvent(patch, event, atClick)
 }
 
 func (s *Stepper) setActiveSamplesplitterVoice(patch string, synth *Synth, pitch uint8, velocity uint8) (*StepperSampleVoice, StepperSampleVoice) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	var previous *StepperSampleVoice
-	if voice, ok := s.activeSampleVoices[patch]; ok {
-		prev := voice
-		previous = &prev
-	}
-	s.sampleVoiceToken++
-	current := StepperSampleVoice{
-		Patch:    patch,
-		Synth:    synth,
-		Pitch:    pitch,
-		Velocity: velocity,
-		Token:    s.sampleVoiceToken,
-	}
-	s.activeSampleVoices[patch] = current
-	return previous, current
+	return s.player.StartSamplesplitterVoice(patch, synth, pitch, velocity)
 }
 
 func (s *Stepper) SamplePlaybackStopIfCurrent(event *StepperSamplePlaybackStop) *NoteOff {
-	if event == nil || event.Voice.Synth == nil {
-		return nil
-	}
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	current, ok := s.activeSampleVoices[event.Voice.Patch]
-	if !ok || current.Token != event.Voice.Token {
-		return nil
-	}
-	delete(s.activeSampleVoices, event.Voice.Patch)
-	return NewNoteOff(event.Voice.Synth, event.Voice.Pitch, event.Voice.Velocity)
+	return s.player.SamplePlaybackStopIfCurrent(event)
 }
 
 func (s *Stepper) StopSamplesplitterVoice(patch string) {
-	s.mutex.Lock()
-	voice, ok := s.activeSampleVoices[patch]
-	if ok {
-		delete(s.activeSampleVoices, patch)
-	}
-	s.mutex.Unlock()
-	if ok && voice.Synth != nil {
-		voice.Synth.SendNoteToMidiOutput(NewNoteOff(voice.Synth, voice.Pitch, voice.Velocity))
-	}
+	s.player.StopSamplesplitterVoice(patch)
 }
 
 func (s *Stepper) StopAllSamplesplitterVoices() {
-	s.mutex.Lock()
-	voices := []StepperSampleVoice{}
-	for patch, voice := range s.activeSampleVoices {
-		voices = append(voices, voice)
-		delete(s.activeSampleVoices, patch)
-	}
-	s.mutex.Unlock()
-	for _, voice := range voices {
-		if voice.Synth != nil {
-			voice.Synth.SendNoteToMidiOutput(NewNoteOff(voice.Synth, voice.Pitch, voice.Velocity))
-		}
-	}
+	s.player.StopAllSamplesplitterVoices()
 }
 
 func (s *Stepper) ResetPitchBends() {
-	synths := map[*Synth]bool{}
-	for _, patch := range []string{"A", "B", "C", "D"} {
-		p := GetPatch(patch)
-		if p != nil {
-			if synth := p.Synth(); synth != nil {
-				synths[synth] = true
-			}
-		}
-		if synth := s.samplesplitterSynthForPatch(patch); synth != nil {
-			synths[synth] = true
-		}
-	}
-	for synth := range synths {
-		synth.SendPitchBend(MidiPitchBendCenter)
-	}
-}
-
-func (s *Stepper) biduleSynthForPatch(patch string, event StepperEvent) *Synth {
-	p := GetPatch(patch)
-	if p != nil {
-		return p.Synth()
-	}
-	if event.SynthName != "" {
-		return GetSynth(event.SynthName)
-	}
-	return nil
-}
-
-func (s *Stepper) samplesplitterSynthForPatch(patch string) *Synth {
-	p := GetPatch(patch)
-	if p == nil {
-		return nil
-	}
-	synthName := p.Get("stepper.samplesplitter_synth")
-	if synthName == "" {
-		synthName = s.defaultSamplesplitterSynthForPatch(patch)
-	}
-	if synthName == "P_16_C_01" && patch != "A" {
-		synthName = s.defaultSamplesplitterSynthForPatch(patch)
-	}
-	return GetSynth(synthName)
-}
-
-func (s *Stepper) defaultSamplesplitterSynthForPatch(patch string) string {
-	switch patch {
-	case "A":
-		return "P_16_C_01"
-	case "B":
-		return "P_16_C_02"
-	case "C":
-		return "P_16_C_03"
-	case "D":
-		return "P_16_C_04"
-	default:
-		return "P_16_C_01"
-	}
-}
-
-func (s *Stepper) routeForPatch(patch string) string {
-	p := GetPatch(patch)
-	if p == nil {
-		return "off"
-	}
-	route := p.Get("stepper.route")
-	if !validStepperRoute(route) {
-		return "samplesplitter"
-	}
-	return route
+	s.player.ResetPitchBends()
 }
 
 func (s *Stepper) CurrentStep() int {

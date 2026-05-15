@@ -2,6 +2,9 @@
 """
 samplesplitter.py — MIDI-driven MP3 sample splitter and polyphonic player.
 
+Legacy standalone implementation. The Go implementation in cmd/samplesplitter
+and pkg/samplesplitter is the reference implementation for Palette behavior.
+
 Usage:
     python3 samplesplitter.py --dir /path/to/mp3s [--port 9876] [--base-note 48]
 

@@ -140,8 +140,8 @@ func (patch *Patch) effectiveVisualShape(paramValue string) string {
 	if patch == nil || theStepper == nil {
 		return paramValue
 	}
-	route := theStepper.routeForPatch(patch.Name())
-	if route != "samplesplitter" && route != "both" {
+	route := theStepper.config.RouteForPatch(patch.Name())
+	if route != StepperRouteSamplesplitter && route != StepperRouteBoth {
 		return paramValue
 	}
 	if shape := SigilShapeForPatch(patch.Name()); shape != "" {

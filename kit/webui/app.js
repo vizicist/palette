@@ -1,37 +1,26 @@
-// State
-let currentPatch = '*';
-let currentCategory = 'quad';
-let advancedMode = false;
-let lastSinglePatch = 'A'; // Track last single selection for toggle
-let showingParams = false; // Toggle between presets and parameters view
-let activeAdventure = null;
-let initialPage = 'bss2';
-const selectedPresets = new Map();
-const stepperNumSteps = 8;
-const cursorActivityCounts = { A: 0, B: 0, C: 0, D: 0 };
-const transmissionQuantValues = [0, 0.25, 0.5, 1];
-const transmissionQuantLabels = ['Off', '16th', '8th', 'Quarter'];
-const patchSigils = {
-    A: 'chaos',
-    B: 'oracle',
-    C: 'sacred',
-    D: 'directive'
-};
-const stepperTiming = {
-    playing: false,
-    click: 0,
-    clicksPerSecond: 0,
-    stepLength: 1,
-    receivedAt: 0
-};
-
-// Cached parameter definitions and enums for string param dropdowns
-let cachedParamDefs = null;
-let cachedParamEnums = null;
-
-// Attract mode state
-let attractModeActive = false;
-let attractAllowGui = false;
+import { API } from './api.js';
+import { stepperNumSteps, transmissionQuantValues, UIState } from './state.js';
+import {
+    applyInitialPageMode,
+    flashSigilForPatch,
+    hideAttract,
+    hideHelp,
+    hideResetModal,
+    renderStepperIndicator,
+    resetRecordButton,
+    setPalettePadActivity,
+    setupAppTitleFit,
+    showAttract,
+    showHelp,
+    showResetMessage,
+    showResetModal,
+    updatePalettePadRoute,
+    updatePatchButtons,
+    updatePresetButtons,
+    updateRecordButton,
+    updateRitualNav,
+    updateStepperIndicator
+} from './render.js';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -44,19 +33,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const level = await API.call('global.get', { name: 'global.guidefaultlevel' });
         if (level === '1' || level === 1) {
-            advancedMode = true;
+            UIState.advancedMode = true;
         }
     } catch (e) { /* default to normal mode */ }
 
     // Check if attract GUI display is allowed
     try {
         const val = await API.call('global.get', { name: 'global.attractallowgui' });
-        attractAllowGui = val === 'true' || val === true;
+        UIState.attractAllowGui = val === 'true' || val === true;
     } catch (e) { /* default to false */ }
 
     try {
         const page = await API.call('global.get', { name: 'global.initialpage' });
-        initialPage = normalizeInitialPage(page);
+        UIState.setInitialPage(page);
     } catch (e) { /* default to bss2 */ }
 
     applyInitialPageMode();
@@ -84,36 +73,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     requestAnimationFrame(updateStepperIndicator);
 });
 
-function setupAppTitleFit() {
-    fitAppTitle();
-    window.addEventListener('resize', fitAppTitle);
-    if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(fitAppTitle).catch(() => {});
-    }
-}
-
-function fitAppTitle() {
-    const title = document.getElementById('app-title');
-    const text = document.getElementById('app-title-text');
-    if (!title || !text) return;
-
-    title.style.setProperty('--app-title-scale', '1');
-    const availableWidth = Math.max(1, title.clientWidth - 12);
-    const naturalWidth = Math.max(1, text.scrollWidth);
-    const scale = Math.min(1, availableWidth / naturalWidth);
-    title.style.setProperty('--app-title-scale', scale.toFixed(3));
-}
-
-function normalizeInitialPage(page) {
-    const value = String(page || '').trim().toLowerCase();
-    return ['pro', 'bss1', 'bss2'].includes(value) ? value : 'bss2';
-}
-
-function applyInitialPageMode() {
-    document.body.classList.remove('initial-pro', 'initial-bss1', 'initial-bss2');
-    document.body.classList.add(`initial-${initialPage}`);
-}
-
 async function startInitialPage() {
     await startSpacePalette();
 }
@@ -123,26 +82,20 @@ function setupRitualNav() {
     document.getElementById('btn-nav-sigil').addEventListener('click', showSigilSequencer);
 }
 
-function updateRitualNav() {
-    document.querySelectorAll('.ritual-nav-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.screen === activeAdventure);
-    });
-}
-
 async function startSpacePalette() {
     await stopStepperQuietly();
-    activeAdventure = 'space';
+    UIState.setActiveAdventure('space');
     updateRitualNav();
     document.getElementById('sigil-screen').classList.add('hidden');
     document.getElementById('main-container').classList.remove('hidden');
-    setAdvancedMode(advancedMode, false);
+    setAdvancedMode(UIState.advancedMode, false);
     await loadPresets();
     await refreshStepperStatus();
     await pollStatus();
 }
 
 async function showSigilSequencer() {
-    activeAdventure = 'sigil';
+    UIState.setActiveAdventure('sigil');
     updateRitualNav();
     hideAttract();
     hideHelp();
@@ -173,7 +126,7 @@ async function loadPresets() {
     grid.innerHTML = '<div class="loading">Loading...</div>';
 
     try {
-        const list = await API.getSavedList(currentCategory);
+        const list = await API.getSavedList(UIState.currentCategory);
 
         // Handle both array and newline-separated string formats
         let presets;
@@ -461,8 +414,7 @@ function setupTempoControl() {
 }
 
 async function refreshStepperStatus() {
-    const wantsStatus = activeAdventure === 'sigil' || (activeAdventure === 'space' && initialPage === 'bss2');
-    if (!wantsStatus) return;
+    if (!UIState.wantsStepperStatus()) return;
     let status;
     try {
         status = await API.stepperStatus();
@@ -493,40 +445,8 @@ async function refreshStepperStatus() {
     }
 }
 
-function updatePalettePadRoute(patch, route) {
-    const pad = document.querySelector(`.palette-pad[data-pad="${patch}"]`);
-    if (!pad) return;
-    const normalized = route === 'samplesplitter' || route === 'both' ? 'samplesplitter' : 'bidule';
-    pad.dataset.route = normalized;
-    pad.classList.remove('sample', 'synth');
-    const button = pad.querySelector('.palette-pad-route');
-    if (button) button.textContent = normalized === 'samplesplitter' ? 'TRANSMISSION' : 'OSCILLATION';
-}
-
 function syncStepperTiming(status) {
-    stepperTiming.playing = !!status.playing;
-    stepperTiming.click = Number(status.click) || 0;
-    stepperTiming.clicksPerSecond = Number(status.clicks_per_second) || 0;
-    stepperTiming.stepLength = Math.max(1, Number(status.step_length) || 1);
-    stepperTiming.receivedAt = performance.now();
-}
-
-function updateStepperIndicator() {
-    renderStepperIndicator();
-    requestAnimationFrame(updateStepperIndicator);
-}
-
-function renderStepperIndicator() {
-    if (activeAdventure !== 'sigil') return;
-    let step = 0;
-    if (stepperTiming.playing && stepperTiming.clicksPerSecond > 0) {
-        const elapsedMs = performance.now() - stepperTiming.receivedAt;
-        const estimatedClick = stepperTiming.click + (elapsedMs * stepperTiming.clicksPerSecond / 1000);
-        step = Math.floor(estimatedClick / stepperTiming.stepLength) % stepperNumSteps;
-    }
-    document.querySelectorAll('.stepper-position-cell').forEach(cell => {
-        cell.classList.toggle('active', stepperTiming.playing && Number(cell.dataset.step) === step);
-    });
+    UIState.syncStepperTiming(status);
 }
 
 async function loadParams() {
@@ -536,20 +456,20 @@ async function loadParams() {
 
     try {
         // Load paramdefs and paramenums if not cached (for string param dropdowns)
-        if (!cachedParamDefs) {
-            cachedParamDefs = await API.getParamDefsJson();
+        if (!UIState.paramDefs) {
+            UIState.paramDefs = await API.getParamDefsJson();
         }
-        if (!cachedParamEnums) {
-            cachedParamEnums = await API.getParamEnums();
+        if (!UIState.paramEnums) {
+            UIState.paramEnums = await API.getParamEnums();
         }
 
         // Get parameter values - use different API for global vs patch categories
         let paramsStr;
-        if (currentCategory === 'global') {
+        if (UIState.currentCategory === 'global') {
             paramsStr = await API.getGlobalParams('global.');
         } else {
-            const patchToQuery = currentPatch === '*' ? 'A' : currentPatch;
-            paramsStr = await API.getPatchParams(patchToQuery, currentCategory);
+            const patchToQuery = UIState.currentPatch === '*' ? 'A' : UIState.currentPatch;
+            paramsStr = await API.getPatchParams(patchToQuery, UIState.currentCategory);
         }
 
         // Parse "name=value\n" format
@@ -573,7 +493,7 @@ async function loadParams() {
         params.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
         // For effect category, filter out sub-params of disabled effects
-        if (currentCategory === 'effect') {
+        if (UIState.currentCategory === 'effect') {
             // Find which effects are enabled (boolean params without ":" that are "true")
             const enabledEffects = new Set();
             for (const p of params) {
@@ -600,8 +520,8 @@ async function loadParams() {
         for (const p of params) {
             const isNumeric = !isNaN(parseFloat(p.value));
             const isBool = p.value === 'true' || p.value === 'false';
-            const isMainEffectBool = currentCategory === 'effect' && isBool && !p.name.includes(':');
-            const isEffectSubParam = currentCategory === 'effect' && p.name.includes(':');
+            const isMainEffectBool = UIState.currentCategory === 'effect' && isBool && !p.name.includes(':');
+            const isEffectSubParam = UIState.currentCategory === 'effect' && p.name.includes(':');
 
             let rowClass = 'param-row';
             if (isEffectSubParam) rowClass += ' effect-sub-param';
@@ -624,7 +544,7 @@ async function loadParams() {
                 // Use slider for numeric params in effect sub-params, visual, sound, misc
                 const isFloat = isNumeric && p.value.includes('.');
                 const isInt = isNumeric && !p.value.includes('.');
-                const sliderCategory = isEffectSubParam || currentCategory === 'visual' || currentCategory === 'sound' || currentCategory === 'misc' || currentCategory === 'global';
+                const sliderCategory = isEffectSubParam || UIState.currentCategory === 'visual' || UIState.currentCategory === 'sound' || UIState.currentCategory === 'misc' || UIState.currentCategory === 'global';
 
                 // For bool params in slider categories, use Enabled/Disabled button
                 if (sliderCategory && isBool) {
@@ -640,13 +560,13 @@ async function loadParams() {
                     const isString = !isNumeric && !isBool;
                     let enumValues = null;
                     let enumName = null;
-                    if (isString && cachedParamDefs && cachedParamEnums) {
+                    if (isString && UIState.paramDefs && UIState.paramEnums) {
                         // Look up the param definition to get the enum name from "min" field
-                        const paramDef = cachedParamDefs[p.name];
+                        const paramDef = UIState.paramDefs[p.name];
                         if (paramDef && paramDef.valuetype === 'string' && paramDef.min) {
                             enumName = paramDef.min;
-                            if (cachedParamEnums[enumName]) {
-                                enumValues = cachedParamEnums[enumName];
+                            if (UIState.paramEnums[enumName]) {
+                                enumValues = UIState.paramEnums[enumName];
                             }
                         }
                     }
@@ -672,7 +592,7 @@ async function loadParams() {
                     } else {
                         html += `<span class="param-value">${p.value}</span>`;
                         html += '<span class="param-controls">';
-                        const paramDef = cachedParamDefs ? cachedParamDefs[p.name] : null;
+                        const paramDef = UIState.paramDefs ? UIState.paramDefs[p.name] : null;
                         if (sliderCategory && isFloat) {
                             const val = parseFloat(p.value);
                             const sMin = paramDef && paramDef.min !== undefined ? parseFloat(paramDef.min) : 0;
@@ -738,18 +658,18 @@ function setupParamControls() {
 
             // Ensure value is a string
             const valueStr = String(newValue);
-            console.log('Setting param:', paramName, '=', valueStr, 'patch:', currentPatch);
+            console.log('Setting param:', paramName, '=', valueStr, 'patch:', UIState.currentPatch);
 
             try {
                 // Use different API for global vs patch parameters
-                if (currentCategory === 'global') {
+                if (UIState.currentCategory === 'global') {
                     await API.setGlobalParam(paramName, valueStr);
-                } else if (currentPatch === '*') {
+                } else if (UIState.currentPatch === '*') {
                     for (const p of ['A', 'B', 'C', 'D']) {
                         await API.setPatchParam(p, paramName, valueStr);
                     }
                 } else {
-                    await API.setPatchParam(currentPatch, paramName, valueStr);
+                    await API.setPatchParam(UIState.currentPatch, paramName, valueStr);
                 }
                 valueEl.textContent = valueStr;
 
@@ -762,7 +682,7 @@ function setupParamControls() {
                 }
 
                 // Refresh list if toggling an effect boolean (affects sub-param visibility)
-                if (currentCategory === 'effect' && action === 'toggle' && !paramName.includes(':')) {
+                if (UIState.currentCategory === 'effect' && action === 'toggle' && !paramName.includes(':')) {
                     // Save scroll position before refresh
                     const paramList = document.querySelector('.param-list');
                     const scrollTop = paramList ? paramList.scrollTop : 0;
@@ -790,14 +710,14 @@ function setupParamControls() {
             valueEl.textContent = valueStr;
 
             try {
-                if (currentCategory === 'global') {
+                if (UIState.currentCategory === 'global') {
                     await API.setGlobalParam(paramName, valueStr);
-                } else if (currentPatch === '*') {
+                } else if (UIState.currentPatch === '*') {
                     for (const p of ['A', 'B', 'C', 'D']) {
                         await API.setPatchParam(p, paramName, valueStr);
                     }
                 } else {
-                    await API.setPatchParam(currentPatch, paramName, valueStr);
+                    await API.setPatchParam(UIState.currentPatch, paramName, valueStr);
                 }
             } catch (err) {
                 console.error('Failed to set param:', err);
@@ -817,14 +737,14 @@ function setupParamControls() {
             valueEl.textContent = valueStr;
 
             try {
-                if (currentCategory === 'global') {
+                if (UIState.currentCategory === 'global') {
                     await API.setGlobalParam(paramName, valueStr);
-                } else if (currentPatch === '*') {
+                } else if (UIState.currentPatch === '*') {
                     for (const p of ['A', 'B', 'C', 'D']) {
                         await API.setPatchParam(p, paramName, valueStr);
                     }
                 } else {
-                    await API.setPatchParam(currentPatch, paramName, valueStr);
+                    await API.setPatchParam(UIState.currentPatch, paramName, valueStr);
                 }
             } catch (err) {
                 console.error('Failed to set param:', err);
@@ -852,14 +772,14 @@ function setupParamControls() {
                 valueEl.textContent = valueStr;
 
                 try {
-                    if (currentCategory === 'global') {
+                    if (UIState.currentCategory === 'global') {
                         await API.setGlobalParam(paramName, valueStr);
-                    } else if (currentPatch === '*') {
+                    } else if (UIState.currentPatch === '*') {
                         for (const p of ['A', 'B', 'C', 'D']) {
                             await API.setPatchParam(p, paramName, valueStr);
                         }
                     } else {
-                        await API.setPatchParam(currentPatch, paramName, valueStr);
+                        await API.setPatchParam(UIState.currentPatch, paramName, valueStr);
                     }
                     // Update data-original to reflect the new saved value
                     input.dataset.original = valueStr;
@@ -883,15 +803,15 @@ function setupParamHeaderButtons() {
         initBtn.addEventListener('click', async () => {
             try {
                 // Get init values for the current category
-                const initValues = await API.getParamInits(currentCategory);
+                const initValues = await API.getParamInits(UIState.currentCategory);
 
                 // Apply all values in a single batch call per patch
-                if (currentPatch === '*') {
+                if (UIState.currentPatch === '*') {
                     await Promise.all(['A', 'B', 'C', 'D'].map(p =>
                         API.setPatchParams(p, initValues)
                     ));
                 } else {
-                    await API.setPatchParams(currentPatch, initValues);
+                    await API.setPatchParams(UIState.currentPatch, initValues);
                 }
 
                 // Refresh the params display
@@ -909,15 +829,15 @@ function setupParamHeaderButtons() {
         randBtn.addEventListener('click', async () => {
             try {
                 // Get random values for the current category
-                const randValues = await API.getParamRands(currentCategory);
+                const randValues = await API.getParamRands(UIState.currentCategory);
 
                 // Apply all values in a single batch call per patch
-                if (currentPatch === '*') {
+                if (UIState.currentPatch === '*') {
                     await Promise.all(['A', 'B', 'C', 'D'].map(p =>
                         API.setPatchParams(p, randValues)
                     ));
                 } else {
-                    await API.setPatchParams(currentPatch, randValues);
+                    await API.setPatchParams(UIState.currentPatch, randValues);
                 }
 
                 // Refresh the params display
@@ -932,25 +852,25 @@ function setupParamHeaderButtons() {
 
 async function loadPreset(name) {
     try {
-        if (currentCategory === 'global') {
+        if (UIState.currentCategory === 'global') {
             await API.loadGlobal(name);
-        } else if (currentCategory === 'quad') {
-            if (currentPatch === '*') {
+        } else if (UIState.currentCategory === 'quad') {
+            if (UIState.currentPatch === '*') {
                 // Load quad to all patches
                 await API.loadQuad(name);
             } else {
                 // Load only this patch's portion of the quad
-                await API.loadPatch(currentPatch, 'quad', name);
+                await API.loadPatch(UIState.currentPatch, 'quad', name);
             }
-        } else if (currentPatch === '*') {
+        } else if (UIState.currentPatch === '*') {
             // Load to all patches
             for (const p of ['A', 'B', 'C', 'D']) {
-                await API.loadPatch(p, currentCategory, name);
+                await API.loadPatch(p, UIState.currentCategory, name);
             }
         } else {
-            await API.loadPatch(currentPatch, currentCategory, name);
+            await API.loadPatch(UIState.currentPatch, UIState.currentCategory, name);
         }
-        selectedPresets.set(currentPresetKey(), name);
+        UIState.selectedPresets.set(UIState.presetKey(), name);
         updatePresetButtons();
     } catch (e) {
         alert('Load failed: ' + e.message);
@@ -958,8 +878,7 @@ async function loadPreset(name) {
 }
 
 async function refreshCursorActivity() {
-    const wantsActivity = activeAdventure === 'sigil' || (activeAdventure === 'space' && initialPage === 'bss2');
-    if (!wantsActivity) return;
+    if (!UIState.wantsCursorActivity()) return;
     let activity;
     try {
         activity = await API.cursorActivity();
@@ -968,42 +887,12 @@ async function refreshCursorActivity() {
     }
     for (const patch of ['A', 'B', 'C', 'D']) {
         const count = Number(activity && activity[patch]) || 0;
-        if (activeAdventure === 'sigil' && count > cursorActivityCounts[patch]) {
+        if (UIState.activeAdventure === 'sigil' && count > UIState.cursorActivityCounts[patch]) {
             flashSigilForPatch(patch);
         }
         setPalettePadActivity(patch, count > 0);
-        cursorActivityCounts[patch] = count;
+        UIState.cursorActivityCounts[patch] = count;
     }
-}
-
-function flashSigilForPatch(patch) {
-    const sigil = patchSigils[patch];
-    if (!sigil) return;
-    const img = document.querySelector(`.sigil-band img[data-sigil="${sigil}"]`);
-    if (img) {
-        img.classList.remove('flash');
-        void img.offsetWidth;
-        img.classList.add('flash');
-    }
-}
-
-function setPalettePadActivity(patch, active) {
-    const pad = document.querySelector(`.palette-pad[data-pad="${patch}"]`);
-    if (pad) {
-        pad.classList.toggle('morph-active', active);
-    }
-}
-
-function currentPresetKey() {
-    const patch = currentCategory === 'global' ? '*' : currentPatch;
-    return `${currentCategory}:${patch}`;
-}
-
-function updatePresetButtons() {
-    const selected = selectedPresets.get(currentPresetKey());
-    document.querySelectorAll('#preset-grid .preset-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.name === selected);
-    });
 }
 
 async function syncPresetSelectionFromEngine() {
@@ -1011,7 +900,7 @@ async function syncPresetSelectionFromEngine() {
         const selections = await API.getPresetStatus();
         if (!selections || typeof selections !== 'object') return;
         Object.entries(selections).forEach(([key, value]) => {
-            selectedPresets.set(key, value);
+            UIState.selectedPresets.set(key, value);
         });
         updatePresetButtons();
     } catch (e) {
@@ -1022,7 +911,7 @@ async function syncPresetSelectionFromEngine() {
 function setupControls() {
     document.getElementById('btn-complete-reset').addEventListener('click', async () => {
         // In advanced mode, COMPLETE RESET returns to normal mode
-        if (advancedMode) {
+        if (UIState.advancedMode) {
             setAdvancedMode(false);
             return;
         }
@@ -1073,20 +962,8 @@ function setupHelpOverlay() {
     });
 }
 
-let helpVisible = false;
-
-function showHelp() {
-    helpVisible = true;
-    document.getElementById('help-overlay').classList.remove('hidden');
-}
-
-function hideHelp() {
-    helpVisible = false;
-    document.getElementById('help-overlay').classList.add('hidden');
-}
-
 function setAdvancedMode(enabled, shouldLoadPresets = true) {
-    advancedMode = enabled;
+    UIState.setAdvancedMode(enabled);
     document.body.classList.toggle('advanced-mode', enabled);
     const categoryTabs = document.getElementById('category-tabs');
     const patchSelector = document.getElementById('patch-selector');
@@ -1102,8 +979,7 @@ function setAdvancedMode(enabled, shouldLoadPresets = true) {
         patchSelector.classList.add('hidden');
         titleBar.classList.add('hidden');
         // Reset to quad category in normal mode
-        currentCategory = 'quad';
-        currentPatch = '*';
+        UIState.resetNormalPresetView();
         if (shouldLoadPresets) {
             loadPresets();
         }
@@ -1115,18 +991,14 @@ function setupCategoryTabs() {
         tab.addEventListener('click', async () => {
             const clickedCategory = tab.dataset.category;
 
-            if (clickedCategory === currentCategory) {
-                // Same category clicked - toggle between presets and params
-                showingParams = !showingParams;
-            } else {
+            if (clickedCategory !== UIState.currentCategory) {
                 // Different category - switch to it, show presets
                 document.querySelectorAll('#category-tabs .tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                currentCategory = clickedCategory;
-                showingParams = false;
             }
+            UIState.toggleCategory(clickedCategory);
 
-            if (showingParams) {
+            if (UIState.showingParams) {
                 await loadParams();
             } else {
                 await loadPresets();
@@ -1140,42 +1012,11 @@ function setupPatchSelector() {
         btn.addEventListener('click', () => {
             const patch = btn.dataset.patch;
 
-            if (patch === '*') {
-                // Toggle between all selected and last single selection
-                if (currentPatch === '*') {
-                    // Currently all selected, switch to single
-                    currentPatch = lastSinglePatch;
-                    updatePatchButtons();
-                    updatePresetButtons();
-                } else {
-                    // Currently single, switch to all
-                    currentPatch = '*';
-                    updatePatchButtons();
-                    updatePresetButtons();
-                }
-            } else {
-                // Single patch selected
-                lastSinglePatch = patch;
-                currentPatch = patch;
-                updatePatchButtons();
-                updatePresetButtons();
-            }
+            UIState.selectPatch(patch);
+            updatePatchButtons();
+            updatePresetButtons();
         });
     });
-}
-
-function updatePatchButtons() {
-    const buttons = document.querySelectorAll('#patch-selector .patch-btn');
-    buttons.forEach(b => b.classList.remove('active'));
-
-    if (currentPatch === '*') {
-        // Highlight all buttons (*, A, B, C, D)
-        buttons.forEach(b => b.classList.add('active'));
-    } else {
-        // Highlight only the selected single patch
-        const btn = document.querySelector(`#patch-selector .patch-btn[data-patch="${currentPatch}"]`);
-        if (btn) btn.classList.add('active');
-    }
 }
 
 // Attract mode overlay
@@ -1207,29 +1048,15 @@ async function exitAttractMode() {
     hideAttract();
 }
 
-function showAttract() {
-    if (!attractModeActive) {
-        attractModeActive = true;
-        document.getElementById('attract-overlay').classList.remove('hidden');
-    }
-}
-
-function hideAttract() {
-    if (attractModeActive) {
-        attractModeActive = false;
-        document.getElementById('attract-overlay').classList.add('hidden');
-    }
-}
-
 async function pollStatus() {
-    if (activeAdventure !== 'space') {
+    if (UIState.activeAdventure !== 'space') {
         hideAttract();
         return;
     }
 
     try {
         const status = await API.getStatus();
-        if (status && status.attractmode === 'true' && attractAllowGui && !helpVisible) {
+        if (status && status.attractmode === 'true' && UIState.attractAllowGui && !UIState.helpVisible) {
             showAttract();
         } else {
             hideAttract();
@@ -1240,34 +1067,13 @@ async function pollStatus() {
     }
 }
 
-// Reset modal
-function showResetModal() {
-    const overlay = document.getElementById('restart-overlay');
-    const modal = document.getElementById('restart-modal');
-    const message = document.getElementById('restart-message');
-    modal.classList.remove('hidden');
-    message.classList.add('hidden');
-    overlay.classList.remove('hidden');
-}
-
-function hideResetModal() {
-    document.getElementById('restart-overlay').classList.add('hidden');
-}
-
-function showResetMessage() {
-    document.getElementById('restart-modal').classList.add('hidden');
-    document.getElementById('restart-message').classList.remove('hidden');
-}
-
 // Recording UI
-let recordInterval = null;
-
 function startRecordUI(remaining) {
     const btn = document.getElementById('btn-record');
     btn.classList.add('recording');
     updateRecordButton(remaining);
 
-    recordInterval = setInterval(async () => {
+    UIState.recordInterval = setInterval(async () => {
         try {
             const status = await API.obsRecordStatus();
             if (status && status.recording) {
@@ -1281,18 +1087,11 @@ function startRecordUI(remaining) {
     }, 1000);
 }
 
-function updateRecordButton(remaining) {
-    const btn = document.getElementById('btn-record');
-    btn.innerHTML = `REC<br>${Math.round(remaining)}s`;
-}
-
 function stopRecordUI() {
-    const btn = document.getElementById('btn-record');
-    btn.classList.remove('recording');
-    btn.textContent = 'RECORD';
-    if (recordInterval) {
-        clearInterval(recordInterval);
-        recordInterval = null;
+    resetRecordButton();
+    if (UIState.recordInterval) {
+        clearInterval(UIState.recordInterval);
+        UIState.recordInterval = null;
     }
 }
 
@@ -1344,4 +1143,5 @@ document.addEventListener('click', async (e) => {
         return;
     }
 });
+
 
