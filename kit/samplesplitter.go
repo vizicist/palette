@@ -121,12 +121,14 @@ type SamplePlaybackStart struct {
 	SampleSelector int
 	Velocity       int
 	PitchBend      int
+	VoiceKey       string
 }
 
 type SamplePlaybackStop struct {
 	Patch          string
 	SigilChannel   int
 	SampleSelector int
+	VoiceKey       string
 }
 
 type SamplePlaybackPitch struct {
@@ -155,10 +157,9 @@ func (event *SamplePlaybackStart) Trigger() {
 		return
 	}
 	if !withInEngineSamplesplitter(func(service *ss.Service) {
-		LogInfo("SamplePlaybackStart.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "velocity", event.Velocity, "pitchbend", event.PitchBend)
-		service.StopChannel(event.SigilChannel)
+		LogInfo("SamplePlaybackStart.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "velocity", event.Velocity, "pitchbend", event.PitchBend, "voiceKey", event.VoiceKey)
 		service.MIDIPitchBend(event.SigilChannel, event.PitchBend)
-		if err := service.NoteOn(event.SigilChannel, event.SampleSelector, event.Velocity); err != nil {
+		if err := service.NoteOnVoice(event.SigilChannel, event.SampleSelector, event.Velocity, event.VoiceKey); err != nil {
 			LogWarn("SamplePlaybackStart", "err", err, "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector)
 		}
 	}) {
@@ -171,6 +172,11 @@ func (event *SamplePlaybackStop) Trigger() {
 		return
 	}
 	if !withInEngineSamplesplitter(func(service *ss.Service) {
+		if event.VoiceKey != "" {
+			LogInfo("SamplePlaybackStop.Trigger StopVoice", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "voiceKey", event.VoiceKey)
+			service.StopVoice(event.VoiceKey)
+			return
+		}
 		if event.SampleSelector < 0 {
 			LogInfo("SamplePlaybackStop.Trigger StopChannel", "patch", event.Patch, "sigilChannel", event.SigilChannel)
 			service.StopChannel(event.SigilChannel)

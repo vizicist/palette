@@ -2,6 +2,7 @@ __pycache__/
 .venv/
 *.py[cod]
 *.exe
+!ffmpeg/bin/ffmpeg.exe
 *.cues.json
 *.mp3
 *.wav

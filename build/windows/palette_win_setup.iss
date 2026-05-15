@@ -52,6 +52,10 @@ Source: "ship\ffgl\*"; DestDir: "{app}\ffgl"; Flags: ignoreversion recursesubdir
 Source: "ship\samplesplitter\*"; DestDir: "{app}\samplesplitter"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Source: "ship\keykit\*"; DestDir: "{app}\keykit"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+[InstallDelete]
+Type: files; Name: "{app}\samplesplitter\ffmpeg\bin\ffplay.exe"
+Type: files; Name: "{app}\samplesplitter\ffmpeg\bin\ffprobe.exe"
+
 ; This specifies the Visual C++ Windows Runtime Redistributable to install, it's put in {app}\bin to help debug things.
 [Files]
 Source: "vc15\bin\VC_redist.x64.exe"; DestDir: {app}\bin

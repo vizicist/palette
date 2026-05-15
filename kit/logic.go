@@ -224,7 +224,12 @@ func (logic *PatchLogic) bss2SamplePlaybackStart(ce CursorEvent) *SamplePlayback
 		SampleSelector: sampleSelector,
 		Velocity:       int(velocity),
 		PitchBend:      logic.bss2SamplePitchBendValue(ce),
+		VoiceKey:       bss2SampleVoiceKey(ce),
 	}
+}
+
+func bss2SampleVoiceKey(ce CursorEvent) string {
+	return fmt.Sprintf("cursor-%s-%d", ce.Tag, ce.GID)
 }
 
 func (logic *PatchLogic) bss2SamplePitchBendValue(ce CursorEvent) int {
@@ -260,7 +265,7 @@ func (logic *PatchLogic) scheduleBSS2SampleStart(ac *ActiveCursor, ce CursorEven
 		return
 	}
 	if ac.SamplePlayback != nil {
-		ScheduleAt(atClick, ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: -1})
+		ScheduleAt(atClick, ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: ac.SamplePlayback.SampleSelector, VoiceKey: ac.SamplePlayback.VoiceKey})
 	}
 	ScheduleAt(atClick, ce.Tag, noteOn)
 	ac.SamplePlayback = noteOn
@@ -268,7 +273,7 @@ func (logic *PatchLogic) scheduleBSS2SampleStart(ac *ActiveCursor, ce CursorEven
 
 func (logic *PatchLogic) scheduleBSS2SampleStop(ac *ActiveCursor, ce CursorEvent, atClick Clicks) {
 	if ac.SamplePlayback != nil {
-		ScheduleAt(atClick, ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: -1})
+		ScheduleAt(atClick, ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: ac.SamplePlayback.SampleSelector, VoiceKey: ac.SamplePlayback.VoiceKey})
 		ScheduleAt(atClick+1, ce.Tag, &SamplePlaybackPitch{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, Value: MidiPitchBendCenter})
 		ac.SamplePlayback = nil
 	}
@@ -357,7 +362,7 @@ func (logic *PatchLogic) generateBSS2SampleFromCursor(ce CursorEvent) {
 		if ac.SamplePlayback != nil {
 			LogInfo("BSS2 sample cursor up", "patch", ac.SamplePlayback.Patch, "sigilChannel", ac.SamplePlayback.SigilChannel, "sampleSelector", ac.SamplePlayback.SampleSelector, "click", CurrentClick())
 			theScheduler.DeleteSamplePlaybackStarts(ce.Tag, ac.SamplePlayback.SigilChannel)
-			ScheduleAt(CurrentClick(), ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: -1})
+			ScheduleAt(CurrentClick(), ce.Tag, &SamplePlaybackStop{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, SampleSelector: ac.SamplePlayback.SampleSelector, VoiceKey: ac.SamplePlayback.VoiceKey})
 			ScheduleAt(CurrentClick()+1, ce.Tag, &SamplePlaybackPitch{Patch: ac.SamplePlayback.Patch, SigilChannel: ac.SamplePlayback.SigilChannel, Value: MidiPitchBendCenter})
 			ac.SamplePlayback = nil
 		} else {

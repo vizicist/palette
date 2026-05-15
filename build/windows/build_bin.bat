@@ -6,6 +6,9 @@ if not "%PALETTE_SOURCE%" == "" goto keepgoing1
 	goto getout
 :keepgoing1
 
+call :check_git_lfs
+if errorlevel 1 goto getout
+
 if not "%VSINSTALLDIR%" == "" goto keepgoing2
 	call :set_msdev_env
 	if errorlevel 1 goto getout
@@ -126,9 +129,23 @@ if not exist "%PALETTE_SOURCE%\cmd\samplesplitter\samplesplitter.py" (
 	echo     %PALETTE_SOURCE%\cmd\samplesplitter
 	goto getout
 )
+if not exist "%PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe" (
+	echo The bundled ffmpeg.exe is missing under:
+	echo     %PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe
+	echo This file is tracked with Git LFS. Install Git LFS and run "git lfs pull".
+	goto getout
+)
+call :check_lfs_file "%PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe"
+if errorlevel 1 goto getout
 robocopy "%PALETTE_SOURCE%\cmd\samplesplitter" "%ship%\samplesplitter" /E /XD .git __pycache__ /XF *.pyc *.exe >nul
 if errorlevel 8 (
 	echo Failed to copy samplesplitter.
+	goto getout
+)
+mkdir "%ship%\samplesplitter\ffmpeg\bin" >nul 2>&1
+copy "%PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe" "%ship%\samplesplitter\ffmpeg\bin\ffmpeg.exe" >nul
+if errorlevel 1 (
+	echo Failed to copy bundled ffmpeg.exe.
 	goto getout
 )
 if exist "%PALETTE_SOURCE%\data_default\samplesplitter" (
@@ -246,6 +263,31 @@ echo Expected gcc.exe and g++.exe under:
 echo     %MINGW64_BIN%
 echo Install MinGW-w64 there, or update build\windows\build_bin.bat if your install lives somewhere else.
 exit /b 1
+
+:check_git_lfs
+git lfs version >nul 2>&1
+if errorlevel 1 (
+	echo Git LFS is required to build the Palette installer because ffmpeg.exe is tracked with Git LFS.
+	echo Install Git LFS, run "git lfs install", then run "git lfs pull" in the Palette repo.
+	exit /b 1
+)
+exit /b 0
+
+:check_lfs_file
+set "LFSFILE=%~1"
+for %%F in ("%LFSFILE%") do set "LFSFILE_SIZE=%%~zF"
+if "%LFSFILE_SIZE%" == "" (
+	echo Unable to check file size for:
+	echo     %LFSFILE%
+	exit /b 1
+)
+if %LFSFILE_SIZE% LSS 1000000 (
+	echo The bundled ffmpeg.exe appears to be a Git LFS pointer instead of the real binary:
+	echo     %LFSFILE%
+	echo Run "git lfs pull" in the Palette repo, then build again.
+	exit /b 1
+)
+exit /b 0
 
 :find_inno_setup
 set "ISCC_EXE="
