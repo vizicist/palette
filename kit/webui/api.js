@@ -1,4 +1,4 @@
-const API = {
+export const API = {
     async call(api, params = {}) {
         const body = JSON.stringify({ api, ...params });
         console.log('API call:', api, body);
@@ -81,3 +81,5 @@ const API = {
     reloadTransmissionSet() { return this.call('global.transmissionreload'); },
     cursorActivity() { return this.call('cursor.activity'); }
 };
+
+window.API = API;

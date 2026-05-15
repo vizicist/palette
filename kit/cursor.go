@@ -29,19 +29,18 @@ type CursorEvent struct {
 
 // ActiveCursor is an OSC message
 type ActiveCursor struct {
-	Current        CursorEvent
-	Previous       CursorEvent
-	NoteOn         *NoteOn
-	NoteOnClick    Clicks
-	Patch          *Patch
-	SampleVoice    *StepperSampleVoice
-	SamplePlayback *SamplePlaybackStart
-	Button         string
-	loopIt         bool
-	loopBeats      int
-	loopFade       float64
-	maxZ           float64
-	pitchOffset    int32
+	Current              CursorEvent
+	Previous             CursorEvent
+	NoteOn               *NoteOn
+	NoteOnClick          Clicks
+	Patch                *Patch
+	TransmissionPlayback *TransmissionPlayback
+	Button               string
+	loopIt               bool
+	loopBeats            int
+	loopFade             float64
+	maxZ                 float64
+	pitchOffset          int32
 }
 
 type CursorManager struct {

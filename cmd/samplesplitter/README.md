@@ -1,6 +1,20 @@
-# samplesplitter
+# SampleSplitter
 
 Polyphonic MIDI-driven MP3 sample splitter and player with a browser UI.
+
+## Implementation Status
+
+The Go implementation in this directory is the reference implementation for
+Palette and for new SampleSplitter work.
+
+The Python implementation (`samplesplitter.py` plus helper scripts) is retained
+as a legacy standalone tool. It is useful for comparison, manual testing, and
+running outside Palette, but new behavior should be implemented in Go first.
+Palette builds and runtime should use the Go `samplesplitter.exe` or the
+in-engine Go service, not `samplesplitter.py`.
+
+See `CONTRACT.md` for the compatibility contract that both implementations
+should preserve where practical.
 
 ## Features
 
@@ -9,34 +23,37 @@ Polyphonic MIDI-driven MP3 sample splitter and player with a browser UI.
 - Waveform visualisation with labelled split markers (MIDI note names + timestamps)
 - Each split mapped to a MIDI note (starting at C3 by default)
 - Polyphonic playback — multiple splits simultaneously
-- Pitch bend for pitch shifting (±2 semitones)
+- Pitch bend for pitch shifting
 - Velocity controls volume
 - Note-off stops playback
 - MIDI port selectable in the UI
 
-## Requirements
+## Go Usage
 
-- Python 3.11 on Windows
-- [ffmpeg](https://ffmpeg.org/)
-- `pyo` — audio engine
-- `mido` + `python-rtmidi` — MIDI input
+From this directory:
 
 ```bash
-py -3.11 -m pip install --user pyo mido python-rtmidi
-brew install ffmpeg   # macOS
+go run . --dir /path/to/mp3s
 ```
 
-On Windows, `pyo` has prebuilt wheels for Python 3.11. Python 3.13 may try to
-compile `pyo` from source and fail unless native audio headers such as
-PortAudio are installed.
+Build:
 
-## Usage
+```bash
+go build .
+```
+
+The Go version uses the bundled `ffmpeg/bin/ffmpeg.exe` on Windows when
+available, then falls back to `ffmpeg` on PATH.
+
+## Legacy Python Usage
 
 ```bash
 py -3.11 samplesplitter.py --dir /path/to/mp3s
 ```
 
-Opens a browser at `http://localhost:9876` automatically.
+The Python version requires Python 3.11, `pyo`, `mido`, `python-rtmidi`, and
+`ffmpeg`. It opens a browser at `http://localhost:9876` automatically unless
+`--no-open` is supplied.
 
 When run from the Palette source tree without `--dir`, the default MP3s are
 loaded from `../../data_default/samplesplitter/mp3s`. Installed builds still use
@@ -56,4 +73,4 @@ Options:
 | Note on (base + N) | Play split N |
 | Note off | Stop that split |
 | Velocity | Volume (0–127 → 0–1) |
-| Pitch bend | Pitch shift ±2 semitones |
+| Pitch bend | Pitch shift |
