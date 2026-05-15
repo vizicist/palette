@@ -239,6 +239,10 @@ func (s *Service) State() *State {
 }
 
 func (s *Service) NoteOn(channel, note, velocity int) error {
+	return s.NoteOnVoice(channel, note, velocity, "")
+}
+
+func (s *Service) NoteOnVoice(channel, note, velocity int, voiceKey string) error {
 	if s == nil || s.state == nil {
 		return errors.New("samplesplitter service is not initialized")
 	}
@@ -253,6 +257,9 @@ func (s *Service) NoteOn(channel, note, velocity int) error {
 	req, err := s.state.PlanNoteOn(note, velocity, channel)
 	if err != nil {
 		return err
+	}
+	if voiceKey != "" {
+		req.VoiceKey = voiceKey
 	}
 	if s.audio == nil {
 		return errors.New("audio backend is not initialized")
@@ -273,6 +280,18 @@ func (s *Service) NoteOff(channel, note int) {
 	s.state.PlanNoteOff(note, channel)
 	if s.audio != nil {
 		s.audio.StopNote(channel, note)
+	}
+}
+
+func (s *Service) StopVoice(voiceKey string) {
+	if s == nil || voiceKey == "" {
+		return
+	}
+	if s.state != nil {
+		s.state.RecordMIDIActivity()
+	}
+	if s.audio != nil {
+		s.audio.StopVoice(voiceKey)
 	}
 }
 
