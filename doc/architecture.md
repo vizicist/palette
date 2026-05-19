@@ -12,7 +12,7 @@ It turns multitouch pad gestures into synchronized sound, visuals, loops,
 sample playback, preset changes, and process control. The main runtime is a Go
 engine that serves a browser UI, receives input from Sensel Morph pads and MIDI,
 drives Bidule/Omnisphere by MIDI, drives Resolume/FFGL visuals by OSC, and now
-also hosts the Go SampleSplitter service for in-engine Transmission playback.
+also hosts the Go SampleSplitter service for in-engine SamplePlayback.
 
 ## High-Level Diagram
 
@@ -35,7 +35,7 @@ flowchart TB
         Stepper["Stepper\n8-step sequencer state"]
         StepperCfg["Stepper Config\nroute/mode selection"]
         StepperPlayer["Stepper Player\noutput scheduling"]
-        Transmission["Transmission Domain\nBSS2 cursor-to-sample playback"]
+        SamplePlayback["SamplePlayback Domain\nBSS2 cursor-to-sample playback"]
         ProcMgr["Process Manager\nBidule, Resolume, GUI, OBS, etc."]
         SSplitter["In-engine SampleSplitter\npkg/samplesplitter.Service"]
     end
@@ -76,11 +76,11 @@ flowchart TB
     OSCIn --> Router
     PatchLogic --> Scheduler
     PatchLogic --> Stepper
-    PatchLogic --> Transmission
+    PatchLogic --> SamplePlayback
     Stepper --> StepperPlayer
     StepperCfg --> Stepper
     StepperCfg --> StepperPlayer
-    Transmission --> Scheduler
+    SamplePlayback --> Scheduler
     Scheduler --> Bidule
     Scheduler --> Resolume
     Scheduler --> FFGL
@@ -124,7 +124,7 @@ SampleSplitter now has two relevant forms:
 
 - The in-engine Go service from `pkg/samplesplitter`, started through
   `global.process.samplesplitter`. This is the path used by Palette
-  Transmission playback.
+  SamplePlayback.
 - The standalone Go executable in `cmd/samplesplitter`, with the same browser
   UI and MIDI-facing behavior for standalone use. The Python implementation is
   retained in `cmd/samplesplitter` as a legacy standalone reference and should
@@ -148,7 +148,7 @@ The engine exposes a JSON API at `http://127.0.0.1:3330/api`. Calls use the
 `type.action` form. Major API groups include:
 
 - `global.*` for global parameters, process control, status, boot values, and
-  Transmission reloads.
+  SamplePlayback reloads.
 - `quad.*` for loading four-patch presets.
 - `patch.*` for loading and editing one or more patch presets.
 - `saved.*` for listing saved presets and parameter definitions.
@@ -169,7 +169,7 @@ legal names, types, defaults, and UI metadata. Runtime values are held in
 Important saved data categories are:
 
 - Global parameters, including process enable flags, logging, GUI mode,
-  Transmission settings, and boot-time defaults.
+  SamplePlayback settings, and boot-time defaults.
 - Quad presets, which describe all four patches as a single performance state.
 - Patch presets, which describe sound, visual, effect, and miscellaneous
   behavior for a single pad.
@@ -189,7 +189,7 @@ these sources into the same runtime flow where possible.
 The cursor manager tracks active touches and their associated state. A cursor
 event is then interpreted by patch logic for the relevant A/B/C/D pad. Patch
 logic decides whether that cursor is controlling the normal Oscillation/Synth
-path, the BSS2 Transmission path, visual output, recording into Stepper, or some
+path, the BSS2 SamplePlayback path, visual output, recording into Stepper, or some
 combination of those.
 
 ## Timing and Scheduling
@@ -211,11 +211,11 @@ parameters determine synth selection, pitch, velocity, channel, and gesture
 behavior. Bidule receives MIDI through configured virtual MIDI ports, typically
 LoopBe30 on Windows.
 
-Transmission playback is the newer direct sample path. In BSS2, when a pad is
-in Transmission mode, cursor gestures are interpreted by `TransmissionDomain`
+SamplePlayback is the newer direct sample path. In BSS2, when a pad is
+in the UI's Transmission mode, cursor gestures are interpreted by `SamplePlaybackDomain`
 instead of being sent only as normal synth notes. Horizontal finger position
 selects the sample, vertical position controls pitch bend, and pressure controls
-volume. Playback is quantized according to the Transmission quantization
+volume. Playback is quantized according to the SamplePlayback quantization
 parameter. The scheduler sends the resulting sample start, pitch, and stop
 events to the in-engine SampleSplitter service.
 
@@ -233,7 +233,7 @@ pipeline.
 
 Each A/B/C/D patch maps to an independent visual layer. Patch and effect
 parameters control shape, color, sizing, fades, z behavior, and Resolume effect
-parameters. In Transmission mode, the visual shape can be forced to the sigil
+parameters. In the UI's Transmission mode, the visual shape can be forced to the sigil
 for the corresponding pad while preserving the currently selected preset's other
 sound and effect settings.
 
@@ -247,8 +247,8 @@ For normal Oscillation/Synth behavior, the loop records cursor-driven notes and
 visual behavior through the existing scheduling infrastructure. This is why the
 loop can affect both audio and visuals without a separate sequencer path.
 
-Transmission playback has been integrated with this same timing model at the
-Palette layer. Sample starts are quantized to the selected Transmission
+SamplePlayback has been integrated with this same timing model at the
+Palette layer. Sample starts are quantized to the selected SamplePlayback
 quantization interval, and the sample voice lifecycle is explicit so old/stale
 stop events cannot terminate a newer voice for the same pad.
 
@@ -267,12 +267,12 @@ during that step. Stepper playback is separated from Stepper sequencing:
 - `StepperPlayer` owns output scheduling to Bidule and/or samples.
 
 Routes can be off, Bidule, SampleSplitter, or both. Stepper sequencing is
-disabled on the BSS2 initial page because BSS2 Transmission behavior is direct
+disabled on the BSS2 initial page because BSS2 SamplePlayback behavior is direct
 cursor-to-sample playback rather than grid recording.
 
-## Transmission and SampleSplitter
+## SamplePlayback and SampleSplitter
 
-The Transmission domain is Palette-facing and lives in `kit/transmission.go`.
+The SamplePlayback domain is Palette-facing and lives in `kit/sample_playback.go`.
 It translates BSS2 cursor events into sample playback intent. It does not split
 audio itself; it uses the SampleSplitter service as the playback engine.
 
@@ -286,7 +286,7 @@ SampleSplitter itself lives in `pkg/samplesplitter`. It is responsible for:
 - Exposing a browser UI/API on port 9876.
 - Playing audio directly through the selected output device.
 
-Palette uses the in-engine service directly for Transmission playback, with MIDI
+Palette uses the in-engine service directly for SamplePlayback, with MIDI
 disabled for that path. The standalone Go SampleSplitter still supports MIDI
 triggering for independent testing and non-Palette use.
 
@@ -307,7 +307,7 @@ The UI is split into small browser modules:
 Current UI concepts include the original Space Palette Pro page, the Sequencer
 page, and the newer BSS2 page controlled by `global.initialpage` values `pro`,
 `bss1`, and `bss2`. The BSS2 UI presents virtual pads, Transmission/Oscillation
-mode toggles, Transmission controls, and Oscillation/Photonic preset controls.
+mode toggles, SamplePlayback controls, and Oscillation/Photonic preset controls.
 
 ## Process Management
 
@@ -368,5 +368,5 @@ quantization, cursor mapping, and loop integration should stay in the `kit`
 domain layer.
 
 This separation is what allows the same SampleSplitter implementation to serve
-both standalone MIDI use and in-engine Transmission playback without forcing
-Palette to route its own Transmission gestures through MIDI.
+both standalone MIDI use and in-engine SamplePlayback without forcing Palette to
+route its own sample gestures through MIDI.

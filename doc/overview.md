@@ -22,7 +22,7 @@ For a deeper module-by-module map, see
 - Reading Sensel Morph pad input and other cursor/MIDI/OSC inputs.
 - Running the click clock, scheduler, looping system, and Stepper sequencer.
 - Converting cursor gestures into MIDI notes, visual OSC messages, and direct
-  Transmission sample playback.
+  SamplePlayback.
 - Serving the browser-based UI at `http://127.0.0.1:3330/`.
 - Exposing the local JSON API at `http://127.0.0.1:3330/api`.
 - Loading and saving global, quad, and patch presets.
@@ -30,8 +30,8 @@ For a deeper module-by-module map, see
   the in-engine SampleSplitter service.
 
 The normal Oscillation/Synth path sends MIDI to Bidule/Omnisphere and sends OSC
-to Resolume and the Palette FFGL plugin. The newer Transmission path uses the Go
-SampleSplitter service inside the engine for direct sample playback from cursor
+to Resolume and the Palette FFGL plugin. The newer SamplePlayback path uses the
+Go SampleSplitter service inside the engine for direct sample playback from cursor
 gestures.
 
 ## Browser UI
@@ -41,7 +41,7 @@ The current UI is browser-based and embedded directly into `palette_engine` from
 surface.
 
 The UI supports preset selection, parameter editing, advanced mode, virtual pad
-mode selection, Transmission controls, Stepper/Sequencer display, and startup
+mode selection, SamplePlayback controls, Stepper/Sequencer display, and startup
 page selection through `global.initialpage`.
 
 Because the UI files are embedded, changes under `kit/webui` require rebuilding
@@ -76,7 +76,7 @@ SampleSplitter is now primarily a Go implementation.
 
 There are two supported Go paths:
 
-- The in-engine service from `pkg/samplesplitter`, used by Palette Transmission
+- The in-engine service from `pkg/samplesplitter`, used by Palette SamplePlayback
   playback.
 - The standalone executable in `cmd/samplesplitter`, useful for direct browser
   and MIDI-driven sample playback outside the full Palette runtime.

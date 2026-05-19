@@ -1,6 +1,6 @@
 export const stepperNumSteps = 8;
 
-export const transmissionQuantValues = [0, 0.25, 0.5, 1];
+export const samplePlaybackQuantValues = [0, 0.25, 0.5, 1];
 
 export const patchSigils = {
     A: 'chaos',

@@ -88,42 +88,43 @@ func ExecuteAPIFromJSON(rawjson string) (string, error) {
 type globalAPIHandler func(api string, apiargs map[string]string) (string, error)
 
 var globalAPIHandlers = map[string]globalAPIHandler{
-	"debugnil":           globalDebugNil,
-	"debugsched":         globalDebugSched,
-	"debugpending":       globalDebugPending,
-	"status":             globalStatus,
-	"presetstatus":       globalPresetStatus,
-	"attract":            globalAttract,
-	"activate":           globalActivate,
-	"load":               globalLoad,
-	"getboot":            globalGetBoot,
-	"getbootwithprefix":  globalGetBoot,
-	"setboot":            globalSetBoot,
-	"setbootfromcurrent": globalSetBootFromCurrent,
-	"set":                globalSet,
-	"setparams":          globalSetParams,
-	"get":                globalGet,
-	"getwithprefix":      globalGet,
-	"showclip":           globalShowClip,
-	"startrecording":     globalStartRecording,
-	"stoprecording":      globalStopRecording,
-	"startplayback":      globalStartPlayback,
-	"save":               globalSave,
-	"done":               globalDone,
-	"audio_reset":        globalAudioReset,
-	"sendlogs":           globalSendLogs,
-	"log":                globalLog,
-	"midi_midifile":      globalRemoved,
-	"echo":               globalEcho,
-	"debug":              globalRemoved,
-	"set_tempo_factor":   globalSetTempoFactor,
-	"transmissionreload": globalTransmissionReload,
-	"playcursor":         globalPlayCursor,
-	"obsrecord":          globalObsRecord,
-	"obsrecordstop":      globalObsRecordStop,
-	"obsrecordstatus":    globalObsRecordStatus,
-	"obssetup":           globalObsSetup,
-	"obsping":            globalObsPing,
+	"debugnil":             globalDebugNil,
+	"debugsched":           globalDebugSched,
+	"debugpending":         globalDebugPending,
+	"status":               globalStatus,
+	"presetstatus":         globalPresetStatus,
+	"attract":              globalAttract,
+	"activate":             globalActivate,
+	"load":                 globalLoad,
+	"getboot":              globalGetBoot,
+	"getbootwithprefix":    globalGetBoot,
+	"setboot":              globalSetBoot,
+	"setbootfromcurrent":   globalSetBootFromCurrent,
+	"set":                  globalSet,
+	"setparams":            globalSetParams,
+	"get":                  globalGet,
+	"getwithprefix":        globalGet,
+	"showclip":             globalShowClip,
+	"startrecording":       globalStartRecording,
+	"stoprecording":        globalStopRecording,
+	"startplayback":        globalStartPlayback,
+	"save":                 globalSave,
+	"done":                 globalDone,
+	"audio_reset":          globalAudioReset,
+	"sendlogs":             globalSendLogs,
+	"log":                  globalLog,
+	"midi_midifile":        globalRemoved,
+	"echo":                 globalEcho,
+	"debug":                globalRemoved,
+	"set_tempo_factor":     globalSetTempoFactor,
+	"sampleplaybackreload": globalSamplePlaybackReload,
+	"transmissionreload":   globalSamplePlaybackReload,
+	"playcursor":           globalPlayCursor,
+	"obsrecord":            globalObsRecord,
+	"obsrecordstop":        globalObsRecordStop,
+	"obsrecordstatus":      globalObsRecordStatus,
+	"obssetup":             globalObsSetup,
+	"obsping":              globalObsPing,
 }
 
 func ExecuteGlobalAPI(api string, apiargs map[string]string) (string, error) {
@@ -218,6 +219,7 @@ func globalGetBoot(api string, apiargs map[string]string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	name = canonicalGlobalParamName(name)
 	params, err := LoadParamValuesOfCategory("global", "_Boot")
 	if err != nil {
 		return "", err
@@ -233,6 +235,7 @@ func globalSetBoot(api string, apiargs map[string]string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	name = canonicalGlobalParamName(name)
 	params, err := LoadParamValuesOfCategory("global", "_Boot")
 	if err != nil {
 		return "", err
@@ -290,6 +293,7 @@ func globalGet(api string, apiargs map[string]string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	name = canonicalGlobalParamName(name)
 	if api == "getwithprefix" {
 		return GlobalParams.GetWithPrefix(name)
 	}
@@ -449,7 +453,7 @@ func globalSetTempoFactor(api string, apiargs map[string]string) (string, error)
 	return "", nil
 }
 
-func globalTransmissionReload(api string, apiargs map[string]string) (string, error) {
+func globalSamplePlaybackReload(api string, apiargs map[string]string) (string, error) {
 	if err := ReloadInEngineSamplesplitterSamples(); err != nil {
 		return "", err
 	}
@@ -527,11 +531,25 @@ func ActivateGlobalParam(name string) {
 }
 
 func SetAndApplyGlobalParam(name string, value string) (err error) {
+	name = canonicalGlobalParamName(name)
 	err = GlobalParams.SetParamWithString(name, value)
 	if err != nil {
 		return err
 	}
 	return ApplyGlobalParam(name, value)
+}
+
+func canonicalGlobalParamName(name string) string {
+	switch name {
+	case "global.transmissionquant":
+		return "global.sampleplaybackquant"
+	case "global.transmissioncompressed":
+		return "global.sampleplaybackcompressed"
+	case "global.transmissionwords":
+		return "global.sampleplaybackwords"
+	default:
+		return name
+	}
 }
 
 func ApplyGlobalParam(name string, value string) (err error) {
@@ -633,10 +651,10 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			return err
 		}
 
-	case "global.transmissioncompressed":
+	case "global.sampleplaybackcompressed":
 		SetInEngineSamplesplitterCompressed(IsTrueValue(value))
 
-	case "global.transmissionwords":
+	case "global.sampleplaybackwords":
 		words := int64(2)
 		if GetInt(value, &words) {
 			if words < 1 {
@@ -646,7 +664,7 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			}
 			SetInEngineSamplesplitterWords(int(words))
 			if err := ReloadInEngineSamplesplitterSamples(); err != nil {
-				LogWarn("global.transmissionwords reload failed", "err", err)
+				LogWarn("global.sampleplaybackwords reload failed", "err", err)
 			}
 		}
 

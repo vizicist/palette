@@ -1,7 +1,8 @@
 import { API } from './api.js';
-import { stepperNumSteps, transmissionQuantValues, UIState } from './state.js';
+import { stepperNumSteps, samplePlaybackQuantValues, UIState } from './state.js';
 import {
     applyInitialPageMode,
+    fitAppTitle,
     flashSigilForPatch,
     hideAttract,
     hideHelp,
@@ -58,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupPatchSelector();
     setupSigilSequencer();
     setupPalettePads();
-    setupTransmissionControls();
+    setupSamplePlaybackControls();
     setupTempoControl();
     await startInitialPage();
 
@@ -67,6 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(updateRecordButtonVisibility, 10000);
 
     // Start polling engine status every 2 seconds
+    setInterval(syncInitialPageFromEngine, 2000);
     setInterval(pollStatus, 2000);
     setInterval(refreshStepperStatus, 1000);
     setInterval(refreshCursorActivity, 200);
@@ -75,6 +77,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function startInitialPage() {
     await startSpacePalette();
+}
+
+async function syncInitialPageFromEngine() {
+    try {
+        const page = await API.call('global.get', { name: 'global.initialpage' });
+        const previous = UIState.initialPage;
+        UIState.setInitialPage(page);
+        if (UIState.initialPage === previous) return;
+        applyInitialPageMode();
+        fitAppTitle();
+        if (UIState.activeAdventure === 'space') {
+            setAdvancedMode(UIState.advancedMode, false);
+            updateRitualNav();
+            updatePresetButtons();
+        }
+    } catch (e) {
+        // Ignore transient API errors; the next poll will try again.
+    }
 }
 
 function setupRitualNav() {
@@ -275,10 +295,10 @@ function setupPalettePads() {
     });
 }
 
-function setupTransmissionControls() {
-    const quant = document.getElementById('transmission-quant');
-    const words = document.getElementById('transmission-words');
-    const newSet = document.getElementById('transmission-newset');
+function setupSamplePlaybackControls() {
+    const quant = document.getElementById('sample-playback-quant');
+    const words = document.getElementById('sample-playback-words');
+    const newSet = document.getElementById('sample-playback-newset');
     if (!quant) return;
 
     const indexForQuant = (value) => {
@@ -286,7 +306,7 @@ function setupTransmissionControls() {
         if (!Number.isFinite(numeric)) return 2;
         let bestIndex = 0;
         let bestDistance = Infinity;
-        transmissionQuantValues.forEach((candidate, index) => {
+        samplePlaybackQuantValues.forEach((candidate, index) => {
             const distance = Math.abs(candidate - numeric);
             if (distance < bestDistance) {
                 bestIndex = index;
@@ -296,18 +316,18 @@ function setupTransmissionControls() {
         return bestIndex;
     };
     const setFromValue = (value) => {
-        quant.value = String(transmissionQuantValues[indexForQuant(value)]);
+        quant.value = String(samplePlaybackQuantValues[indexForQuant(value)]);
     };
 
-    API.call('global.get', { name: 'global.transmissionquant' })
+    API.call('global.get', { name: 'global.sampleplaybackquant' })
         .then(setFromValue)
         .catch(() => setFromValue(0.5));
 
     const sendQuant = () => {
         const index = indexForQuant(quant.value);
-        quant.value = String(transmissionQuantValues[index]);
-        API.setGlobalParam('global.transmissionquant', String(transmissionQuantValues[index]))
-            .catch(err => console.error('Failed to set transmission quantize:', err));
+        quant.value = String(samplePlaybackQuantValues[index]);
+        API.setGlobalParam('global.sampleplaybackquant', String(samplePlaybackQuantValues[index]))
+            .catch(err => console.error('Failed to set sample playback quantize:', err));
     };
 
     quant.addEventListener('change', sendQuant);
@@ -318,7 +338,7 @@ function setupTransmissionControls() {
             if (!Number.isFinite(numeric)) return 2;
             return Math.max(1, Math.min(5, numeric));
         };
-        API.call('global.get', { name: 'global.transmissionwords' })
+        API.call('global.get', { name: 'global.sampleplaybackwords' })
             .then(value => {
                 words.value = String(clampWords(value));
             })
@@ -334,7 +354,7 @@ function setupTransmissionControls() {
                 newSet.textContent = 'Busy';
             }
             try {
-                await API.setGlobalParam('global.transmissionwords', String(selected));
+                await API.setGlobalParam('global.sampleplaybackwords', String(selected));
                 await refreshStepperStatus();
                 if (newSet) {
                     newSet.textContent = 'Ready';
@@ -343,7 +363,7 @@ function setupTransmissionControls() {
                     }, 1200);
                 }
             } catch (err) {
-                console.error('Failed to set transmission word count:', err);
+                console.error('Failed to set sample playback word count:', err);
                 if (newSet) newSet.textContent = 'Error';
             } finally {
                 words.disabled = false;
@@ -359,14 +379,14 @@ function setupTransmissionControls() {
             newSet.textContent = 'Busy';
             const busyStartedAt = performance.now();
             try {
-                await API.reloadTransmissionSet();
+                await API.reloadSamplePlaybackSet();
                 await refreshStepperStatus();
                 const remainingBusyMs = Math.max(0, 1000 - (performance.now() - busyStartedAt));
                 if (remainingBusyMs > 0) {
                     await new Promise(resolve => setTimeout(resolve, remainingBusyMs));
                 }
             } catch (err) {
-                console.error('Failed to load new transmission set:', err);
+                console.error('Failed to load new sample playback set:', err);
                 newSet.textContent = 'Error';
                 setTimeout(() => {
                     if (newSet.textContent === 'Error') newSet.textContent = newSetLabel;
@@ -912,6 +932,7 @@ function setupControls() {
     document.getElementById('btn-complete-reset').addEventListener('click', async () => {
         // In advanced mode, COMPLETE RESET returns to normal mode
         if (UIState.advancedMode) {
+            await syncInitialPageFromEngine();
             setAdvancedMode(false);
             return;
         }

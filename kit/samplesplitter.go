@@ -35,8 +35,8 @@ func StartInEngineSamplesplitter() error {
 	config.MP3Dir = SamplesplitterMP3Dir(runtimeDir)
 	config.MIDIPortName = ""
 	config.FFmpegPath = ss.FindFFmpeg(runtimeDir)
-	config.Compressed, _ = GetParamBool("global.transmissioncompressed")
-	if words, err := GetParamInt("global.transmissionwords"); err == nil {
+	config.Compressed = samplePlaybackCompressed()
+	if words, err := samplePlaybackWords(); err == nil {
 		config.DefaultWords = words
 	}
 	service, err := ss.NewService(ss.ServiceOptions{
@@ -59,6 +59,31 @@ func StartInEngineSamplesplitter() error {
 	inEngineSamplesplitter.cancel = cancel
 	LogInfo("StartInEngineSamplesplitter", "mp3Dir", config.MP3Dir, "ffmpeg", config.FFmpegPath)
 	return nil
+}
+
+func samplePlaybackCompressed() bool {
+	enabled, err := GetParamBool("global.sampleplaybackcompressed")
+	if err == nil {
+		return enabled
+	}
+	enabled, err = GetParamBool("global.transmissioncompressed")
+	if err == nil {
+		return enabled
+	}
+	LogIfError(err)
+	return false
+}
+
+func samplePlaybackWords() (int, error) {
+	words, err := GetParamInt("global.sampleplaybackwords")
+	if err == nil {
+		return words, nil
+	}
+	words, legacyErr := GetParamInt("global.transmissionwords")
+	if legacyErr == nil {
+		return words, nil
+	}
+	return 2, err
 }
 
 func StopInEngineSamplesplitter() {
@@ -95,6 +120,11 @@ func SetInEngineSamplesplitterWords(words int) bool {
 }
 
 func ReloadInEngineSamplesplitterSamples() error {
+	if !InEngineSamplesplitterRunning() {
+		if err := StartInEngineSamplesplitter(); err != nil {
+			return err
+		}
+	}
 	var reloadErr error
 	if !withInEngineSamplesplitter(func(service *ss.Service) {
 		reloadErr = service.ReloadSigilSamples()
