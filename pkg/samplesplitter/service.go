@@ -160,7 +160,7 @@ func (s *Service) ReloadSigilSamples() error {
 	if s == nil || s.state == nil {
 		return errors.New("samplesplitter service is not initialized")
 	}
-	s.state.SetBusy(true, "Loading transmissions")
+	s.state.SetBusy(true, "Loading samples")
 	defer s.state.SetBusy(false, "")
 	if s.audio != nil {
 		s.audio.StopAll()

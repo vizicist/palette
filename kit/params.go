@@ -168,6 +168,9 @@ func (vals *ParamValues) ApplyValuesFromMap(category string, paramsmap map[strin
 			LogInfo("New value format", "name", fullname, "value", value)
 		}
 		paramCategory, _ := SavedNameSplit(fullname)
+		if paramCategory == "global" {
+			fullname = canonicalGlobalParamName(fullname)
+		}
 
 		// Only include ones that match the category.
 		// If the category is "patch" or "quad", match any of sound/visual/effect/misc.

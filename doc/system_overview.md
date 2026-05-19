@@ -16,7 +16,7 @@ the sound and visual systems.
 The browser UI is the main human control surface. It is served by the engine at
 `http://127.0.0.1:3330/` and talks back to the engine through the local API. It
 is used for preset selection, parameter editing, pad mode selection,
-Transmission controls, and sequencer views.
+SamplePlayback controls, and sequencer views.
 
 Bidule is the main synth host. Palette sends MIDI to Bidule, and Bidule routes
 that MIDI to Omnisphere instances and other synth/effect chains.
@@ -27,7 +27,7 @@ processes the visual layers.
 
 SampleSplitter is the sample playback system. In the normal Palette runtime it
 runs as an in-engine Go service, driven directly by cursor events for
-Transmission playback. It also has a standalone Go executable with its own
+SamplePlayback. It also has a standalone Go executable with its own
 browser UI on port 9876 for independent use and MIDI testing.
 
 `palette` is the command-line tool. It controls the engine through the same API
@@ -84,7 +84,7 @@ flowchart LR
 4. The Palette FFGL plugin draws the shape or sigil.
 5. Resolume applies the rest of the visual effect chain and outputs the image.
 
-### Pad Gesture to Transmission Samples
+### Pad Gesture to SamplePlayback
 
 1. A pad is set to Transmission mode in the browser UI.
 2. The performer touches or moves on that pad.

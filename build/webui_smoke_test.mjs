@@ -149,10 +149,10 @@ for (const id of [
     'btn-nav-sigil',
     'sigil-screen',
     'palette-pad-stage',
-    'transmission-controls-panel',
-    'transmission-quant',
-    'transmission-words',
-    'transmission-newset',
+    'sample-playback-controls-panel',
+    'sample-playback-quant',
+    'sample-playback-words',
+    'sample-playback-newset',
     'preset-grid'
 ]) {
     assert(index.includes(`id="${id}"`), `index contains #${id}`);
@@ -161,6 +161,7 @@ for (const id of [
 assert(app.includes("import { API } from './api.js';"), 'app imports API module');
 assert(app.includes("from './state.js';"), 'app imports UI state module');
 assert(app.includes("from './render.js';"), 'app imports render module');
+assert(app.includes('syncInitialPageFromEngine'), 'app syncs initial page changes from engine');
 assert(api.includes('window.API = API'), 'api preserves window.API for browser-console use');
 assert(state.includes('export const UIState'), 'state exports UIState');
 assert(render.includes('export function updatePalettePadRoute'), 'render exports pad route rendering');

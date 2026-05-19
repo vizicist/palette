@@ -34,7 +34,7 @@ type ActiveCursor struct {
 	NoteOn               *NoteOn
 	NoteOnClick          Clicks
 	Patch                *Patch
-	TransmissionPlayback *TransmissionPlayback
+	ActiveSamplePlayback *ActiveSamplePlayback
 	Button               string
 	loopIt               bool
 	loopBeats            int
@@ -596,19 +596,13 @@ func (cm *CursorManager) DeleteActiveCursor(gid int) {
 	if !ok {
 		// LogWarn("DeleteActiveCursor: gid not found in ActiveCursor", "gid", gid)
 	} else {
-		// LogInfo("DeleteActiveCursor: gid found","noteon",ac.NoteOn,"gid",gid)
-		if ac.NoteOn != nil {
-			// LogInfo("DeleteActiveCursor: gid found SENDING NOTEOFF!","noteon",ac.NoteOn,"gid",gid)
-			noteOff := NewNoteOffFromNoteOn(ac.NoteOn)
-			ac.NoteOn.Synth.SendNoteToMidiOutput(noteOff)
-			// LogInfo("DeleteActiveCursor: gid found AFTER NOTEOFF!","noteoff",noteOff,"gid",gid)
-		} else {
-			LogWarn("DeleteActiveCursor: gid found, NO NOTEON?", "gid", gid)
-		}
-
+		delete(cm.activeCursors, gid)
 	}
-	delete(cm.activeCursors, gid)
 	cm.activeMutex.Unlock()
+
+	if ok {
+		cleanupDeletedActiveCursor(ac, "DeleteActiveCursor")
+	}
 }
 
 // DeleteActiveCursorIfZLessThan deletes the ActiveCursor if its Z value is less than threshold.
@@ -618,6 +612,7 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float6
 
 	cm.activeMutex.Lock()
 	ac, ok := cm.activeCursors[gid]
+	var loopAc *ActiveCursor
 	loopGID := 0
 	if !ok {
 		// LogWarn("DeleteActiveCursor: gid not found in ActiveCursor", "gid", gid)
@@ -631,6 +626,7 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float6
 				LogWarn("HEY!!! in DeleteActiveCursorIfZLessThan LoopedGidFor returns 0?")
 			} else {
 				LogOfType("cursor", "DeleteActiveCursorIfZLessThan deleting!!", "loopGid", loopGID)
+				loopAc = cm.activeCursors[loopGID]
 				delete(cm.activeCursors, gid)
 				delete(cm.activeCursors, loopGID)
 				// LogInfo("DeleteActiveCursorIfZLessThan REMOVING", "loopGid", loopGid, "gid", gid, "ac.maxZ", ac.maxZ, "gid", gid)
@@ -652,19 +648,65 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float6
 	if loopGID != 0 {
 		theScheduler.DeleteCursorEventsWhoseGIDIs(loopGID)
 		theScheduler.DeleteCursorEventsWhoseGIDIs(gid)
+		cleanupDeletedActiveCursor(ac, "DeleteActiveCursorIfZLessThan")
+		cleanupDeletedActiveCursor(loopAc, "DeleteActiveCursorIfZLessThan loop")
 	}
 }
 
 func (cm *CursorManager) DeleteActiveCursorsForTag(tag string) {
 
 	cm.activeMutex.Lock()
-	defer cm.activeMutex.Unlock()
+	var deleted []*ActiveCursor
 
 	for gid, ac := range cm.activeCursors {
 		if ac.Current.Tag == tag {
+			deleted = append(deleted, ac)
 			delete(cm.activeCursors, gid)
 		}
 	}
+	cm.activeMutex.Unlock()
+
+	for _, ac := range deleted {
+		cleanupDeletedActiveCursor(ac, "DeleteActiveCursorsForTag")
+	}
+}
+
+func cleanupDeletedActiveCursor(ac *ActiveCursor, reason string) {
+	if ac == nil {
+		return
+	}
+	stoppedSample := stopActiveSamplePlayback(ac, reason)
+	if ac.NoteOn != nil {
+		// LogInfo("DeleteActiveCursor: gid found SENDING NOTEOFF!","noteon",ac.NoteOn,"gid",gid)
+		noteOff := NewNoteOffFromNoteOn(ac.NoteOn)
+		ac.NoteOn.Synth.SendNoteToMidiOutput(noteOff)
+		// LogInfo("DeleteActiveCursor: gid found AFTER NOTEOFF!","noteoff",noteOff,"gid",gid)
+	} else if !stoppedSample {
+		LogWarn("DeleteActiveCursor: gid found, NO NOTEON?", "gid", ac.Current.GID)
+	}
+}
+
+func stopActiveSamplePlayback(ac *ActiveCursor, reason string) bool {
+	if ac == nil || ac.ActiveSamplePlayback == nil {
+		return false
+	}
+	playback := ac.ActiveSamplePlayback
+	ac.ActiveSamplePlayback = nil
+	tag := ac.Current.Tag
+	LogInfo("stopActiveSamplePlayback", "reason", reason, "gid", ac.Current.GID, "patch", playback.Patch, "sigilChannel", playback.SigilChannel, "sampleSelector", playback.SampleSelector, "voiceKey", playback.VoiceKey)
+	if theScheduler != nil {
+		theScheduler.DeleteSamplePlaybackStarts(tag, playback.SigilChannel)
+		ScheduleAt(CurrentClick(), tag, playback.StopEvent())
+		ScheduleAt(CurrentClick()+1, tag, playback.ResetPitchEvent())
+		return true
+	}
+	if stop := playback.StopEvent(); stop != nil {
+		stop.Trigger()
+	}
+	if reset := playback.ResetPitchEvent(); reset != nil {
+		reset.Trigger()
+	}
+	return true
 }
 
 func CursorToOscMsg(ce CursorEvent) *osc.Message {

@@ -11,7 +11,7 @@ a clear bug in the Go implementation.
 
 - Run the standalone HTTP server from `cmd/samplesplitter`.
 - Provide the reusable `pkg/samplesplitter` service used by Palette's in-engine
-  Transmission playback.
+  SamplePlayback.
 - Own MP3 discovery, cue analysis, waveform data, audio-device selection, MIDI
   input, sample playback, pitch bend, compression, words-per-chunk splitting,
   sigil sample selection, and held-note voice cycling.

@@ -51,7 +51,7 @@ func (p *StepperPlayer) playSamplesplitterEvent(synth *Synth, patch string, even
 	if synth == nil {
 		return
 	}
-	velocity := transmissionVelocityFromPressure(GetPatch(patch), event.Pressure)
+	velocity := samplePlaybackVelocityFromPressure(GetPatch(patch), event.Pressure)
 	noteOn := NewNoteOn(synth, event.Pitch, velocity)
 	previous, current := p.StartSamplesplitterVoice(patch, synth, event.Pitch, velocity)
 	if previous != nil {

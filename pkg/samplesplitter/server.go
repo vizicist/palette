@@ -228,7 +228,7 @@ func (s Server) handleReloadSigils(w http.ResponseWriter, r *http.Request) {
 		writeError(w, errors.New("samplesplitter state is not initialized"), http.StatusNotImplemented)
 		return
 	}
-	s.State.SetBusy(true, "Loading transmissions")
+	s.State.SetBusy(true, "Loading samples")
 	defer s.State.SetBusy(false, "")
 	if s.Audio != nil {
 		s.Audio.StopAll()

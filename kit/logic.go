@@ -162,19 +162,19 @@ func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 }
 
 func (logic *PatchLogic) liveStepperRoute() string {
-	return NewTransmissionDomain(logic.patch).route()
+	return NewSamplePlaybackDomain(logic.patch).route()
 }
 
 func (logic *PatchLogic) bss2SampleMode() bool {
-	return NewTransmissionDomain(logic.patch).Enabled()
+	return NewSamplePlaybackDomain(logic.patch).Enabled()
 }
 
 func (logic *PatchLogic) liveRouteIncludesBidule() bool {
-	return NewTransmissionDomain(logic.patch).RouteIncludesBidule()
+	return NewSamplePlaybackDomain(logic.patch).RouteIncludesBidule()
 }
 
 func (logic *PatchLogic) liveRouteIncludesSamples() bool {
-	return NewTransmissionDomain(logic.patch).RouteIncludesSamples()
+	return NewSamplePlaybackDomain(logic.patch).RouteIncludesSamples()
 }
 
 func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atClick Clicks) {
@@ -186,7 +186,7 @@ func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atCl
 		if synth == nil {
 			return
 		}
-		velocity := transmissionVelocityFromPressure(logic.patch, ce.Pos.Z)
+		velocity := samplePlaybackVelocityFromPressure(logic.patch, ce.Pos.Z)
 		ScheduleAt(atClick, ce.Tag, NewPitchBend(synth, theStepper.pitchBendValue(ce.Pos.Z)))
 		ScheduleAt(atClick, ce.Tag, NewNoteOn(synth, noteOn.Pitch, velocity))
 		ScheduleAt(atClick+1, ce.Tag, NewPitchBend(synth, MidiPitchBendCenter))
@@ -235,7 +235,7 @@ func (logic *PatchLogic) generateBSS2SampleFromCursor(ce CursorEvent) {
 		LogWarn("generateBSS2SampleFromCursor: no active cursor", "gid", ce.GID)
 		return
 	}
-	NewTransmissionDomain(logic.patch).HandleCursor(ce, ac)
+	NewSamplePlaybackDomain(logic.patch).HandleCursor(ce, ac)
 }
 
 func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {

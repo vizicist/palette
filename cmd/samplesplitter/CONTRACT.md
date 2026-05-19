@@ -91,6 +91,6 @@ without hidden local assumptions.
 
 ## Palette Integration
 
-- Palette's in-engine Transmission playback uses the Go service directly.
+- Palette's in-engine SamplePlayback uses the Go service directly.
 - Palette should not depend on MIDI routing into the in-engine service.
 - Standalone Go and legacy Python may still support MIDI input for external use.

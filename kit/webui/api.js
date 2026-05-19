@@ -78,7 +78,7 @@ export const API = {
     stepperToggle(patch, step) { return this.call('stepper.toggle', { patch, step: String(step) }); },
     stepperSetRoute(patch, route) { return this.call('stepper.setroute', { patch, route }); },
     setTempoFactor(value) { return this.call('global.set_tempo_factor', { value: String(value) }); },
-    reloadTransmissionSet() { return this.call('global.transmissionreload'); },
+    reloadSamplePlaybackSet() { return this.call('global.sampleplaybackreload'); },
     cursorActivity() { return this.call('cursor.activity'); }
 };
 

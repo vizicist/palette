@@ -578,7 +578,7 @@ body.initial-bss2 #ritual-nav {
     display: none;
 }
 
-#transmission-controls-panel {
+#sample-playback-controls-panel {
     display: none;
 }
 
@@ -596,7 +596,7 @@ body.initial-bss2 #palette-pad-stage {
     border-bottom: 4px solid #1a6767;
 }
 
-body.initial-bss2 #transmission-controls-panel {
+body.initial-bss2 #sample-playback-controls-panel {
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -612,7 +612,7 @@ body.initial-bss2.advanced-mode #main-container {
 }
 
 body.initial-bss2.advanced-mode #palette-pad-stage,
-body.initial-bss2.advanced-mode #transmission-controls-panel {
+body.initial-bss2.advanced-mode #sample-playback-controls-panel {
     display: none;
 }
 
@@ -736,11 +736,11 @@ body.initial-bss2.advanced-mode #preset-selector-panel {
     gap: 18px;
 }
 
-#transmission-controls-title {
+#sample-playback-controls-title {
     display: none;
 }
 
-body.initial-bss2 #transmission-controls-title {
+body.initial-bss2 #sample-playback-controls-title {
     display: block;
     margin: 0;
     color: #fff;
