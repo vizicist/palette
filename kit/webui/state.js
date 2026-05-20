@@ -36,7 +36,6 @@ export const UIState = {
     attractModeActive: false,
     attractAllowGui: false,
     helpVisible: false,
-    recordInterval: null,
 
     wantsStepperStatus() {
         return this.activeAdventure === 'sigil' || (this.activeAdventure === 'space' && this.initialPage === 'bss2');

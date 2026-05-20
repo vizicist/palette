@@ -148,3 +148,5 @@ assets, and the bundled `ffmpeg.exe`.
 `doit.bat` is the local build/install/run convenience script and should be run
 from `build/windows`. `testit.bat` runs the current test suite, including the
 minimal browser UI smoke test.
+Manual MIDI diagnostics such as `cmd/miditest` are kept in the tree but are not
+part of regression testing.

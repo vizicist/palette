@@ -86,8 +86,6 @@ func ExecuteStepperAPI(api string, apiargs map[string]string) (string, error) {
 		return "", fmt.Errorf("stepper is not initialized")
 	}
 	switch api {
-	case "status", "get":
-		return theStepper.Status()
 	case "play":
 		theStepper.SetPlaying(true)
 		return theStepper.Status()
@@ -150,6 +148,7 @@ func (s *Stepper) SetPlaying(playing bool) {
 		s.StopAllSamplesplitterVoices()
 		s.ResetPitchBends()
 	}
+	NotifyStepperChanged()
 }
 
 func (s *Stepper) SetRecording(patch string, recording bool) (string, error) {
@@ -167,7 +166,9 @@ func (s *Stepper) SetRecording(patch string, recording bool) (string, error) {
 		s.lastPlayCycle = -1
 	}
 	s.mutex.Unlock()
-	return s.Status()
+	status, err := s.Status()
+	NotifyStepperChanged()
+	return status, err
 }
 
 func (s *Stepper) ClearTrack(patch string) (string, error) {
@@ -188,7 +189,9 @@ func (s *Stepper) ClearTrack(patch string) (string, error) {
 	}
 	s.mutex.Unlock()
 	s.StopSamplesplitterVoice(patch)
-	return s.Status()
+	status, err := s.Status()
+	NotifyStepperChanged()
+	return status, err
 }
 
 func (s *Stepper) ToggleStep(patch string, step int) (string, error) {
@@ -212,7 +215,9 @@ func (s *Stepper) ToggleStep(patch string, step int) (string, error) {
 		track.Steps[step] = nil
 	}
 	s.mutex.Unlock()
-	return s.Status()
+	status, err := s.Status()
+	NotifyStepperChanged()
+	return status, err
 }
 
 func (s *Stepper) SetRoute(patch string, route string) (string, error) {
@@ -220,10 +225,24 @@ func (s *Stepper) SetRoute(patch string, route string) (string, error) {
 		return "", err
 	}
 	s.ResetPitchBends()
-	return s.Status()
+	status, err := s.Status()
+	NotifyStepperChanged()
+	return status, err
 }
 
 func (s *Stepper) Status() (string, error) {
+	status, err := s.StatusSnapshot()
+	if err != nil {
+		return "", err
+	}
+	bytes, err := json.Marshal(status)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
+func (s *Stepper) StatusSnapshot() (stepperStatus, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	currentClick := CurrentClick()
@@ -247,11 +266,7 @@ func (s *Stepper) Status() (string, error) {
 			Steps:     steps,
 		}
 	}
-	bytes, err := json.Marshal(status)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
+	return status, nil
 }
 
 func (s *Stepper) RecordNoteOn(patch string, note *NoteOn, pressure float64, atClick Clicks, quant Clicks) {
@@ -268,8 +283,8 @@ func (s *Stepper) RecordNoteOn(patch string, note *NoteOn, pressure float64, atC
 	step, cycle := s.nearestStep(atClick)
 
 	s.mutex.Lock()
-	defer s.mutex.Unlock()
 	if !track.Recording {
+		s.mutex.Unlock()
 		return
 	}
 	if !s.playing {
@@ -293,6 +308,8 @@ func (s *Stepper) RecordNoteOn(patch string, note *NoteOn, pressure float64, atC
 	}
 	track.Steps[step] = append(track.Steps[step], event)
 	s.recordedNoteOnMap[s.recordKey(patch, note.Pitch, event.SynthName)] = event
+	s.mutex.Unlock()
+	NotifyStepperChanged()
 }
 
 func (s *Stepper) RecordNoteOff(patch string, note *NoteOff, atClick Clicks) {
@@ -307,9 +324,9 @@ func (s *Stepper) RecordNoteOff(patch string, note *NoteOff, atClick Clicks) {
 		return
 	}
 	s.mutex.Lock()
-	defer s.mutex.Unlock()
 	event, ok := s.recordedNoteOnMap[s.recordKey(patch, note.Pitch, synthName(note.Synth))]
 	if !ok {
+		s.mutex.Unlock()
 		return
 	}
 	duration := atClick - event.StartClick
@@ -318,6 +335,8 @@ func (s *Stepper) RecordNoteOff(patch string, note *NoteOff, atClick Clicks) {
 	}
 	event.Duration = duration
 	delete(s.recordedNoteOnMap, s.recordKey(patch, note.Pitch, synthName(note.Synth)))
+	s.mutex.Unlock()
+	NotifyStepperChanged()
 }
 
 func (s *Stepper) AdvanceTo(click Clicks) {

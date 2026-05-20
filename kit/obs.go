@@ -30,6 +30,11 @@ var (
 	obsRecordStopChan chan struct{}
 )
 
+type OBSRecordState struct {
+	Recording bool    `json:"recording"`
+	Remaining float64 `json:"remaining"`
+}
+
 func ObsProcessInfo() *ProcessInfo {
 
 	fullpath, err := GetParam("global.obspath")
@@ -297,23 +302,25 @@ func ObsCommand(cmd string) error {
 // Returns immediately with status info. The recording stops automatically.
 func ObsRecordClip() (string, error) {
 	obsRecordMu.Lock()
-	defer obsRecordMu.Unlock()
 
 	if obsRecording {
 		elapsed := time.Since(obsRecordStart).Seconds()
 		remaining := float64(obsRecordSeconds) - elapsed
+		obsRecordMu.Unlock()
 		return fmt.Sprintf(`{"recording":true,"remaining":%.0f}`, remaining), nil
 	}
 
 	// Ensure scene is set up
 	err := ObsAutoSetup()
 	if err != nil {
+		obsRecordMu.Unlock()
 		return "", fmt.Errorf("ObsRecordClip setup: %w", err)
 	}
 
 	// Start recording
 	err = ObsCommand("recordstart")
 	if err != nil {
+		obsRecordMu.Unlock()
 		return "", fmt.Errorf("ObsRecordClip start: %w", err)
 	}
 
@@ -340,35 +347,45 @@ func ObsRecordClip() (string, error) {
 			} else {
 				LogOfType("obs", "ObsRecordClip finished")
 			}
+			NotifyOBSRecordChanged()
 		}
 	}()
 
 	LogOfType("obs", "ObsRecordClip started", "seconds", obsRecordSeconds)
+	obsRecordMu.Unlock()
+	NotifyOBSRecordChanged()
 	return fmt.Sprintf(`{"recording":true,"remaining":%d}`, obsRecordSeconds), nil
 }
 
 // ObsRecordStop stops a recording in progress.
 func ObsRecordStop() (string, error) {
 	obsRecordMu.Lock()
-	defer obsRecordMu.Unlock()
 
 	if !obsRecording {
+		obsRecordMu.Unlock()
 		return `{"recording":false}`, nil
 	}
 
 	obsRecording = false
 	close(obsRecordStopChan)
+	obsRecordMu.Unlock()
+	NotifyOBSRecordChanged()
 
 	return `{"recording":false}`, nil
 }
 
 // ObsRecordStatus returns the current recording state.
 func ObsRecordStatus() (string, error) {
+	status := ObsRecordStatusSnapshot()
+	return fmt.Sprintf(`{"recording":%t,"remaining":%.0f}`, status.Recording, status.Remaining), nil
+}
+
+func ObsRecordStatusSnapshot() OBSRecordState {
 	obsRecordMu.Lock()
 	defer obsRecordMu.Unlock()
 
 	if !obsRecording {
-		return `{"recording":false,"remaining":0}`, nil
+		return OBSRecordState{Recording: false, Remaining: 0}
 	}
 
 	elapsed := time.Since(obsRecordStart).Seconds()
@@ -376,5 +393,5 @@ func ObsRecordStatus() (string, error) {
 	if remaining < 0 {
 		remaining = 0
 	}
-	return fmt.Sprintf(`{"recording":true,"remaining":%.0f}`, remaining), nil
+	return OBSRecordState{Recording: true, Remaining: remaining}
 }

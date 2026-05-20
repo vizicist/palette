@@ -90,7 +90,7 @@ async function checkLiveServer() {
     const liveIndexIsCurrent = index.text.includes('type="module" src="app.js"');
     liveAssert(liveIndexIsCurrent, 'live index serves module entry point');
 
-    for (const name of ['app.js', 'api.js', 'state.js', 'render.js', 'style.css']) {
+    for (const name of ['app.js', 'api.js', 'state.js', 'render.js', 'local_nats.js', 'ui_nats.js', 'subjects.js', 'routes.js', 'vendor/nats.ws.js', 'style.css']) {
         try {
             const result = await fetchText(`${baseURL}/${name}`);
             liveAssert(result.response.ok, `live ${name} returns HTTP 200`);
@@ -115,20 +115,6 @@ async function checkLiveServer() {
         else warn(`live global.status failed: ${err.message}`);
     }
 
-    try {
-        const stepper = await fetchText(`${baseURL}/api`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ api: 'stepper.status' })
-        });
-        liveAssert(stepper.response.ok, 'live stepper.status returns HTTP 200');
-        const outer = JSON.parse(stepper.text);
-        const result = typeof outer.result === 'string' ? JSON.parse(outer.result) : outer.result;
-        liveAssert(result && result.tracks && result.tracks.A && result.tracks.B && result.tracks.C && result.tracks.D, 'live stepper.status has A/B/C/D tracks');
-    } catch (err) {
-        if (requireLive) fail(`live stepper.status failed: ${err.message}`);
-        else warn(`live stepper.status failed: ${err.message}`);
-    }
 }
 
 console.log(`Palette web UI smoke test`);
@@ -139,6 +125,11 @@ const app = readWebUIFile('app.js');
 const api = readWebUIFile('api.js');
 const state = readWebUIFile('state.js');
 const render = readWebUIFile('render.js');
+const localNats = readWebUIFile('local_nats.js');
+const uiNats = readWebUIFile('ui_nats.js');
+const subjects = readWebUIFile('subjects.js');
+const routes = readWebUIFile('routes.js');
+const vendorNats = readWebUIFile(join('vendor', 'nats.ws.js'));
 
 assert(index.includes('<script type="module" src="app.js"></script>'), 'index uses app.js as module entry point');
 assert(!index.includes('<script src="api.js"></script>'), 'index does not load api.js as a legacy global script');
@@ -159,14 +150,26 @@ for (const id of [
 }
 
 assert(app.includes("import { API } from './api.js';"), 'app imports API module');
+assert(app.includes("from './ui_nats.js';"), 'app imports UI NATS module');
+assert(app.includes("from './routes.js';"), 'app imports route constants');
 assert(app.includes("from './state.js';"), 'app imports UI state module');
 assert(app.includes("from './render.js';"), 'app imports render module');
 assert(app.includes('syncInitialPageFromEngine'), 'app syncs initial page changes from engine');
+assert(!app.includes('setInterval('), 'app has no recurring HTTP polling intervals');
 assert(api.includes('window.API = API'), 'api preserves window.API for browser-console use');
 assert(state.includes('export const UIState'), 'state exports UIState');
 assert(render.includes('export function updatePalettePadRoute'), 'render exports pad route rendering');
+assert(localNats.includes('export class LocalNATS'), 'local_nats exports LocalNATS');
+assert(localNats.includes("from './vendor/nats.ws.js'"), 'local_nats uses vendored nats.ws client');
+assert(uiNats.includes('setupUIStateFeed'), 'ui_nats exports UI state feed setup');
+assert(uiNats.includes('requestUISnapshot'), 'ui_nats exports startup snapshot request');
+assert(uiNats.includes('Subjects.uiStatus'), 'ui_nats subscribes with subject constants');
+assert(subjects.includes('palette.local.ui.status'), 'subjects defines local UI status subject');
+assert(subjects.includes('palette.local.ui.snapshot.request'), 'subjects defines local UI snapshot request subject');
+assert(routes.includes('samplesplitter'), 'routes preserves samplesplitter route wire value');
+assert(vendorNats.includes('export { connect as connect }'), 'vendored nats.ws exports connect');
 
-for (const name of ['app.js', 'api.js', 'state.js', 'render.js']) {
+for (const name of ['app.js', 'api.js', 'state.js', 'render.js', 'local_nats.js', 'ui_nats.js', 'subjects.js', 'routes.js', 'vendor/nats.ws.js']) {
     checkSyntax(name);
 }
 
@@ -174,7 +177,12 @@ const moduleSources = new Map([
     ['app.js', app],
     ['api.js', api],
     ['state.js', state],
-    ['render.js', render]
+    ['render.js', render],
+    ['local_nats.js', localNats],
+    ['ui_nats.js', uiNats],
+    ['subjects.js', subjects],
+    ['routes.js', routes],
+    [join('vendor', 'nats.ws.js'), vendorNats]
 ]);
 for (const [name, source] of moduleSources) {
     for (const imported of importedModules(name, source)) {

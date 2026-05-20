@@ -17,9 +17,7 @@ var NoProcess bool
 // ExecuteAPI xxx
 func ExecuteAPI(api string, apiargs map[string]string) (result string, err error) {
 
-	if api != "global.status" && api != "cursor.activity" { // high-frequency polling APIs
-		LogOfType("api", "ExecuteAPI", "api", api, "apiargs", apiargs)
-	}
+	LogOfType("api", "ExecuteAPI", "api", api, "apiargs", apiargs)
 
 	words := strings.Split(api, ".")
 	if len(words) <= 1 {
@@ -92,7 +90,6 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"debugsched":           globalDebugSched,
 	"debugpending":         globalDebugPending,
 	"status":               globalStatus,
-	"presetstatus":         globalPresetStatus,
 	"attract":              globalAttract,
 	"activate":             globalActivate,
 	"load":                 globalLoad,
@@ -118,13 +115,10 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"debug":                globalRemoved,
 	"set_tempo_factor":     globalSetTempoFactor,
 	"sampleplaybackreload": globalSamplePlaybackReload,
-	"transmissionreload":   globalSamplePlaybackReload,
 	"playcursor":           globalPlayCursor,
 	"obsrecord":            globalObsRecord,
 	"obsrecordstop":        globalObsRecordStop,
-	"obsrecordstatus":      globalObsRecordStatus,
 	"obssetup":             globalObsSetup,
-	"obsping":              globalObsPing,
 }
 
 func ExecuteGlobalAPI(api string, apiargs map[string]string) (string, error) {
@@ -155,30 +149,7 @@ func globalDebugPending(api string, apiargs map[string]string) (string, error) {
 }
 
 func globalStatus(api string, apiargs map[string]string) (string, error) {
-	uptime := fmt.Sprintf("%f", Uptime())
-	attractmode := strconv.FormatBool(theAttractManager.AttractModeIsOn())
-	natsConnected := strconv.FormatBool(natsIsConnected)
-	if theQuad == nil {
-		return JSONObject(
-			"uptime", uptime,
-			"attractmode", attractmode,
-			"hostname", Hostname(),
-		), nil
-	}
-	return JSONObject(
-		"uptime", uptime,
-		"attractmode", attractmode,
-		"natsconnected", natsConnected,
-		"hostname", Hostname(),
-		"A", Patchs["A"].Status(),
-		"B", Patchs["B"].Status(),
-		"C", Patchs["C"].Status(),
-		"D", Patchs["D"].Status(),
-	), nil
-}
-
-func globalPresetStatus(api string, apiargs map[string]string) (string, error) {
-	bytes, err := json.Marshal(currentPresetSelectionSnapshot())
+	bytes, err := json.Marshal(uiStatusSnapshot())
 	if err != nil {
 		return "", err
 	}
@@ -191,6 +162,7 @@ func globalAttract(api string, apiargs map[string]string) (string, error) {
 		return "", err
 	}
 	theAttractManager.SetAttractMode(IsTrueValue(v))
+	NotifyStatusChanged()
 	return "", nil
 }
 
@@ -329,23 +301,12 @@ func globalObsRecordStop(api string, apiargs map[string]string) (string, error) 
 	return ObsRecordStop()
 }
 
-func globalObsRecordStatus(api string, apiargs map[string]string) (string, error) {
-	return ObsRecordStatus()
-}
-
 func globalObsSetup(api string, apiargs map[string]string) (string, error) {
 	err := ObsAutoSetup()
 	if err != nil {
 		return "", err
 	}
 	return `{"status":"ok"}`, nil
-}
-
-func globalObsPing(api string, apiargs map[string]string) (string, error) {
-	if ObsIsRunning() {
-		return `{"running":true}`, nil
-	}
-	return `{"running":false}`, nil
 }
 
 func globalStartPlayback(api string, apiargs map[string]string) (string, error) {
@@ -450,11 +411,12 @@ func globalSetTempoFactor(api string, apiargs map[string]string) (string, error)
 		return "", err
 	}
 	ChangeClicksPerSecond(float64(v))
+	NotifyStepperChanged()
 	return "", nil
 }
 
 func globalSamplePlaybackReload(api string, apiargs map[string]string) (string, error) {
-	if err := ReloadInEngineSamplesplitterSamples(); err != nil {
+	if err := ReloadSamplePlaybackServiceSamples(); err != nil {
 		return "", err
 	}
 	return JSONObject("ok", "true"), nil
@@ -536,20 +498,15 @@ func SetAndApplyGlobalParam(name string, value string) (err error) {
 	if err != nil {
 		return err
 	}
-	return ApplyGlobalParam(name, value)
+	err = ApplyGlobalParam(name, value)
+	if err == nil {
+		NotifyStatusChanged()
+	}
+	return err
 }
 
 func canonicalGlobalParamName(name string) string {
-	switch name {
-	case "global.transmissionquant":
-		return "global.sampleplaybackquant"
-	case "global.transmissioncompressed":
-		return "global.sampleplaybackcompressed"
-	case "global.transmissionwords":
-		return "global.sampleplaybackwords"
-	default:
-		return name
-	}
+	return name
 }
 
 func ApplyGlobalParam(name string, value string) (err error) {
@@ -652,7 +609,7 @@ func ApplyGlobalParam(name string, value string) (err error) {
 		}
 
 	case "global.sampleplaybackcompressed":
-		SetInEngineSamplesplitterCompressed(IsTrueValue(value))
+		SetSamplePlaybackServiceCompressed(IsTrueValue(value))
 
 	case "global.sampleplaybackwords":
 		words := int64(2)
@@ -662,8 +619,8 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			} else if words > 5 {
 				words = 5
 			}
-			SetInEngineSamplesplitterWords(int(words))
-			if err := ReloadInEngineSamplesplitterSamples(); err != nil {
+			SetSamplePlaybackServiceWords(int(words))
+			if err := ReloadSamplePlaybackServiceSamples(); err != nil {
 				LogWarn("global.sampleplaybackwords reload failed", "err", err)
 			}
 		}

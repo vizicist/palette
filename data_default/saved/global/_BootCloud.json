@@ -26,7 +26,7 @@
         "global.emailto":"",
         "global.guiexec":"bin/pyinstalled/palette_gui.exe",
         "global.initialpage":"bss2",
-        "global.sampleplaybackquant":"0.5",
+        "global.sampleplaybackquant":"0.0",
         "global.sampleplaybackcompressed":"false",
         "global.sampleplaybackwords":"2",
         "global.sampleplaybackvolume":"1.0",

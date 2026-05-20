@@ -14,9 +14,17 @@ presets and parameters, serves the browser UI, and sends control messages to
 the sound and visual systems.
 
 The browser UI is the main human control surface. It is served by the engine at
-`http://127.0.0.1:3330/` and talks back to the engine through the local API. It
-is used for preset selection, parameter editing, pad mode selection,
-SamplePlayback controls, and sequencer views.
+`http://127.0.0.1:3330/`, sends user actions through the local API, and receives
+live UI state over the embedded local NATS WebSocket using the vendored
+`nats.ws` browser client. It is used for preset selection, parameter editing,
+pad mode selection, SamplePlayback controls, and sequencer views.
+
+The engine also embeds a local NATS server. It listens on `127.0.0.1:4222` for
+local NATS clients and `127.0.0.1:9222` for browser WebSocket clients. When
+`NATS_URL` is configured, this embedded server creates an outbound leaf
+connection to the remote hub. The `palette.local.>` subject namespace is denied
+on the leaf connection and is reserved for local GUI-engine traffic, including
+the UI startup snapshot request and live `palette.local.ui.*` updates.
 
 Bidule is the main synth host. Palette sends MIDI to Bidule, and Bidule routes
 that MIDI to Omnisphere instances and other synth/effect chains.
@@ -25,10 +33,11 @@ Resolume is the visual host. Palette sends OSC control data to Resolume and to
 the Palette FFGL plugin running inside Resolume. Resolume then renders and
 processes the visual layers.
 
-SampleSplitter is the sample playback system. In the normal Palette runtime it
-runs as an in-engine Go service, driven directly by cursor events for
-SamplePlayback. It also has a standalone Go executable with its own
-browser UI on port 9876 for independent use and MIDI testing.
+SamplePlayback is the Palette-facing sample domain. In the normal Palette
+runtime it is backed by an in-engine Go service from the SampleSplitter package,
+driven directly by cursor events rather than MIDI. SampleSplitter also has a
+standalone Go executable with its own browser UI on port 9876 for independent
+use and MIDI testing.
 
 `palette` is the command-line tool. It controls the engine through the same API
 used by the browser UI, so most UI actions can also be scripted.
@@ -43,8 +52,11 @@ flowchart LR
     Performer["Performer\nSensel Morph pads"] --> Engine["palette_engine\ncentral runtime"]
 
     UI["Browser UI\nport 3330"] <--> API["Engine API\n/api"]
+    UI <--> LocalNATS["Embedded local NATS\nWebSocket port 9222"]
     CLI["palette CLI"] <--> API
     API <--> Engine
+    Engine <--> LocalNATS
+    LocalNATS -. "leaf connection\nnot palette.local.>" .-> Hub["Remote NATS hub\nphotonsalon.com"]
 
     Monitor["palette_monitor\nwatchdog"] --> Engine
 
@@ -58,7 +70,8 @@ flowchart LR
     Resolume --> FFGL["Palette FFGL plugin\nsprites and shapes"]
     FFGL --> Display["Projection / display output"]
 
-    Engine --> SampleSplitter["Go SampleSplitter\nin-engine service"]
+    Engine --> SamplePlayback["SamplePlayback\nPalette domain"]
+    SamplePlayback --> SampleSplitter["Go sample playback service\npkg/samplesplitter"]
     SampleSplitter --> AudioOut["Sample audio output"]
     SSUI["SampleSplitter UI\nport 9876"] <--> SampleSplitter
 
@@ -91,7 +104,7 @@ flowchart LR
 3. The engine maps horizontal position to sample selection, vertical position to
    pitch bend, and pressure to volume.
 4. Playback starts are quantized by the engine scheduler.
-5. The in-engine Go SampleSplitter service plays the selected audio chunk.
+5. The in-engine sample playback service plays the selected audio chunk.
 
 ### Browser or CLI Control
 
@@ -99,16 +112,16 @@ flowchart LR
 2. The engine updates parameters, presets, process state, or sequencer state.
 3. The changed state immediately affects subsequent input and playback.
 4. Some global process parameters can start or stop external programs such as
-   Bidule, Resolume, OBS, and the SampleSplitter service.
+   Bidule, Resolume, OBS, and the sample playback service.
 
 ## Runtime Shape
 
 In the usual installed system, the user starts Palette through the CLI or a
 script. The engine then becomes the live coordinator. The UI is just a browser
-client of the engine, while Bidule, Resolume, and SampleSplitter are specialized
-endpoints controlled by the engine.
+client of the engine, while Bidule, Resolume, and the sample playback service
+are specialized endpoints controlled by the engine.
 
 The most important architectural boundary is that timing and performance logic
 belong to `palette_engine`. The UI edits state, Bidule makes synth sound,
-Resolume makes visuals, and SampleSplitter plays chunks of audio, but the
+Resolume makes visuals, and SamplePlayback plays chunks of audio, but the
 engine decides what should happen and when.

@@ -452,6 +452,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 			LogWarn("CursorManager.ExecuteCursorEvent: clear with empty tag?")
 		}
 		theCursorManager.ClearAllActiveCursors(ce.Tag)
+		NotifyCursorActivityChanged()
 		return
 	}
 
@@ -545,6 +546,7 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 		LogOfType("cursor", "handleDownDragUp up is deleting gid", "gid", ce.GID, "ddu", ce.Ddu)
 		cm.DeleteActiveCursorIfZLessThan(ce.GID, cm.LoopThreshold)
 	}
+	NotifyCursorActivityChanged()
 }
 
 func (cm *CursorManager) LoopCursorEvent(ac *ActiveCursor) *SchedElement {

@@ -17,16 +17,16 @@ const samplesplitterPort = 9876
 const samplesplitterMidiPort = "16. Internal MIDI"
 const samplesplitterStatusTimeout = 500 * time.Millisecond
 
-var inEngineSamplesplitter struct {
+var samplePlaybackService struct {
 	mutex   sync.Mutex
 	service *ss.Service
 	cancel  context.CancelFunc
 }
 
-func StartInEngineSamplesplitter() error {
-	inEngineSamplesplitter.mutex.Lock()
-	defer inEngineSamplesplitter.mutex.Unlock()
-	if inEngineSamplesplitter.service != nil && inEngineSamplesplitter.service.Running() {
+func StartSamplePlaybackService() error {
+	samplePlaybackService.mutex.Lock()
+	defer samplePlaybackService.mutex.Unlock()
+	if samplePlaybackService.service != nil && samplePlaybackService.service.Running() {
 		return nil
 	}
 	runtimeDir := SamplesplitterRuntimeDir(SamplesplitterExecutablePath())
@@ -55,18 +55,14 @@ func StartInEngineSamplesplitter() error {
 		_ = service.Close()
 		return err
 	}
-	inEngineSamplesplitter.service = service
-	inEngineSamplesplitter.cancel = cancel
-	LogInfo("StartInEngineSamplesplitter", "mp3Dir", config.MP3Dir, "ffmpeg", config.FFmpegPath)
+	samplePlaybackService.service = service
+	samplePlaybackService.cancel = cancel
+	LogInfo("StartSamplePlaybackService", "mp3Dir", config.MP3Dir, "ffmpeg", config.FFmpegPath)
 	return nil
 }
 
 func samplePlaybackCompressed() bool {
 	enabled, err := GetParamBool("global.sampleplaybackcompressed")
-	if err == nil {
-		return enabled
-	}
-	enabled, err = GetParamBool("global.transmissioncompressed")
 	if err == nil {
 		return enabled
 	}
@@ -79,20 +75,16 @@ func samplePlaybackWords() (int, error) {
 	if err == nil {
 		return words, nil
 	}
-	words, legacyErr := GetParamInt("global.transmissionwords")
-	if legacyErr == nil {
-		return words, nil
-	}
 	return 2, err
 }
 
-func StopInEngineSamplesplitter() {
-	inEngineSamplesplitter.mutex.Lock()
-	service := inEngineSamplesplitter.service
-	cancel := inEngineSamplesplitter.cancel
-	inEngineSamplesplitter.service = nil
-	inEngineSamplesplitter.cancel = nil
-	inEngineSamplesplitter.mutex.Unlock()
+func StopSamplePlaybackService() {
+	samplePlaybackService.mutex.Lock()
+	service := samplePlaybackService.service
+	cancel := samplePlaybackService.cancel
+	samplePlaybackService.service = nil
+	samplePlaybackService.cancel = nil
+	samplePlaybackService.mutex.Unlock()
 	if cancel != nil {
 		cancel()
 	}
@@ -101,43 +93,43 @@ func StopInEngineSamplesplitter() {
 	}
 }
 
-func InEngineSamplesplitterRunning() bool {
-	inEngineSamplesplitter.mutex.Lock()
-	defer inEngineSamplesplitter.mutex.Unlock()
-	return inEngineSamplesplitter.service != nil && inEngineSamplesplitter.service.Running()
+func SamplePlaybackServiceRunning() bool {
+	samplePlaybackService.mutex.Lock()
+	defer samplePlaybackService.mutex.Unlock()
+	return samplePlaybackService.service != nil && samplePlaybackService.service.Running()
 }
 
-func SetInEngineSamplesplitterCompressed(enabled bool) bool {
-	return withInEngineSamplesplitter(func(service *ss.Service) {
+func SetSamplePlaybackServiceCompressed(enabled bool) bool {
+	return withSamplePlaybackService(func(service *ss.Service) {
 		service.SetCompressed(enabled)
 	})
 }
 
-func SetInEngineSamplesplitterWords(words int) bool {
-	return withInEngineSamplesplitter(func(service *ss.Service) {
+func SetSamplePlaybackServiceWords(words int) bool {
+	return withSamplePlaybackService(func(service *ss.Service) {
 		service.SetDefaultWords(words)
 	})
 }
 
-func ReloadInEngineSamplesplitterSamples() error {
-	if !InEngineSamplesplitterRunning() {
-		if err := StartInEngineSamplesplitter(); err != nil {
+func ReloadSamplePlaybackServiceSamples() error {
+	if !SamplePlaybackServiceRunning() {
+		if err := StartSamplePlaybackService(); err != nil {
 			return err
 		}
 	}
 	var reloadErr error
-	if !withInEngineSamplesplitter(func(service *ss.Service) {
+	if !withSamplePlaybackService(func(service *ss.Service) {
 		reloadErr = service.ReloadSigilSamples()
 	}) {
-		return fmt.Errorf("in-engine samplesplitter is not running")
+		return fmt.Errorf("sample playback service is not running")
 	}
 	return reloadErr
 }
 
-func withInEngineSamplesplitter(fn func(*ss.Service)) bool {
-	inEngineSamplesplitter.mutex.Lock()
-	service := inEngineSamplesplitter.service
-	inEngineSamplesplitter.mutex.Unlock()
+func withSamplePlaybackService(fn func(*ss.Service)) bool {
+	samplePlaybackService.mutex.Lock()
+	service := samplePlaybackService.service
+	samplePlaybackService.mutex.Unlock()
 	if service == nil || !service.Running() {
 		return false
 	}
@@ -160,7 +152,7 @@ func SendSamplesplitterNote(synth *Synth, value any) bool {
 	if channel < 0 {
 		channel = 0
 	}
-	return withInEngineSamplesplitter(func(service *ss.Service) {
+	return withSamplePlaybackService(func(service *ss.Service) {
 		switch v := value.(type) {
 		case *NoteOn:
 			if err := service.NoteOn(channel, int(v.Pitch), int(v.Velocity)); err != nil {
@@ -182,7 +174,7 @@ func SendSamplesplitterPitchBend(synth *Synth, value int) bool {
 	if channel < 0 {
 		channel = 0
 	}
-	return withInEngineSamplesplitter(func(service *ss.Service) {
+	return withSamplePlaybackService(func(service *ss.Service) {
 		service.MIDIPitchBend(channel, value)
 	})
 }
