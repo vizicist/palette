@@ -10,7 +10,7 @@ import (
 const (
 	samplePlaybackSampleCount       = 48
 	minSamplePlaybackVelocity       = 76
-	defaultSamplePlaybackQuantBeats = 0.5
+	defaultSamplePlaybackQuantBeats = 0
 	defaultSamplePlaybackVolume     = 1.0
 )
 
@@ -181,7 +181,7 @@ func (d SamplePlaybackDomain) nextQuant(t Clicks) Clicks {
 }
 
 func (d SamplePlaybackDomain) quant() Clicks {
-	quantBeats, err := getSamplePlaybackFloatParam("global.sampleplaybackquant", "global.transmissionquant", defaultSamplePlaybackQuantBeats)
+	quantBeats, err := getSamplePlaybackFloatParam("global.sampleplaybackquant", defaultSamplePlaybackQuantBeats)
 	if err != nil {
 		LogIfError(err)
 	}
@@ -266,14 +266,14 @@ func (event *SamplePlaybackStart) Trigger() {
 	if event == nil {
 		return
 	}
-	if !withInEngineSamplesplitter(func(service *ss.Service) {
+	if !withSamplePlaybackService(func(service *ss.Service) {
 		LogInfo("SamplePlaybackStart.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "velocity", event.Velocity, "pitchbend", event.PitchBend, "voiceKey", event.VoiceKey)
 		service.MIDIPitchBend(event.SigilChannel, event.PitchBend)
 		if err := service.NoteOnVoice(event.SigilChannel, event.SampleSelector, event.Velocity, event.VoiceKey); err != nil {
 			LogWarn("SamplePlaybackStart", "err", err, "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector)
 		}
 	}) {
-		LogWarn("SamplePlaybackStart: in-engine service is not running", "patch", event.Patch)
+		LogWarn("SamplePlaybackStart: sample playback service is not running", "patch", event.Patch)
 	}
 }
 
@@ -281,7 +281,7 @@ func (event *SamplePlaybackStop) Trigger() {
 	if event == nil {
 		return
 	}
-	if !withInEngineSamplesplitter(func(service *ss.Service) {
+	if !withSamplePlaybackService(func(service *ss.Service) {
 		if event.VoiceKey != "" {
 			LogInfo("SamplePlaybackStop.Trigger StopVoice", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "voiceKey", event.VoiceKey)
 			service.StopVoice(event.VoiceKey)
@@ -295,7 +295,7 @@ func (event *SamplePlaybackStop) Trigger() {
 		LogInfo("SamplePlaybackStop.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector)
 		service.NoteOff(event.SigilChannel, event.SampleSelector)
 	}) {
-		LogWarn("SamplePlaybackStop: in-engine service is not running", "patch", event.Patch)
+		LogWarn("SamplePlaybackStop: sample playback service is not running", "patch", event.Patch)
 	}
 }
 
@@ -303,11 +303,11 @@ func (event *SamplePlaybackPitch) Trigger() {
 	if event == nil {
 		return
 	}
-	if !withInEngineSamplesplitter(func(service *ss.Service) {
+	if !withSamplePlaybackService(func(service *ss.Service) {
 		LogInfo("SamplePlaybackPitch.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "value", event.Value)
 		service.MIDIPitchBend(event.SigilChannel, event.Value)
 	}) {
-		LogWarn("SamplePlaybackPitch: in-engine service is not running", "patch", event.Patch)
+		LogWarn("SamplePlaybackPitch: sample playback service is not running", "patch", event.Patch)
 	}
 }
 
@@ -337,7 +337,7 @@ func samplePlaybackVolume() float64 {
 	if GlobalParams == nil {
 		return defaultSamplePlaybackVolume
 	}
-	volume, err := getSamplePlaybackFloatParam("global.sampleplaybackvolume", "", defaultSamplePlaybackVolume)
+	volume, err := getSamplePlaybackFloatParam("global.sampleplaybackvolume", defaultSamplePlaybackVolume)
 	if err != nil {
 		LogIfError(err)
 	}
@@ -347,19 +347,13 @@ func samplePlaybackVolume() float64 {
 	return volume
 }
 
-func getSamplePlaybackFloatParam(name string, legacyName string, dflt float64) (float64, error) {
+func getSamplePlaybackFloatParam(name string, dflt float64) (float64, error) {
 	if GlobalParams == nil {
 		return dflt, nil
 	}
 	value, err := GetParamFloat(name)
 	if err == nil {
 		return value, nil
-	}
-	if legacyName != "" {
-		legacyValue, legacyErr := GetParamFloat(legacyName)
-		if legacyErr == nil {
-			return legacyValue, nil
-		}
 	}
 	return dflt, err
 }

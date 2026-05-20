@@ -38,6 +38,7 @@ flowchart TB
         SamplePlayback["SamplePlayback Domain\nBSS2 cursor-to-sample playback"]
         ProcMgr["Process Manager\nBidule, Resolume, GUI, OBS, etc."]
         SSplitter["In-engine SampleSplitter\npkg/samplesplitter.Service"]
+        LocalNATS["Embedded local NATS\nclient 4222, websocket 9222"]
     end
 
     subgraph "Inputs"
@@ -69,6 +70,7 @@ flowchart TB
     Engine --> Scheduler
     Engine --> Params
     Engine --> ProcMgr
+    Engine --> LocalNATS
     Router --> CursorMgr
     Router --> PatchLogic
     Morph --> Router
@@ -88,6 +90,7 @@ flowchart TB
     SSplitter --> Audio
     ProcMgr --> Bidule
     ProcMgr --> Resolume
+    LocalNATS -. "leaf, excluding palette.local.>" .-> HubNATS["Remote NATS hub\nphotonsalon.com"]
     ProcMgr --> OBS
     Params --> Data
     DefaultData --> Data
@@ -153,12 +156,14 @@ The engine exposes a JSON API at `http://127.0.0.1:3330/api`. Calls use the
 - `patch.*` for loading and editing one or more patch presets.
 - `saved.*` for listing saved presets and parameter definitions.
 - `cursor.*` for cursor injection and test paths.
-- `stepper.*` for sequencer status, route selection, playback, recording, and
-  track clearing.
+- `stepper.*` for sequencer commands such as route selection, playback,
+  recording, and track clearing.
 
 The CLI is mostly an API client. Browser UI actions also flow through this API,
 which keeps the web UI thin and makes most behavior scriptable from the command
-line.
+line. Live UI state is not exposed through polling-oriented HTTP endpoints; the
+browser receives status, cursor activity, OBS recording state, and stepper state
+from the embedded local NATS feed.
 
 ## Parameters, Presets, and Data
 
@@ -301,8 +306,18 @@ The UI is split into small browser modules:
 - `state.js` owns UI state, selected mode, current category, patch selection,
   cursor activity, stepper timing, and initial page normalization.
 - `render.js` owns DOM rendering helpers.
-- `app.js` coordinates startup, event handlers, polling, API refreshes, and page
-  transitions.
+- `local_nats.js` wraps the vendored `nats.ws` browser client and maintains the
+  browser's local NATS-over-WebSocket connection.
+- `subjects.js` centralizes the local NATS subjects used by the UI.
+- `routes.js` centralizes Stepper/SamplePlayback route wire values and labels.
+- `ui_nats.js` owns the browser subscription and startup snapshot plumbing.
+- `app.js` coordinates startup, event handlers, push-event handling, API
+  actions, and page transitions.
+
+The web UI no longer runs recurring HTTP polls. Engine state used by the UI is
+published locally on NATS subjects under `palette.local.ui.*`, and startup state
+is fetched with a local NATS request to `palette.local.ui.snapshot.request`.
+The embedded NATS leaf configuration keeps those subjects local-only.
 
 Current UI concepts include the original Space Palette Pro page, the Sequencer
 page, and the newer BSS2 page controlled by `global.initialpage` values `pro`,
@@ -330,6 +345,9 @@ convenience entry point and should be run from `build/windows`.
 `testit.bat` runs the current minimal test suite for the build, including Go
 tests and the web UI smoke test. The smoke test is implemented in
 `build/webui_smoke_test.mjs` and can optionally require a live engine.
+Manual diagnostic commands such as `cmd/miditest` are intentionally kept out of
+the regression test path because they depend on local MIDI hardware and driver
+state.
 
 The build includes only `ffmpeg.exe` from the SampleSplitter ffmpeg directory.
 That executable is tracked with Git LFS so fresh clones can obtain it without

@@ -285,7 +285,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 			LogInfo("StartRunning: already running", "process", process)
 			return nil
 		}
-		if err := StartInEngineSamplesplitter(); err != nil {
+		if err := StartSamplePlaybackService(); err != nil {
 			return fmt.Errorf("StartRunning: process=%s err=%w", process, err)
 		}
 		pm.wasStarted[process].Store(true)
@@ -398,7 +398,7 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 			}
 		}
 	} else if process == "samplesplitter" {
-		StopInEngineSamplesplitter()
+		StopSamplePlaybackService()
 		KillSamplesplitter()
 	} else {
 		// Use PID-based killing if we have the PID (avoids killing other instances)

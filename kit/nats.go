@@ -33,46 +33,51 @@ var (
 	natsIsConnected bool       = false
 )
 
-func NatsConnectToHubAndSubscribe() {
+func StartEmbeddedNATSAndConnectEngine() {
 
 	if natsIsConnected {
 		// Already connected
-		LogError(fmt.Errorf("NatsConnectToHubAndSubscribe: Already connected"))
+		LogError(fmt.Errorf("StartEmbeddedNATSAndConnectEngine: Already connected"))
 		return
 	}
 
-	url, err := NatsEnvValue("NATS_URL")
-	if err != nil {
+	if err := StartEmbeddedLocalNATSServer(); err != nil {
 		LogError(err)
 		return
 	}
+	url := EmbeddedNATSURL()
 
 	// Connect Options.
-	opts := []nats.Option{nats.Name("Palette NATS Subscriber")}
+	opts := []nats.Option{nats.Name("Palette Engine Local NATS Subscriber")}
 	opts = setupConnOptions(opts)
 
-	// Connect to NATS hub
-	LogInfo("Connecting to NATS hub", "url", maskURLPassword(url))
+	// Connect to the embedded local server. The server owns the leaf
+	// connection to the hub, keeping palette.local.> traffic local-only.
+	LogInfo("Connecting to embedded local NATS", "url", maskURLPassword(url))
 	nc, err := nats.Connect(url, opts...)
 	if err != nil {
 		natsIsConnected = false
-		LogError(fmt.Errorf("nats.Connect to hub failed, url=%s err=%w", maskURLPassword(url), err))
+		LogError(fmt.Errorf("nats.Connect to embedded local server failed, url=%s err=%w", maskURLPassword(url), err))
 		return
 	}
 	natsIsConnected = true
 	natsConn = nc
 
 	subscribeTo := fmt.Sprintf("to_palette.%s.>", Hostname())
-	err = NatsSubscribe(subscribeTo, natsEngineAPIHandler)
+	err = SubscribeEngineAPIOverNATS(subscribeTo)
 	if err != nil {
 		LogError(err)
 	} else {
-		LogInfo("Connected to NATS hub and subscribed", "subscribeTo", subscribeTo)
+		LogInfo("Connected to embedded local NATS and subscribed", "subscribeTo", subscribeTo)
 		NatsPublishFromEngine("connect.info", map[string]any{
 			"hostname": Hostname(),
 		})
 	}
 
+}
+
+func SubscribeEngineAPIOverNATS(subject string) error {
+	return NatsSubscribe(subject, natsEngineAPIHandler)
 }
 
 func NatsConnectLocal() error {
@@ -273,6 +278,20 @@ func NatsPublish(subj string, data map[string]any) error {
 	return nc.LastError()
 }
 
+func NatsPublishJSON(subj string, data any) error {
+	nc := natsConn
+	if !natsIsConnected || nc == nil {
+		return fmt.Errorf("NatsPublishJSON: no NATS connection, subject=%s", subj)
+	}
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	err = nc.Publish(subj, bytes)
+	LogIfError(err)
+	return nc.LastError()
+}
+
 // NatsSubscribe subscribes to the given subject using the provided callback.
 func NatsSubscribe(subj string, callback nats.MsgHandler) error {
 
@@ -341,8 +360,13 @@ func NatsPublishFromEngine(subject string, data map[string]any) {
 }
 
 func NatsDisconnect() {
+	if natsConn == nil {
+		natsIsConnected = false
+		return
+	}
 	natsConn.Close()
 	natsIsConnected = false
+	natsConn = nil
 }
 
 func NatsEnvValue(key string) (string, error) {

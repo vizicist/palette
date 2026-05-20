@@ -1,5 +1,7 @@
 import { API } from './api.js';
+import { Routes, routeLabel } from './routes.js';
 import { stepperNumSteps, samplePlaybackQuantValues, UIState } from './state.js';
+import { applyUISnapshot, requestUISnapshot, setupUIStateFeed } from './ui_nats.js';
 import {
     applyInitialPageMode,
     fitAppTitle,
@@ -30,24 +32,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.classList.add('touchscreen-embed');
     }
 
-    // Check guidefaultlevel to determine initial mode
     try {
-        const level = await API.call('global.get', { name: 'global.guidefaultlevel' });
-        if (level === '1' || level === 1) {
-            UIState.advancedMode = true;
-        }
-    } catch (e) { /* default to normal mode */ }
-
-    // Check if attract GUI display is allowed
-    try {
-        const val = await API.call('global.get', { name: 'global.attractallowgui' });
-        UIState.attractAllowGui = val === 'true' || val === true;
-    } catch (e) { /* default to false */ }
-
-    try {
-        const page = await API.call('global.get', { name: 'global.initialpage' });
-        UIState.setInitialPage(page);
-    } catch (e) { /* default to bss2 */ }
+        await setupUIStateFeed({
+            status: handleUIStatus,
+            stepper: handleStepperStatus,
+            cursor: handleCursorActivity,
+            obsRecord: handleOBSRecordStatus
+        });
+        await seedUIState();
+    } catch (e) {
+        console.warn('NATS UI feed unavailable:', e);
+        updateRecordButtonVisibility(false);
+    }
 
     applyInitialPageMode();
     setupAppTitleFit();
@@ -63,17 +59,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupTempoControl();
     await startInitialPage();
 
-    // Hide the Record button until we confirm OBS is reachable.
-    updateRecordButtonVisibility();
-    setInterval(updateRecordButtonVisibility, 10000);
-
-    // Start polling engine status every 2 seconds
-    setInterval(syncInitialPageFromEngine, 2000);
-    setInterval(pollStatus, 2000);
-    setInterval(refreshStepperStatus, 1000);
-    setInterval(refreshCursorActivity, 200);
     requestAnimationFrame(updateStepperIndicator);
 });
+
+async function seedUIState() {
+    try {
+        applyUISnapshot(await requestUISnapshot(), {
+            status: status => {
+                syncStartupMode(status);
+                handleUIStatus(status);
+            },
+            stepper: handleStepperStatus,
+            cursor: handleCursorActivity,
+            obsRecord: handleOBSRecordStatus
+        });
+    } catch (e) {
+        console.warn('NATS UI snapshot seed failed:', e);
+        updateRecordButtonVisibility(false);
+    }
+}
 
 async function startInitialPage() {
     await startSpacePalette();
@@ -81,19 +85,33 @@ async function startInitialPage() {
 
 async function syncInitialPageFromEngine() {
     try {
-        const page = await API.call('global.get', { name: 'global.initialpage' });
-        const previous = UIState.initialPage;
-        UIState.setInitialPage(page);
-        if (UIState.initialPage === previous) return;
-        applyInitialPageMode();
-        fitAppTitle();
-        if (UIState.activeAdventure === 'space') {
-            setAdvancedMode(UIState.advancedMode, false);
-            updateRitualNav();
-            updatePresetButtons();
+        const snapshot = await requestUISnapshot();
+        if (snapshot && snapshot.status) {
+            syncInitialPageValue(snapshot.status.initialpage);
         }
     } catch (e) {
-        // Ignore transient API errors; the next poll will try again.
+        // Ignore transient API errors.
+    }
+}
+
+function syncInitialPageValue(page) {
+    const previous = UIState.initialPage;
+    UIState.setInitialPage(page);
+    if (UIState.initialPage === previous) return;
+    applyInitialPageMode();
+    fitAppTitle();
+    if (UIState.activeAdventure === 'space') {
+        setAdvancedMode(UIState.advancedMode, false);
+        updateRitualNav();
+        updatePresetButtons();
+    }
+}
+
+function syncStartupMode(status) {
+    UIState.advancedMode = status && (status.guidefaultlevel === '1' || status.guidefaultlevel === 1);
+    UIState.attractAllowGui = !!(status && status.attractallowgui);
+    if (status && status.initialpage) {
+        UIState.setInitialPage(status.initialpage);
     }
 }
 
@@ -109,9 +127,8 @@ async function startSpacePalette() {
     document.getElementById('sigil-screen').classList.add('hidden');
     document.getElementById('main-container').classList.remove('hidden');
     setAdvancedMode(UIState.advancedMode, false);
-    await loadPresets();
     await refreshStepperStatus();
-    await pollStatus();
+    await loadPresets();
 }
 
 async function showSigilSequencer() {
@@ -126,17 +143,11 @@ async function showSigilSequencer() {
     document.getElementById('sigil-screen').classList.remove('hidden');
     await API.stepperPlay().catch(err => console.error('Failed to start stepper playback:', err));
     await setStepperDefaults();
-    await refreshStepperStatus();
 }
 
-async function updateRecordButtonVisibility() {
+function updateRecordButtonVisibility(running = false) {
     const btn = document.getElementById('btn-record');
     if (!btn) return;
-    let running = false;
-    try {
-        const result = await API.obsPing();
-        running = !!(result && result.running);
-    } catch (e) { /* treat errors as "not running" */ }
     btn.style.display = running ? '' : 'none';
 }
 
@@ -196,7 +207,7 @@ async function stopStepperQuietly() {
 async function setStepperDefaults() {
     await Promise.all(['A', 'B', 'C', 'D'].flatMap(patch => [
         API.stepperSetRecord(patch, true).catch(err => console.error(`Failed to enable stepper recording for ${patch}:`, err)),
-        API.stepperSetRoute(patch, 'samplesplitter').catch(err => console.error(`Failed to set stepper route for ${patch}:`, err))
+        API.stepperSetRoute(patch, Routes.samples).catch(err => console.error(`Failed to set stepper route for ${patch}:`, err))
     ]));
 }
 
@@ -214,10 +225,9 @@ function setupSigilSequencer() {
         html += `<div class="sigil-row-label">${label}</div>`;
         html += '<button class="sigil-control sigil-clear" data-action="clear">Clear</button>';
         html += '<select class="sigil-route" aria-label="MIDI route">';
-        html += '<option value="samplesplitter">Transmission</option>';
-        html += '<option value="off">Off</option>';
-        html += '<option value="bidule">Bidule</option>';
-        html += '<option value="both">Both</option>';
+        for (const route of [Routes.samples, Routes.off, Routes.bidule, Routes.both]) {
+            html += `<option value="${route}">${routeLabel(route)}</option>`;
+        }
         html += '</select>';
         html += '</div>';
         html += '<div class="sigil-steps">';
@@ -284,13 +294,13 @@ function setupPalettePads() {
         const pad = e.target.closest('.palette-pad');
         if (!pad) return;
         const patch = pad.dataset.pad;
-        const route = pad.dataset.route === 'samplesplitter' ? 'bidule' : 'samplesplitter';
+        const route = pad.dataset.route === Routes.samples ? Routes.bidule : Routes.samples;
         updatePalettePadRoute(patch, route);
         API.stepperSetRoute(patch, route)
             .then(() => refreshStepperStatus())
             .catch(err => {
                 console.error('Failed to set palette pad route:', err);
-                refreshStepperStatus().catch(() => updatePalettePadRoute(patch, pad.dataset.route || 'samplesplitter'));
+                refreshStepperStatus().catch(() => updatePalettePadRoute(patch, pad.dataset.route || Routes.samples));
             });
     });
 }
@@ -433,14 +443,8 @@ function setupTempoControl() {
     slider.addEventListener('change', sendTempo);
 }
 
-async function refreshStepperStatus() {
+function handleStepperStatus(status) {
     if (!UIState.wantsStepperStatus()) return;
-    let status;
-    try {
-        status = await API.stepperStatus();
-    } catch (err) {
-        return;
-    }
     if (!status || !status.tracks) return;
 
     syncStepperTiming(status);
@@ -449,12 +453,12 @@ async function refreshStepperStatus() {
     for (const patch of ['A', 'B', 'C', 'D']) {
         const track = status.tracks[patch];
         if (!track) continue;
-        updatePalettePadRoute(patch, track.route || 'samplesplitter');
+        updatePalettePadRoute(patch, track.route || Routes.samples);
         const row = document.querySelector(`.sigil-row[data-patch="${patch}"]`);
         if (!row) continue;
         const route = row.querySelector('.sigil-route');
         if (route && route.value !== track.route) {
-            route.value = track.route || 'samplesplitter';
+            route.value = track.route || Routes.samples;
         }
         row.querySelectorAll('.sigil-step').forEach(btn => {
             const step = Number(btn.dataset.step);
@@ -462,6 +466,16 @@ async function refreshStepperStatus() {
             btn.classList.toggle('active', events.length > 0);
             btn.dataset.count = String(events.length);
         });
+    }
+}
+
+async function refreshStepperStatus() {
+    if (!UIState.wantsStepperStatus()) return;
+    try {
+        const snapshot = await requestUISnapshot();
+        if (snapshot && snapshot.stepper) handleStepperStatus(snapshot.stepper);
+    } catch (err) {
+        // User-triggered refreshes may race engine startup; UI push events will catch up.
     }
 }
 
@@ -897,14 +911,8 @@ async function loadPreset(name) {
     }
 }
 
-async function refreshCursorActivity() {
+function handleCursorActivity(activity) {
     if (!UIState.wantsCursorActivity()) return;
-    let activity;
-    try {
-        activity = await API.cursorActivity();
-    } catch (err) {
-        return;
-    }
     for (const patch of ['A', 'B', 'C', 'D']) {
         const count = Number(activity && activity[patch]) || 0;
         if (UIState.activeAdventure === 'sigil' && count > UIState.cursorActivityCounts[patch]) {
@@ -912,19 +920,6 @@ async function refreshCursorActivity() {
         }
         setPalettePadActivity(patch, count > 0);
         UIState.cursorActivityCounts[patch] = count;
-    }
-}
-
-async function syncPresetSelectionFromEngine() {
-    try {
-        const selections = await API.getPresetStatus();
-        if (!selections || typeof selections !== 'object') return;
-        Object.entries(selections).forEach(([key, value]) => {
-            UIState.selectedPresets.set(key, value);
-        });
-        updatePresetButtons();
-    } catch (e) {
-        // Ignore polling errors
     }
 }
 
@@ -1069,23 +1064,33 @@ async function exitAttractMode() {
     hideAttract();
 }
 
-async function pollStatus() {
+function handleUIStatus(status) {
     if (UIState.activeAdventure !== 'space') {
         hideAttract();
-        return;
+    } else if (status && isTrueStatusValue(status.attractmode) && UIState.attractAllowGui && !UIState.helpVisible) {
+        showAttract();
+    } else {
+        hideAttract();
     }
 
-    try {
-        const status = await API.getStatus();
-        if (status && status.attractmode === 'true' && UIState.attractAllowGui && !UIState.helpVisible) {
-            showAttract();
-        } else {
-            hideAttract();
-        }
-        await syncPresetSelectionFromEngine();
-    } catch (e) {
-        // Ignore polling errors
+    updateRecordButtonVisibility(!!(status && status.obsrunning));
+
+    if (status && Object.prototype.hasOwnProperty.call(status, 'attractallowgui')) {
+        UIState.attractAllowGui = !!status.attractallowgui;
     }
+    if (status && status.initialpage) {
+        syncInitialPageValue(status.initialpage);
+    }
+    if (status && status.presets && typeof status.presets === 'object') {
+        Object.entries(status.presets).forEach(([key, value]) => {
+            UIState.selectedPresets.set(key, value);
+        });
+        updatePresetButtons();
+    }
+}
+
+function isTrueStatusValue(value) {
+    return value === true || value === 'true';
 }
 
 // Recording UI
@@ -1093,26 +1098,18 @@ function startRecordUI(remaining) {
     const btn = document.getElementById('btn-record');
     btn.classList.add('recording');
     updateRecordButton(remaining);
-
-    UIState.recordInterval = setInterval(async () => {
-        try {
-            const status = await API.obsRecordStatus();
-            if (status && status.recording) {
-                updateRecordButton(status.remaining);
-            } else {
-                stopRecordUI();
-            }
-        } catch (e) {
-            stopRecordUI();
-        }
-    }, 1000);
 }
 
 function stopRecordUI() {
     resetRecordButton();
-    if (UIState.recordInterval) {
-        clearInterval(UIState.recordInterval);
-        UIState.recordInterval = null;
+}
+
+function handleOBSRecordStatus(status) {
+    updateRecordButtonVisibility(!!(status && status.obsrunning));
+    if (status && status.recording) {
+        startRecordUI(status.remaining);
+    } else {
+        stopRecordUI();
     }
 }
 

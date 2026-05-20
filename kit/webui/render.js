@@ -1,3 +1,4 @@
+import { Routes } from './routes.js';
 import { patchSigils, stepperNumSteps, UIState } from './state.js';
 
 export function setupAppTitleFit() {
@@ -34,11 +35,11 @@ export function updateRitualNav() {
 export function updatePalettePadRoute(patch, route) {
     const pad = document.querySelector(`.palette-pad[data-pad="${patch}"]`);
     if (!pad) return;
-    const normalized = route === 'samplesplitter' || route === 'both' ? 'samplesplitter' : 'bidule';
+    const normalized = route === Routes.samples || route === Routes.both ? Routes.samples : Routes.bidule;
     pad.dataset.route = normalized;
     pad.classList.remove('sample', 'synth');
     const button = pad.querySelector('.palette-pad-route');
-    if (button) button.textContent = normalized === 'samplesplitter' ? 'TRANSMISSION' : 'OSCILLATION';
+    if (button) button.textContent = normalized === Routes.samples ? 'TRANSMISSION' : 'OSCILLATION';
 }
 
 export function renderStepperIndicator() {

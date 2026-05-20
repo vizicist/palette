@@ -65,7 +65,7 @@ func InitEngine() {
 
 	// e.params = NewParamValues()
 
-	NatsConnectToHubAndSubscribe()
+	StartEmbeddedNATSAndConnectEngine()
 
 	theCursorManager = NewCursorManager()
 	theRouter = NewRouter()
@@ -139,6 +139,7 @@ func EngineNatsAPI(host string, cmd string, timeout time.Duration) (result strin
 
 func EngineCloseNats() {
 	NatsDisconnect()
+	StopEmbeddedNATSServer()
 }
 
 func StartEngine() {
@@ -240,6 +241,7 @@ func (e *Engine) Start() {
 	go theScheduler.Start()
 	go theRouter.Start()
 	go theMidiIO.Start()
+	StartUIStateProjector()
 
 	go TheBidule().Reset()
 

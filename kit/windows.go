@@ -28,7 +28,7 @@ func KillExecutable(executable string) {
 }
 
 func IsSamplesplitterRunning() (bool, error) {
-	if InEngineSamplesplitterRunning() {
+	if SamplePlaybackServiceRunning() {
 		return true, nil
 	}
 	processRunning, err := IsSamplesplitterProcessRunning()
@@ -39,7 +39,7 @@ func IsSamplesplitterRunning() (bool, error) {
 }
 
 func IsSamplesplitterProcessRunning() (bool, error) {
-	if InEngineSamplesplitterRunning() {
+	if SamplePlaybackServiceRunning() {
 		return true, nil
 	}
 	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
@@ -55,7 +55,7 @@ func IsSamplesplitterProcessRunning() (bool, error) {
 }
 
 func KillSamplesplitter() {
-	StopInEngineSamplesplitter()
+	StopSamplePlaybackService()
 	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
 		`Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq 'samplesplitter.exe' -or ($_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`)
 	_ = cmd.Run()

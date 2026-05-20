@@ -51,7 +51,7 @@ func TestSamplePlaybackVolumeDefaultsWhenParamsUnavailable(t *testing.T) {
 	}
 }
 
-func TestLegacyTransmissionParamCanonicalizesToSamplePlayback(t *testing.T) {
+func TestSamplePlaybackQuantUsesCanonicalParam(t *testing.T) {
 	oldParamDefs := ParamDefs
 	oldGlobalParams := GlobalParams
 	defer func() {
@@ -62,7 +62,7 @@ func TestLegacyTransmissionParamCanonicalizesToSamplePlayback(t *testing.T) {
 	ParamDefs = map[string]ParamDef{
 		"global.sampleplaybackquant": {
 			Category: "global",
-			Init:     "0.5",
+			Init:     "0.0",
 			TypedParamDef: ParamDefFloat{
 				min: 0,
 				max: 1,
@@ -71,8 +71,8 @@ func TestLegacyTransmissionParamCanonicalizesToSamplePlayback(t *testing.T) {
 	}
 	GlobalParams = NewParamValues()
 
-	if err := SetAndApplyGlobalParam("global.transmissionquant", "0.25"); err != nil {
-		t.Fatalf("SetAndApplyGlobalParam err = %v", err)
+	if err := SetAndApplyGlobalParam("global.sampleplaybackquant", "0.25"); err != nil {
+		t.Fatalf("SetAndApplyGlobalParam canonical err = %v", err)
 	}
 	got, err := GetParamFloat("global.sampleplaybackquant")
 	if err != nil {
@@ -81,8 +81,8 @@ func TestLegacyTransmissionParamCanonicalizesToSamplePlayback(t *testing.T) {
 	if got != 0.25 {
 		t.Fatalf("global.sampleplaybackquant = %v, want 0.25", got)
 	}
-	if _, err := GetParam("global.transmissionquant"); err == nil {
-		t.Fatal("legacy global.transmissionquant should not be stored as a normal param")
+	if err := SetAndApplyGlobalParam("global.transmissionquant", "0.25"); err == nil {
+		t.Fatal("legacy global.transmissionquant should be rejected")
 	}
 }
 

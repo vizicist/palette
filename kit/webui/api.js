@@ -28,8 +28,6 @@ export const API = {
         }
     },
 
-    getStatus() { return this.call('global.status'); },
-    getPresetStatus() { return this.call('global.presetstatus'); },
     getSavedList(category) { return this.call('saved.list', { category }); },
     getParamDefs(category) { return this.call('saved.paramdefs', { category }); },
     getParamDefsJson() { return this.call('saved.paramdefsjson'); },
@@ -66,11 +64,8 @@ export const API = {
     // OBS recording
     obsRecord() { return this.call('global.obsrecord'); },
     obsRecordStop() { return this.call('global.obsrecordstop'); },
-    obsRecordStatus() { return this.call('global.obsrecordstatus'); },
-    obsPing() { return this.call('global.obsping'); },
 
     // Stepper APIs
-    stepperStatus() { return this.call('stepper.status'); },
     stepperPlay() { return this.call('stepper.play'); },
     stepperStop() { return this.call('stepper.stop'); },
     stepperSetRecord(patch, onoff) { return this.call('stepper.setrecord', { patch, onoff: String(onoff) }); },
@@ -78,8 +73,7 @@ export const API = {
     stepperToggle(patch, step) { return this.call('stepper.toggle', { patch, step: String(step) }); },
     stepperSetRoute(patch, route) { return this.call('stepper.setroute', { patch, route }); },
     setTempoFactor(value) { return this.call('global.set_tempo_factor', { value: String(value) }); },
-    reloadSamplePlaybackSet() { return this.call('global.sampleplaybackreload'); },
-    cursorActivity() { return this.call('cursor.activity'); }
+    reloadSamplePlaybackSet() { return this.call('global.sampleplaybackreload'); }
 };
 
 window.API = API;

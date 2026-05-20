@@ -50,6 +50,7 @@ func rememberPresetSelection(category string, patch string, filename string) {
 	currentPresetSelections.Lock()
 	currentPresetSelections.values[category+":"+patch] = filename
 	currentPresetSelections.Unlock()
+	NotifyStatusChanged()
 }
 
 func currentPresetSelectionSnapshot() map[string]string {

@@ -11,6 +11,7 @@ require (
 	github.com/goccy/go-json v0.10.5
 	github.com/hypebeast/go-osc v0.0.0-20220308234300-cec5a8a1e5f5
 	github.com/joho/godotenv v1.5.1
+	github.com/nats-io/nats-server/v2 v2.10.23
 	github.com/nats-io/nats.go v1.43.0
 	github.com/pkg/profile v1.7.0
 	github.com/reugn/go-quartz v0.9.0
@@ -42,8 +43,10 @@ require (
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
+	github.com/minio/highwayhash v1.0.3 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mmcloughlin/profile v0.1.1 // indirect
+	github.com/nats-io/jwt/v2 v2.5.8 // indirect
 	github.com/nats-io/nkeys v0.4.11 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
@@ -60,6 +63,7 @@ require (
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/time v0.8.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
