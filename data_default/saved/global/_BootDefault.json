@@ -29,7 +29,7 @@
         "global.sampleplaybackquant":"0.0",
         "global.sampleplaybackcompressed":"true",
         "global.sampleplaybackwords":"4",
-        "global.sampleplaybackvolume":"0.35",
+        "global.sampleplaybackvolume":"0.25",
         "global.guidefaultlevel":"0",
         "global.guishowall":"false",
         "global.guisize":"palette",
