@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Local Chromium runtime profile/cache data; ignored by git and not source"
+paths = ['''data_default/config/chrome/.*''']
