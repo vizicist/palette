@@ -3,20 +3,20 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
 	twitch "github.com/gempir/go-twitch-irc/v3"
 )
 
-const (
-	// clientUsername            = "justinfan123123"
-	// clientAuthenticationToken = "oauth:123123123"
-	clientUsername            = "nosuchtim"
-	clientAuthenticationToken = "oauth:9dudgfmilvgy76hgtsag361rcmpzfl"
-)
+const clientUsername = "nosuchtim"
 
 func main() {
+	clientAuthenticationToken := os.Getenv("TWITCH_OAUTH_TOKEN")
+	if clientAuthenticationToken == "" {
+		log.Fatal("TWITCH_OAUTH_TOKEN must be set")
+	}
 	client := twitch.NewClient(clientUsername, clientAuthenticationToken)
 	// client := twitch.NewAnonymousClient()
 
