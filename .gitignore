@@ -107,3 +107,6 @@ cmd/palette_hub/palette_hub.exe
 cmd/palette_hub/palette_hub.exe
 cmd/palette_hub/palette_hub.exe
 .claude/settings.local.json
+data_default/config/.env
+cmd/palette_hub/daily_update.launchd.err
+cmd/palette_hub/update_lasttoy.launchd.err

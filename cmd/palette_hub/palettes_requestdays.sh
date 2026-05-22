@@ -16,7 +16,41 @@ fi
 START_DATE="2025-01-01"
 END_DATE=$(date +%Y-%m-%d)
 # Always refresh the last 3 days (current day + 2 past days)
-REFRESH_CUTOFF=$(date -d "$END_DATE - 2 days" +%Y-%m-%d)
+if command -v gdate >/dev/null 2>&1; then
+    DATE_CMD=gdate
+else
+    DATE_CMD=date
+fi
+
+next_day() {
+    if [ "$DATE_CMD" = "gdate" ]; then
+        gdate -d "$1 + 1 day" +%Y-%m-%d
+    else
+        # BSD/macOS date requires -v adjustments before the input parse (-f).
+        date -j -v+1d -f %Y-%m-%d "$1" +%Y-%m-%d
+    fi
+}
+
+rfc3339_tz_offset() {
+    if [ "$DATE_CMD" = "gdate" ]; then
+        gdate +%:z
+    else
+        # BSD/macOS date has %z (-0700), not GNU %:z (-07:00).
+        date +%z | sed 's/\(..\)$/\:\1/'
+    fi
+}
+
+if [ "$DATE_CMD" = "gdate" ]; then
+    REFRESH_CUTOFF=$(gdate -d "$END_DATE - 2 days" +%Y-%m-%d)
+else
+    REFRESH_CUTOFF=$(date -j -v-2d +%Y-%m-%d)
+fi
+
+# Optional quick mode for manual troubleshooting.  Normal cron runs should not
+# set RECENT_ONLY, so missing days are backfilled when a palette comes back.
+if [ "${RECENT_ONLY:-}" = "1" ]; then
+    START_DATE="$REFRESH_CUTOFF"
+fi
 
 echo "Requesting logs from $START_DATE to $END_DATE (refreshing $REFRESH_CUTOFF and later)"
 
@@ -49,37 +83,47 @@ while IFS= read -r line || [ -n "$line" ]; do
     while [[ "$current_date" < "$END_DATE" ]] || [[ "$current_date" == "$END_DATE" ]]; do
         outfile="$outdir/${current_date}.json"
 
-        # For recent days (last 3), always delete and re-request to capture new events
-        # For older days, skip if file already exists
-        if [ -f "$outfile" ]; then
-            if [[ ! "$current_date" < "$REFRESH_CUTOFF" ]]; then
-                rm -f "$outfile"
-            else
-                current_date=$(date -d "$current_date + 1 day" +%Y-%m-%d)
-                continue
-            fi
+        # For recent days (last 3), always re-request to capture new events.
+        # For older days, skip if file already exists.
+        if [ -f "$outfile" ] && [[ "$current_date" < "$REFRESH_CUTOFF" ]]; then
+            current_date=$(next_day "$current_date")
+            continue
         fi
 
         # Calculate start and end times for this day (local timezone)
-        tz_offset=$(date +%:z)
+        tz_offset=$(rfc3339_tz_offset)
         day_start="${current_date}T00:00:00${tz_offset}"
         day_end="${current_date}T23:59:59${tz_offset}"
 
         echo "  Requesting $current_date...  $day_start to $day_end"
-        palette_hub request_log "$hostname" "start=$day_start" "end=$day_end" > "$outfile" 2>/dev/null
-
-        # Check if we got any data
-        if [ -s "$outfile" ]; then
-            lines=$(wc -l < "$outfile")
-            echo "    -> $lines entries"
+        tmpfile="$outfile.tmp.$$"
+        if ! palette_hub request_log "$hostname" "start=$day_start" "end=$day_end" > "$tmpfile" 2>&1; then
+            echo "    -> ERROR: palette_hub command failed"
+            sed 's/^/       /' "$tmpfile" | head -5
+            rm -f "$tmpfile"
+            if [ -f "$outfile" ] && head -1 "$outfile" | grep -q '^Error:'; then
+                rm -f "$outfile"
+            fi
+        elif grep -q '^Error:' "$tmpfile"; then
+            echo "    -> ERROR: palette_hub returned an error"
+            sed 's/^/       /' "$tmpfile" | head -5
+            rm -f "$tmpfile"
+            if [ -f "$outfile" ] && head -1 "$outfile" | grep -q '^Error:'; then
+                rm -f "$outfile"
+            fi
         else
-            # Remove empty file
-            # rm -f "$outfile"
-            echo "    -> no entries"
+            mv "$tmpfile" "$outfile"
+            # Check if we got any data
+            if [ -s "$outfile" ]; then
+                lines=$(wc -l < "$outfile")
+                echo "    -> $lines entries"
+            else
+                echo "    -> no entries"
+            fi
         fi
 
         # Next day
-        current_date=$(date -d "$current_date + 1 day" +%Y-%m-%d)
+        current_date=$(next_day "$current_date")
     done
 
 done < "$PALETTES_JSON"
