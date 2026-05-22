@@ -350,6 +350,8 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
             else:
                 js_data['restartsByDate'][date][palette] = 0
 
+    last_updated = datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -383,6 +385,14 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
         }}
         #summary {{
             margin-top: 30px;
+        }}
+        .last-updated {{
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 13px;
+            text-align: right;
         }}
         table {{
             width: 100%;
@@ -512,6 +522,8 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
             <div id="session-list-content" style="font-family: monospace; font-size: 14px; max-height: 500px; overflow-y: auto; background-color: #f9f9f9; padding: 15px; border-radius: 4px;">
             </div>
         </div>
+
+        <div class="last-updated">Last updated: {last_updated}</div>
     </div>
 
     <script>
