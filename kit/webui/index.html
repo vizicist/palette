@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header id="app-title"><span id="app-title-text">Transmission and Oscillation Recontextualizer</span></header>
+    <header id="app-title"><span id="app-title-text">Prophecy and Oscillation Resequencer</span></header>
     <nav id="ritual-nav">
         <button class="ritual-nav-btn" id="btn-nav-space" data-screen="space">Palette</button>
         <button class="ritual-nav-btn" id="btn-nav-sigil" data-screen="sigil">Sequencer</button>
@@ -78,32 +78,64 @@
     <div id="main-container" class="hidden">
         <section id="palette-pad-stage" aria-label="Palette pads">
             <div class="palette-pad-layout">
-                <div class="palette-pad palette-pad-a" data-pad="A">
-                    <span class="palette-pad-title">Sigil: CHAOS</span>
+                <div class="palette-pad palette-pad-a sample" data-pad="A">
+                    <span class="palette-pad-title">CHAOS</span>
                     <img class="palette-pad-sigil" src="sigil-chaos.png" alt="">
-                    <button class="palette-pad-route" type="button">TRANSMISSION</button>
+                    <button class="palette-pad-route" type="button" aria-label="Mode: Prophesize">
+                        <span class="palette-pad-mode-choice palette-pad-mode-prophecy">Prophesize</span>
+                        <span class="palette-pad-mode-arrow" aria-hidden="true">
+                            <span class="palette-pad-mode-arrow-head palette-pad-mode-arrow-head-left"></span>
+                            <span class="palette-pad-mode-arrow-line"></span>
+                            <span class="palette-pad-mode-arrow-head palette-pad-mode-arrow-head-right"></span>
+                        </span>
+                        <span class="palette-pad-mode-choice palette-pad-mode-oscillation">Oscillate</span>
+                    </button>
                 </div>
-                <div class="palette-pad palette-pad-d" data-pad="D">
-                    <span class="palette-pad-title">Sigil: DIRECTIVE</span>
+                <div class="palette-pad palette-pad-d sample" data-pad="D">
+                    <span class="palette-pad-title">DIRECTIVE</span>
                     <img class="palette-pad-sigil" src="sigil-directive.png" alt="">
-                    <button class="palette-pad-route" type="button">TRANSMISSION</button>
+                    <button class="palette-pad-route" type="button" aria-label="Mode: Prophesize">
+                        <span class="palette-pad-mode-choice palette-pad-mode-prophecy">Prophesize</span>
+                        <span class="palette-pad-mode-arrow" aria-hidden="true">
+                            <span class="palette-pad-mode-arrow-head palette-pad-mode-arrow-head-left"></span>
+                            <span class="palette-pad-mode-arrow-line"></span>
+                            <span class="palette-pad-mode-arrow-head palette-pad-mode-arrow-head-right"></span>
+                        </span>
+                        <span class="palette-pad-mode-choice palette-pad-mode-oscillation">Oscillate</span>
+                    </button>
                 </div>
-                <div class="palette-pad palette-pad-b" data-pad="B">
-                    <span class="palette-pad-title">Sigil: ORACLE</span>
+                <div class="palette-pad palette-pad-b sample" data-pad="B">
+                    <span class="palette-pad-title">ORACLE</span>
                     <img class="palette-pad-sigil" src="sigil-oracle.png" alt="">
-                    <button class="palette-pad-route" type="button">TRANSMISSION</button>
+                    <button class="palette-pad-route" type="button" aria-label="Mode: Prophesize">
+                        <span class="palette-pad-mode-choice palette-pad-mode-prophecy">Prophesize</span>
+                        <span class="palette-pad-mode-arrow" aria-hidden="true">
+                            <span class="palette-pad-mode-arrow-head palette-pad-mode-arrow-head-left"></span>
+                            <span class="palette-pad-mode-arrow-line"></span>
+                            <span class="palette-pad-mode-arrow-head palette-pad-mode-arrow-head-right"></span>
+                        </span>
+                        <span class="palette-pad-mode-choice palette-pad-mode-oscillation">Oscillate</span>
+                    </button>
                 </div>
-                <div class="palette-pad palette-pad-c" data-pad="C">
-                    <span class="palette-pad-title">Sigil: SACRED</span>
+                <div class="palette-pad palette-pad-c sample" data-pad="C">
+                    <span class="palette-pad-title">SACRED</span>
                     <img class="palette-pad-sigil" src="sigil-sacred.png" alt="">
-                    <button class="palette-pad-route" type="button">TRANSMISSION</button>
+                    <button class="palette-pad-route" type="button" aria-label="Mode: Prophesize">
+                        <span class="palette-pad-mode-choice palette-pad-mode-prophecy">Prophesize</span>
+                        <span class="palette-pad-mode-arrow" aria-hidden="true">
+                            <span class="palette-pad-mode-arrow-head palette-pad-mode-arrow-head-left"></span>
+                            <span class="palette-pad-mode-arrow-line"></span>
+                            <span class="palette-pad-mode-arrow-head palette-pad-mode-arrow-head-right"></span>
+                        </span>
+                        <span class="palette-pad-mode-choice palette-pad-mode-oscillation">Oscillate</span>
+                    </button>
                 </div>
             </div>
         </section>
 
-        <section id="sample-playback-controls-panel" aria-label="Transmission controls">
-            <h2 id="sample-playback-controls-title">Transmission Control</h2>
-            <div class="palette-pad-controls" aria-label="Transmission controls">
+        <section id="sample-playback-controls-panel" aria-label="Prophecy controls">
+            <h2 id="sample-playback-controls-title">Prophecy Control</h2>
+            <div class="palette-pad-controls" aria-label="Prophecy controls">
                 <label class="pad-control" for="sample-playback-quant">
                     <span class="pad-control-title">Quantize</span>
                     <select id="sample-playback-quant">
@@ -123,12 +155,12 @@
                         <option value="5">5</option>
                     </select>
                 </label>
-                <button class="pad-control-button" id="sample-playback-newset" type="button">Receive New Transmission</button>
+                <button class="pad-control-button" id="sample-playback-newset" type="button">Receive New Prophecies</button>
             </div>
         </section>
 
         <section id="preset-selector-panel" aria-labelledby="preset-selector-title">
-            <h2 id="preset-selector-title">Oscillation and Photonic Control</h2>
+            <h2 id="preset-selector-title">Oscillation Control</h2>
             <main id="preset-grid"></main>
         </section>
 

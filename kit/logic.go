@@ -165,7 +165,7 @@ func (logic *PatchLogic) liveStepperRoute() string {
 	return NewSamplePlaybackDomain(logic.patch).route()
 }
 
-func (logic *PatchLogic) bss2SampleMode() bool {
+func (logic *PatchLogic) bssSampleMode() bool {
 	return NewSamplePlaybackDomain(logic.patch).Enabled()
 }
 
@@ -210,8 +210,8 @@ func (logic *PatchLogic) generateSoundFromCursor(ce CursorEvent, cursorStyle str
 
 	LogOfType("gensound", "generateSoundFromCursor", "cursor", ce.GID, "ce", ce)
 
-	if logic.bss2SampleMode() {
-		logic.generateBSS2SampleFromCursor(ce)
+	if logic.bssSampleMode() {
+		logic.generateBSSSampleFromCursor(ce)
 		return
 	}
 
@@ -226,13 +226,13 @@ func (logic *PatchLogic) generateSoundFromCursor(ce CursorEvent, cursorStyle str
 	}
 }
 
-func (logic *PatchLogic) generateBSS2SampleFromCursor(ce CursorEvent) {
+func (logic *PatchLogic) generateBSSSampleFromCursor(ce CursorEvent) {
 	logic.mutex.Lock()
 	defer logic.mutex.Unlock()
 
 	ac, ok := theCursorManager.getActiveCursorFor(ce.GID)
 	if !ok {
-		LogWarn("generateBSS2SampleFromCursor: no active cursor", "gid", ce.GID)
+		LogWarn("generateBSSSampleFromCursor: no active cursor", "gid", ce.GID)
 		return
 	}
 	NewSamplePlaybackDomain(logic.patch).HandleCursor(ce, ac)
@@ -254,13 +254,13 @@ func (logic *PatchLogic) generateSoundFromCursorDownOnly(ce CursorEvent) {
 		atClick := logic.nextQuant(CurrentClick(), quant)
 		// LogInfo("logic.down", "current", CurrentClick(), "atClick", atClick, "noteOn", noteOn)
 		logic.scheduleLiveNoteOn(ce, noteOn, atClick)
-		if theStepper != nil && !IsBSS2InitialPage() {
+		if theStepper != nil && !IsBSSInitialPage() {
 			theStepper.RecordNoteOn(ce.Tag, noteOn, ce.Pos.Z, atClick, quant)
 		}
 		noteOff := NewNoteOffFromNoteOn(noteOn)
 		atClick += QuarterNote
 		logic.scheduleLiveNoteOff(ce, noteOff, atClick)
-		if theStepper != nil && !IsBSS2InitialPage() {
+		if theStepper != nil && !IsBSSInitialPage() {
 			theStepper.RecordNoteOff(ce.Tag, noteOff, atClick)
 		}
 
@@ -294,7 +294,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			// LogWarn("generateSoundFromCursor: oldNote already exists", "gid", ce.Gid)
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			logic.scheduleLiveNoteOff(ce, noteOff, CurrentClick())
-			if theStepper != nil && !IsBSS2InitialPage() {
+			if theStepper != nil && !IsBSSInitialPage() {
 				theStepper.RecordNoteOff(ce.Tag, noteOff, CurrentClick())
 			}
 		}
@@ -306,7 +306,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			return // do nothing, assumes any errors are logged in cursorToNoteOn
 		}
 		logic.scheduleLiveNoteOn(ce, noteOn, atClick)
-		if theStepper != nil && !IsBSS2InitialPage() {
+		if theStepper != nil && !IsBSSInitialPage() {
 			theStepper.RecordNoteOn(ce.Tag, noteOn, ce.Pos.Z, atClick, quant)
 		}
 		ac.NoteOn = noteOn
@@ -365,7 +365,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
 			logic.scheduleLiveNoteOff(ce, noteOff, offClick)
-			if theStepper != nil && !IsBSS2InitialPage() {
+			if theStepper != nil && !IsBSSInitialPage() {
 				theStepper.RecordNoteOff(ce.Tag, noteOff, offClick)
 			}
 
@@ -375,7 +375,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			}
 
 			logic.scheduleLiveNoteOn(ce, newNoteOn, thisClick)
-			if theStepper != nil && !IsBSS2InitialPage() {
+			if theStepper != nil && !IsBSSInitialPage() {
 				theStepper.RecordNoteOn(ce.Tag, newNoteOn, ce.Pos.Z, thisClick, c2q)
 			}
 			ac.NoteOn = newNoteOn
@@ -392,7 +392,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			noteOff := NewNoteOffFromNoteOn(oldNoteOn)
 			offClick := ac.NoteOnClick + 1
 			logic.scheduleLiveNoteOff(ce, noteOff, offClick+1)
-			if theStepper != nil && !IsBSS2InitialPage() {
+			if theStepper != nil && !IsBSSInitialPage() {
 				theStepper.RecordNoteOff(ce.Tag, noteOff, offClick+1)
 			}
 			// delete(logic.cursorNote, ce.Gid)

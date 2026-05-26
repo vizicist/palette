@@ -18,7 +18,7 @@ func NewStepperConfig() StepperConfig {
 }
 
 func (c StepperConfig) SequencingEnabled() bool {
-	return !IsBSS2InitialPage()
+	return !IsBSSInitialPage()
 }
 
 func (c StepperConfig) CoercePlaying(playing bool) bool {

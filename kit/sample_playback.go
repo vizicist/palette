@@ -54,7 +54,7 @@ func NewSamplePlaybackDomain(patch *Patch) SamplePlaybackDomain {
 }
 
 func (d SamplePlaybackDomain) Enabled() bool {
-	return IsBSS2InitialPage() && d.route() == "samplesplitter"
+	return IsBSSInitialPage() && d.route() == "samplesplitter"
 }
 
 func (d SamplePlaybackDomain) route() string {

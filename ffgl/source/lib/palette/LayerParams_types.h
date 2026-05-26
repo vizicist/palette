@@ -60,8 +60,7 @@ LayerParams_InitializeTypes() {
 	LayerParams_pitchsetTypes.push_back("stylusrmx");
 
 	LayerParams_initialpageTypes.push_back("pro");
-	LayerParams_initialpageTypes.push_back("bss1");
-	LayerParams_initialpageTypes.push_back("bss2");
+	LayerParams_initialpageTypes.push_back("bss");
 
 	LayerParams_guisizeTypes.push_back("small");
 	LayerParams_guisizeTypes.push_back("medium");

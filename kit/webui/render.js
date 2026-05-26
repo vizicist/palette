@@ -22,7 +22,7 @@ export function fitAppTitle() {
 }
 
 export function applyInitialPageMode() {
-    document.body.classList.remove('initial-pro', 'initial-bss1', 'initial-bss2');
+    document.body.classList.remove('initial-pro', 'initial-bss');
     document.body.classList.add(`initial-${UIState.initialPage}`);
 }
 
@@ -37,9 +37,13 @@ export function updatePalettePadRoute(patch, route) {
     if (!pad) return;
     const normalized = route === Routes.samples || route === Routes.both ? Routes.samples : Routes.bidule;
     pad.dataset.route = normalized;
-    pad.classList.remove('sample', 'synth');
+    pad.classList.toggle('sample', normalized === Routes.samples);
+    pad.classList.toggle('synth', normalized === Routes.bidule);
     const button = pad.querySelector('.palette-pad-route');
-    if (button) button.textContent = normalized === Routes.samples ? 'TRANSMISSION' : 'OSCILLATION';
+    if (button) {
+        const mode = normalized === Routes.samples ? 'Prophesize' : 'Oscillate';
+        button.setAttribute('aria-label', `Mode: ${mode}`);
+    }
 }
 
 export function renderStepperIndicator() {
@@ -99,6 +103,13 @@ export function updatePatchButtons() {
 
 export function showHelp() {
     UIState.helpVisible = true;
+    const helpFrame = document.querySelector('#help-overlay iframe');
+    if (helpFrame) {
+        const helpPage = UIState.initialPage === 'bss' ? 'bss_helpscreen.html' : 'helpscreen.html';
+        if (!helpFrame.src.endsWith(helpPage)) {
+            helpFrame.src = helpPage;
+        }
+    }
     document.getElementById('help-overlay').classList.remove('hidden');
 }
 

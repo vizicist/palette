@@ -1,6 +1,6 @@
 package kit
 
-func IsBSS2InitialPage() bool {
+func IsBSSInitialPage() bool {
 	page, err := GetParam("global.initialpage")
-	return err != nil || page == "" || page == "bss2"
+	return err != nil || page != "pro"
 }
