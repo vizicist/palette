@@ -28,7 +28,7 @@ body.initial-pro {
     --ritual-nav-height: 0px;
 }
 
-body.initial-bss2 {
+body.initial-bss {
     --ritual-nav-height: 0px;
 }
 
@@ -37,7 +37,7 @@ body.initial-pro #ritual-nav {
     display: none;
 }
 
-body.initial-bss2 #ritual-nav {
+body.initial-bss #ritual-nav {
     display: none;
 }
 
@@ -462,7 +462,7 @@ body.initial-bss2 #ritual-nav {
 }
 
 #title-bar h1 {
-    font-size: 30px;
+    font-size: 39px;
     font-weight: normal;
 }
 
@@ -582,12 +582,12 @@ body.initial-bss2 #ritual-nav {
     display: none;
 }
 
-body.initial-bss2 #main-container {
+body.initial-bss #main-container {
     display: grid;
     grid-template-rows: minmax(0, 0.82fr) auto minmax(0, 0.88fr) auto;
 }
 
-body.initial-bss2 #palette-pad-stage {
+body.initial-bss #palette-pad-stage {
     display: flex;
     min-height: 0;
     align-items: center;
@@ -596,7 +596,7 @@ body.initial-bss2 #palette-pad-stage {
     border-bottom: 4px solid #1a6767;
 }
 
-body.initial-bss2 #sample-playback-controls-panel {
+body.initial-bss #sample-playback-controls-panel {
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -607,16 +607,16 @@ body.initial-bss2 #sample-playback-controls-panel {
     border-bottom: 4px solid #1a6767;
 }
 
-body.initial-bss2.advanced-mode #main-container {
+body.initial-bss.advanced-mode #main-container {
     grid-template-rows: minmax(0, 1fr) auto auto;
 }
 
-body.initial-bss2.advanced-mode #palette-pad-stage,
-body.initial-bss2.advanced-mode #sample-playback-controls-panel {
+body.initial-bss.advanced-mode #palette-pad-stage,
+body.initial-bss.advanced-mode #sample-playback-controls-panel {
     display: none;
 }
 
-body.initial-bss2.advanced-mode #preset-selector-panel {
+body.initial-bss.advanced-mode #preset-selector-panel {
     width: min(calc(100% - 32px), 1200px);
     height: calc(100% - 20px);
 }
@@ -635,7 +635,7 @@ body.initial-bss2.advanced-mode #preset-selector-panel {
 
 .palette-pad {
     --pad-sigil-scale: 1;
-    --pad-sigil-active-scale: 1.42;
+    --pad-sigil-active-scale: 1.83;
     position: relative;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
@@ -681,26 +681,84 @@ body.initial-bss2.advanced-mode #preset-selector-panel {
 }
 
 .palette-pad-route {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
     width: 100%;
     height: 34px;
     box-sizing: border-box;
-    border: 2px solid #0aa;
-    border-radius: 2px;
-    padding: 0 8px;
-    background: #0f0f0f;
+    border: none;
+    border-radius: 0;
+    padding: 0 2px;
+    background: transparent;
     color: #fff;
-    font-size: clamp(13px, 2vh, 18px);
-    font-weight: 600;
+    font-size: clamp(13.128px, 1.85vh, 17.902px);
+    font-weight: 800;
     line-height: 1;
     text-align: center;
     letter-spacing: 0;
     cursor: pointer;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.palette-pad-mode-choice {
+    color: rgba(255, 255, 255, 0.54);
+    padding: 3px 4px;
+}
+
+.palette-pad-mode-arrow {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.palette-pad-mode-arrow-line {
+    flex: 1;
+    height: 3px;
+    background: currentColor;
+}
+
+.palette-pad-mode-arrow-head {
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+}
+
+.palette-pad-mode-arrow-head-left {
+    border-right: 8px solid currentColor;
+}
+
+.palette-pad-mode-arrow-head-right {
+    border-left: 8px solid currentColor;
+}
+
+.palette-pad.sample .palette-pad-mode-prophecy,
+.palette-pad.synth .palette-pad-mode-oscillation {
+    background: #333;
+    color: #fff;
+    box-shadow: none;
+}
+
+.palette-pad.morph-active.sample .palette-pad-mode-prophecy,
+.palette-pad.morph-active.synth .palette-pad-mode-oscillation {
+    background: #0aa;
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.34);
 }
 
 .palette-pad-route:focus {
+    outline: none;
+}
+
+.palette-pad-route:focus-visible {
     outline: 2px solid #0aa;
-    outline-offset: 2px;
+    outline-offset: 1px;
 }
 
 .palette-pad.morph-active .palette-pad-sigil {
@@ -715,7 +773,7 @@ body.initial-bss2.advanced-mode #preset-selector-panel {
 
 .palette-pad-c {
     --pad-sigil-scale: 1.18;
-    --pad-sigil-active-scale: 1.68;
+    --pad-sigil-active-scale: 2.16;
     transform: translateX(calc(-1 * var(--lower-pad-nudge)));
 }
 
@@ -740,7 +798,7 @@ body.initial-bss2.advanced-mode #preset-selector-panel {
     display: none;
 }
 
-body.initial-bss2 #sample-playback-controls-title {
+body.initial-bss #sample-playback-controls-title {
     display: block;
     margin: 0;
     color: #fff;
@@ -808,7 +866,7 @@ body.initial-bss2 #sample-playback-controls-title {
     display: none;
 }
 
-body.initial-bss2 #preset-selector-panel {
+body.initial-bss #preset-selector-panel {
     width: min(86%, 1050px);
     height: calc(100% - 28px);
     min-height: 0;
@@ -819,7 +877,7 @@ body.initial-bss2 #preset-selector-panel {
     justify-content: center;
 }
 
-body.initial-bss2 #preset-selector-title {
+body.initial-bss #preset-selector-title {
     display: block;
     flex: 0 0 auto;
     margin: 0 0 8px;
@@ -830,16 +888,16 @@ body.initial-bss2 #preset-selector-title {
     text-align: center;
 }
 
-body.initial-bss2.advanced-mode #preset-selector-title {
+body.initial-bss.advanced-mode #preset-selector-title {
     display: none;
 }
 
-body.initial-bss2 #preset-grid {
+body.initial-bss #preset-grid {
     flex: 1;
     min-height: 0;
 }
 
-body.initial-bss2 #preset-grid.grid-mode {
+body.initial-bss #preset-grid.grid-mode {
     grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
     grid-auto-rows: minmax(58px, auto);
     gap: 12px;
@@ -847,7 +905,7 @@ body.initial-bss2 #preset-grid.grid-mode {
     align-content: start;
 }
 
-body.initial-bss2 #preset-grid .preset-btn {
+body.initial-bss #preset-grid .preset-btn {
     font-size: clamp(14px, 2.7vw, 20px);
     line-height: 1.08;
     min-height: 58px;
@@ -888,6 +946,10 @@ body.initial-bss2 #preset-grid .preset-btn {
     gap: 8px;
     padding: 10px;
     align-content: start;
+}
+
+body.initial-pro #preset-grid.grid-mode {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .preset-btn {
@@ -1009,7 +1071,7 @@ body.initial-bss2 #preset-grid .preset-btn {
     }
 
     #title-bar h1 {
-        font-size: 28px;
+        font-size: 36px;
     }
 
     #preset-grid.grid-mode {
@@ -1329,7 +1391,7 @@ body.touchscreen-embed .preset-btn {
     padding: 4px 2px;
 }
 
-body.initial-bss2.touchscreen-embed #preset-grid.grid-mode {
+body.initial-bss.touchscreen-embed #preset-grid.grid-mode {
     grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
     grid-auto-rows: minmax(58px, auto);
     gap: 12px;
@@ -1338,7 +1400,7 @@ body.initial-bss2.touchscreen-embed #preset-grid.grid-mode {
     align-content: start;
 }
 
-body.initial-bss2.touchscreen-embed #preset-grid .preset-btn {
+body.initial-bss.touchscreen-embed #preset-grid .preset-btn {
     min-height: 58px;
     font-size: clamp(14px, 2.7vw, 20px);
     padding: 10px 8px;

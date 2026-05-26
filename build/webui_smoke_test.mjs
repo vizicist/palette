@@ -86,7 +86,7 @@ async function checkLiveServer() {
     }
 
     liveAssert(index.response.ok, 'live index returns HTTP 200');
-    liveAssert(index.text.includes('Transmission and Oscillation Recontextualizer'), 'live index has app title');
+    liveAssert(index.text.includes('Prophecy and Oscillation Resequencer'), 'live index has app title');
     const liveIndexIsCurrent = index.text.includes('type="module" src="app.js"');
     liveAssert(liveIndexIsCurrent, 'live index serves module entry point');
 

@@ -35,7 +35,7 @@ flowchart TB
         Stepper["Stepper\n8-step sequencer state"]
         StepperCfg["Stepper Config\nroute/mode selection"]
         StepperPlayer["Stepper Player\noutput scheduling"]
-        SamplePlayback["SamplePlayback Domain\nBSS2 cursor-to-sample playback"]
+        SamplePlayback["SamplePlayback Domain\nBSS cursor-to-sample playback"]
         ProcMgr["Process Manager\nBidule, Resolume, GUI, OBS, etc."]
         SSplitter["In-engine SampleSplitter\npkg/samplesplitter.Service"]
         LocalNATS["Embedded local NATS\nclient 4222, websocket 9222"]
@@ -194,7 +194,7 @@ these sources into the same runtime flow where possible.
 The cursor manager tracks active touches and their associated state. A cursor
 event is then interpreted by patch logic for the relevant A/B/C/D pad. Patch
 logic decides whether that cursor is controlling the normal Oscillation/Synth
-path, the BSS2 SamplePlayback path, visual output, recording into Stepper, or some
+path, the BSS SamplePlayback path, visual output, recording into Stepper, or some
 combination of those.
 
 ## Timing and Scheduling
@@ -216,7 +216,7 @@ parameters determine synth selection, pitch, velocity, channel, and gesture
 behavior. Bidule receives MIDI through configured virtual MIDI ports, typically
 LoopBe30 on Windows.
 
-SamplePlayback is the newer direct sample path. In BSS2, when a pad is
+SamplePlayback is the newer direct sample path. In BSS, when a pad is
 in the UI's Transmission mode, cursor gestures are interpreted by `SamplePlaybackDomain`
 instead of being sent only as normal synth notes. Horizontal finger position
 selects the sample, vertical position controls pitch bend, and pressure controls
@@ -272,13 +272,13 @@ during that step. Stepper playback is separated from Stepper sequencing:
 - `StepperPlayer` owns output scheduling to Bidule and/or samples.
 
 Routes can be off, Bidule, SampleSplitter, or both. Stepper sequencing is
-disabled on the BSS2 initial page because BSS2 SamplePlayback behavior is direct
+disabled on the BSS initial page because BSS SamplePlayback behavior is direct
 cursor-to-sample playback rather than grid recording.
 
 ## SamplePlayback and SampleSplitter
 
 The SamplePlayback domain is Palette-facing and lives in `kit/sample_playback.go`.
-It translates BSS2 cursor events into sample playback intent. It does not split
+It translates BSS cursor events into sample playback intent. It does not split
 audio itself; it uses the SampleSplitter service as the playback engine.
 
 SampleSplitter itself lives in `pkg/samplesplitter`. It is responsible for:
@@ -320,8 +320,8 @@ is fetched with a local NATS request to `palette.local.ui.snapshot.request`.
 The embedded NATS leaf configuration keeps those subjects local-only.
 
 Current UI concepts include the original Space Palette Pro page, the Sequencer
-page, and the newer BSS2 page controlled by `global.initialpage` values `pro`,
-`bss1`, and `bss2`. The BSS2 UI presents virtual pads, Transmission/Oscillation
+page, and the newer BSS page controlled by `global.initialpage` values `pro`
+and `bss`. The BSS UI presents virtual pads, Prophecy/Oscillation
 mode toggles, SamplePlayback controls, and Oscillation/Photonic preset controls.
 
 ## Process Management

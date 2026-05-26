@@ -3,7 +3,7 @@
   "plugins": [ "", "quad" ],
   "log": ["","cursor","midi","cursor,midi","cursor,midi,osc","osc","api","loop", "morph","mmtt", "quant", "transpose", "ffgl", "gesture"],
   "pitchset": ["","stylusrmx"],
-  "initialpage": ["pro", "bss1", "bss2"],
+  "initialpage": ["pro", "bss"],
   "guisize": ["small","medium","palette"],
   "mmtt": ["kinect", "depthai", ""],
 	"destination": [ ".", "A", "B", "C", "D" ],

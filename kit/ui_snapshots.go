@@ -22,7 +22,7 @@ func uiStatusSnapshot() EngineStatusSnapshot {
 		NATSWebsocket:       EmbeddedNATSWebsocketURL(),
 		Hostname:            Hostname(),
 		Presets:             currentPresetSelectionSnapshot(),
-		InitialPage:         GetParamWithDefault("global.initialpage", "bss2"),
+		InitialPage:         GetParamWithDefault("global.initialpage", "bss"),
 		GuideDefaultLevel:   GetParamWithDefault("global.guidefaultlevel", "0"),
 		AttractAllowGUI:     IsTrueValue(GetParamWithDefault("global.attractallowgui", "false")),
 	}

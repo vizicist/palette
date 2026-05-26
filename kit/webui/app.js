@@ -369,7 +369,7 @@ function setupSamplePlaybackControls() {
                 if (newSet) {
                     newSet.textContent = 'Ready';
                     setTimeout(() => {
-                        if (newSet.textContent === 'Ready') newSet.textContent = 'Receive New Transmission';
+                        if (newSet.textContent === 'Ready') newSet.textContent = 'Receive New Prophecies';
                     }, 1200);
                 }
             } catch (err) {
@@ -383,7 +383,7 @@ function setupSamplePlaybackControls() {
     }
 
     if (newSet) {
-        const newSetLabel = 'Receive New Transmission';
+        const newSetLabel = 'Receive New Prophecies';
         newSet.addEventListener('click', async () => {
             newSet.disabled = true;
             newSet.textContent = 'Busy';
@@ -984,16 +984,17 @@ function setAdvancedMode(enabled, shouldLoadPresets = true) {
     const categoryTabs = document.getElementById('category-tabs');
     const patchSelector = document.getElementById('patch-selector');
     const titleBar = document.getElementById('title-bar');
+    const proInitialPage = UIState.initialPage === 'pro';
 
     if (enabled) {
         categoryTabs.classList.remove('hidden');
         patchSelector.classList.remove('hidden');
-        titleBar.classList.add('hidden');
+        titleBar.classList.toggle('hidden', !proInitialPage);
         updatePatchButtons();
     } else {
         categoryTabs.classList.add('hidden');
         patchSelector.classList.add('hidden');
-        titleBar.classList.add('hidden');
+        titleBar.classList.toggle('hidden', !proInitialPage);
         // Reset to quad category in normal mode
         UIState.resetNormalPresetView();
         if (shouldLoadPresets) {
