@@ -80,11 +80,7 @@ async function seedUIState() {
 }
 
 async function startInitialPage() {
-    if (UIState.initialPage === 'bss') {
-        await showSigilSequencer();
-    } else {
-        await startSpacePalette();
-    }
+    await startSpacePalette();
 }
 
 async function syncInitialPageFromEngine() {
