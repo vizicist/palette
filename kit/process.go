@@ -77,6 +77,34 @@ var MmttExe = executableName("mmtt_kinect")
 var ObsExe = executableName("obs64")
 var SamplesplitterExe = executableName("samplesplitter")
 
+func processAllowedByMode(process string) bool {
+	return process != "samplesplitter" || IsBSSMode()
+}
+
+func effectiveProcessRunit(process string, configured bool) bool {
+	return configured && processAllowedByMode(process)
+}
+
+func SyncSamplesplitterProcessForMode() {
+	if NoProcess || theProcessManager == nil {
+		return
+	}
+	runit, err := GetParamBool("global.process.samplesplitter")
+	if err != nil {
+		LogIfError(err)
+		runit = false
+	}
+	if effectiveProcessRunit("samplesplitter", runit) {
+		if err := theProcessManager.StartRunning("samplesplitter"); err != nil {
+			LogIfError(err)
+		}
+		return
+	}
+	if err := theProcessManager.StopRunning("samplesplitter"); err != nil {
+		LogIfError(err)
+	}
+}
+
 func KillAllExceptMonitor() {
 	LogInfo("KillAll")
 	// XXX - Unfortunate that this is hard-coded.
@@ -174,6 +202,7 @@ func (pm *ProcessManager) CheckAutorestartProcesses() {
 			LogError(err)
 			continue
 		}
+		runit = effectiveProcessRunit(process, runit)
 		running, err := pm.IsRunning(process)
 		if err == nil {
 			if runit {
@@ -277,6 +306,13 @@ func (pm *ProcessManager) StartRunning(process string) error {
 		// "Palette Control" window, not whether any Chrome process is running.
 		// If the window existed, we closed it above. Now we'll start a fresh one.
 	} else if process == "samplesplitter" {
+		if !processAllowedByMode(process) {
+			LogInfo("StartRunning: blocked by global.mode", "process", process, "mode", CurrentMode())
+			StopSamplePlaybackService()
+			KillSamplesplitter()
+			pm.wasStarted[process].Store(false)
+			return nil
+		}
 		running, err := IsSamplesplitterRunning()
 		if err != nil {
 			return err

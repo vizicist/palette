@@ -20,7 +20,7 @@ type EngineStatusSnapshot struct {
 	NATSWebsocket       string            `json:"natswebsocket"`
 	Hostname            string            `json:"hostname"`
 	Presets             map[string]string `json:"presets"`
-	InitialPage         string            `json:"initialpage"`
+	Mode                string            `json:"mode"`
 	GuideDefaultLevel   string            `json:"guidefaultlevel"`
 	AttractAllowGUI     bool              `json:"attractallowgui"`
 	Patches             map[string]string `json:"patches,omitempty"`

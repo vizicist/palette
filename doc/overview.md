@@ -42,7 +42,7 @@ surface.
 
 The UI supports preset selection, parameter editing, advanced mode, virtual pad
 mode selection, SamplePlayback controls, Stepper/Sequencer display, and startup
-page selection through `global.initialpage`.
+page selection through `global.mode`.
 
 Because the UI files are embedded, changes under `kit/webui` require rebuilding
 `palette_engine`.

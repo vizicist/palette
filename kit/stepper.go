@@ -73,7 +73,7 @@ func NewStepper() *Stepper {
 	s.player = NewStepperPlayer(config, sampleVoices, s.stepLength, s.pitchBendValue)
 	for _, patch := range []string{"A", "B", "C", "D"} {
 		s.tracks[patch] = &StepperTrack{
-			Recording:       true,
+			Recording:       false,
 			lastRecordStep:  -1,
 			lastRecordCycle: -1,
 		}
@@ -86,6 +86,8 @@ func ExecuteStepperAPI(api string, apiargs map[string]string) (string, error) {
 		return "", fmt.Errorf("stepper is not initialized")
 	}
 	switch api {
+	case "status":
+		return theStepper.Status()
 	case "play":
 		theStepper.SetPlaying(true)
 		return theStepper.Status()
@@ -160,7 +162,7 @@ func (s *Stepper) SetRecording(patch string, recording bool) (string, error) {
 	track.Recording = recording
 	track.lastRecordStep = -1
 	track.lastRecordCycle = -1
-	if recording {
+	if recording && s.config.SequencingEnabled() {
 		s.playing = true
 		s.lastStep = -1
 		s.lastPlayCycle = -1
@@ -169,6 +171,22 @@ func (s *Stepper) SetRecording(patch string, recording bool) (string, error) {
 	status, err := s.Status()
 	NotifyStepperChanged()
 	return status, err
+}
+
+func (s *Stepper) SetAllRecording(recording bool) {
+	s.mutex.Lock()
+	for _, track := range s.tracks {
+		track.Recording = recording
+		track.lastRecordStep = -1
+		track.lastRecordCycle = -1
+	}
+	if recording && s.config.SequencingEnabled() {
+		s.playing = true
+		s.lastStep = -1
+		s.lastPlayCycle = -1
+	}
+	s.mutex.Unlock()
+	NotifyStepperChanged()
 }
 
 func (s *Stepper) ClearTrack(patch string) (string, error) {

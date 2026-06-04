@@ -1,5 +1,5 @@
 import { API } from './api.js';
-import { Routes, routeLabel } from './routes.js';
+import { initialPageDefaultRoute, Routes, routeLabel } from './routes.js';
 import { stepperNumSteps, samplePlaybackQuantValues, UIState } from './state.js';
 import { applyUISnapshot, requestUISnapshot, setupUIStateFeed } from './ui_nats.js';
 import {
@@ -80,14 +80,18 @@ async function seedUIState() {
 }
 
 async function startInitialPage() {
-    await startSpacePalette();
+    if (UIState.initialPage === 'bss') {
+        await showSigilSequencer();
+    } else {
+        await startSpacePalette();
+    }
 }
 
 async function syncInitialPageFromEngine() {
     try {
         const snapshot = await requestUISnapshot();
         if (snapshot && snapshot.status) {
-            syncInitialPageValue(snapshot.status.initialpage);
+            syncInitialPageValue(statusMode(snapshot.status));
         }
     } catch (e) {
         // Ignore transient API errors.
@@ -110,9 +114,15 @@ function syncInitialPageValue(page) {
 function syncStartupMode(status) {
     UIState.advancedMode = status && (status.guidefaultlevel === '1' || status.guidefaultlevel === 1);
     UIState.attractAllowGui = !!(status && status.attractallowgui);
-    if (status && status.initialpage) {
-        UIState.setInitialPage(status.initialpage);
+    const mode = statusMode(status);
+    if (mode) {
+        UIState.setInitialPage(mode);
     }
+}
+
+function statusMode(status) {
+    if (!status) return '';
+    return status.mode || '';
 }
 
 function setupRitualNav() {
@@ -202,6 +212,9 @@ async function stopStepperQuietly() {
     try {
         await API.stepperStop();
     } catch (e) { /* Stepper may be unavailable during startup */ }
+    await Promise.all(['A', 'B', 'C', 'D'].map(patch =>
+        API.stepperSetRecord(patch, false).catch(err => console.error(`Failed to disable stepper recording for ${patch}:`, err))
+    ));
 }
 
 async function setStepperDefaults() {
@@ -453,12 +466,12 @@ function handleStepperStatus(status) {
     for (const patch of ['A', 'B', 'C', 'D']) {
         const track = status.tracks[patch];
         if (!track) continue;
-        updatePalettePadRoute(patch, track.route || Routes.samples);
+        updatePalettePadRoute(patch, track.route || initialPageDefaultRoute(UIState.initialPage));
         const row = document.querySelector(`.sigil-row[data-patch="${patch}"]`);
         if (!row) continue;
         const route = row.querySelector('.sigil-route');
         if (route && route.value !== track.route) {
-            route.value = track.route || Routes.samples;
+            route.value = track.route || initialPageDefaultRoute(UIState.initialPage);
         }
         row.querySelectorAll('.sigil-step').forEach(btn => {
             const step = Number(btn.dataset.step);
@@ -1079,8 +1092,9 @@ function handleUIStatus(status) {
     if (status && Object.prototype.hasOwnProperty.call(status, 'attractallowgui')) {
         UIState.attractAllowGui = !!status.attractallowgui;
     }
-    if (status && status.initialpage) {
-        syncInitialPageValue(status.initialpage);
+    const mode = statusMode(status);
+    if (mode) {
+        syncInitialPageValue(mode);
     }
     if (status && status.presets && typeof status.presets === 'object') {
         Object.entries(status.presets).forEach(([key, value]) => {

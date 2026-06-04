@@ -1,11 +1,11 @@
 package kit
 
 import (
+	"fmt"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 	"time"
-	"runtime/debug"
-	"fmt"
 
 	"github.com/hypebeast/go-osc/osc"
 )
@@ -31,8 +31,9 @@ func TheBidule() *Bidule {
 }
 
 func (b *Bidule) Activate() {
-	msg := osc.NewMessage("/play")
-	msg.Append(int32(1)) // turn it on
+	time.Sleep(2 * time.Second)
+	b.Reset()
+	msg := bidulePlayMessage(true)
 	for i := 0; i < 10; i++ {
 		dt := 5 * time.Second
 		time.Sleep(dt)
@@ -75,19 +76,29 @@ func (b *Bidule) Reset() {
 		}
 	}()
 
-
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
-	msg := osc.NewMessage("/play")
-	msg.Append(int32(0))
+	SendAllNotesOffToSynths()
+
+	msg := bidulePlayMessage(false)
 	LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
 	theEngine.SendOsc(b.client, msg)
 
 	// Give Bidule time to react
 	time.Sleep(400 * time.Millisecond)
-	msg = osc.NewMessage("/play")
-	msg.Append(int32(1))
+	SendAllNotesOffToSynths()
+	msg = bidulePlayMessage(true)
 	LogOfType("bidule", "Bidule.Reset is sending", "msg", msg)
 	theEngine.SendOsc(b.client, msg)
+}
+
+func bidulePlayMessage(on bool) *osc.Message {
+	msg := osc.NewMessage("/play")
+	if on {
+		msg.Append(int32(1))
+	} else {
+		msg.Append(int32(0))
+	}
+	return msg
 }

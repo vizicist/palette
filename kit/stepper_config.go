@@ -32,6 +32,7 @@ func (c StepperConfig) SetRoute(patch string, route string) error {
 	if !validStepperRoute(route) {
 		return fmt.Errorf("stepper.setroute: bad route=%s", route)
 	}
+	route = string(CoerceStepperRouteForMode(StepperRoute(route)))
 	p := GetPatch(patch)
 	if p == nil {
 		return fmt.Errorf("no such patch: %s", patch)
@@ -53,9 +54,9 @@ func (c StepperConfig) RouteForPatch(patch string) StepperRoute {
 	}
 	route := p.Get("stepper.route")
 	if !validStepperRoute(route) {
-		return StepperRouteSamplesplitter
+		return CoerceStepperRouteForMode(StepperRouteSamplesplitter)
 	}
-	return StepperRoute(route)
+	return CoerceStepperRouteForMode(StepperRoute(route))
 }
 
 func (c StepperConfig) RouteIncludesBidule(patch string) bool {
@@ -64,6 +65,9 @@ func (c StepperConfig) RouteIncludesBidule(patch string) bool {
 }
 
 func (c StepperConfig) RouteIncludesSamples(patch string) bool {
+	if !IsBSSMode() {
+		return false
+	}
 	route := c.RouteForPatch(patch)
 	return route == StepperRouteSamplesplitter || route == StepperRouteBoth
 }

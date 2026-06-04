@@ -25,6 +25,7 @@
         "global.emailpassword":"",
         "global.emailto":"",
         "global.guiexec":"bin/pyinstalled/palette_gui.exe",
+        "global.mode":"pro",
         "global.guidefaultlevel":"0",
         "global.guishowall":"false",
         "global.guisize":"small",

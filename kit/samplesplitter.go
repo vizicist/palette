@@ -24,6 +24,9 @@ var samplePlaybackService struct {
 }
 
 func StartSamplePlaybackService() error {
+	if !IsBSSMode() {
+		return fmt.Errorf("sample playback is disabled in %s mode", CurrentMode())
+	}
 	samplePlaybackService.mutex.Lock()
 	defer samplePlaybackService.mutex.Unlock()
 	if samplePlaybackService.service != nil && samplePlaybackService.service.Running() {
@@ -112,6 +115,9 @@ func SetSamplePlaybackServiceWords(words int) bool {
 }
 
 func ReloadSamplePlaybackServiceSamples() error {
+	if !IsBSSMode() {
+		return fmt.Errorf("sample playback is disabled in %s mode", CurrentMode())
+	}
 	if !SamplePlaybackServiceRunning() {
 		if err := StartSamplePlaybackService(); err != nil {
 			return err
@@ -127,6 +133,9 @@ func ReloadSamplePlaybackServiceSamples() error {
 }
 
 func withSamplePlaybackService(fn func(*ss.Service)) bool {
+	if !IsBSSMode() {
+		return false
+	}
 	samplePlaybackService.mutex.Lock()
 	service := samplePlaybackService.service
 	samplePlaybackService.mutex.Unlock()
@@ -147,6 +156,10 @@ func IsSamplesplitterSynth(synth *Synth) bool {
 func SendSamplesplitterNote(synth *Synth, value any) bool {
 	if !IsSamplesplitterSynth(synth) {
 		return false
+	}
+	if !IsBSSMode() {
+		LogOfType("midi", "SendSamplesplitterNote: blocked by global.mode", "mode", CurrentMode())
+		return true
 	}
 	channel := synth.portchannel.channel - 1
 	if channel < 0 {
@@ -169,6 +182,10 @@ func SendSamplesplitterNote(synth *Synth, value any) bool {
 func SendSamplesplitterPitchBend(synth *Synth, value int) bool {
 	if !IsSamplesplitterSynth(synth) {
 		return false
+	}
+	if !IsBSSMode() {
+		LogOfType("midi", "SendSamplesplitterPitchBend: blocked by global.mode", "mode", CurrentMode())
+		return true
 	}
 	channel := synth.portchannel.channel - 1
 	if channel < 0 {

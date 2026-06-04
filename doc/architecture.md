@@ -320,7 +320,7 @@ is fetched with a local NATS request to `palette.local.ui.snapshot.request`.
 The embedded NATS leaf configuration keeps those subjects local-only.
 
 Current UI concepts include the original Space Palette Pro page, the Sequencer
-page, and the newer BSS page controlled by `global.initialpage` values `pro`
+page, and the newer BSS page controlled by `global.mode` values `pro`
 and `bss`. The BSS UI presents virtual pads, Prophecy/Oscillation
 mode toggles, SamplePlayback controls, and Oscillation/Photonic preset controls.
 
