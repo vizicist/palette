@@ -1,4 +1,4 @@
-import { Routes } from './routes.js';
+import { initialPageDefaultRoute, Routes } from './routes.js';
 import { patchSigils, stepperNumSteps, UIState } from './state.js';
 
 export function setupAppTitleFit() {
@@ -24,6 +24,9 @@ export function fitAppTitle() {
 export function applyInitialPageMode() {
     document.body.classList.remove('initial-pro', 'initial-bss');
     document.body.classList.add(`initial-${UIState.initialPage}`);
+    for (const patch of ['A', 'B', 'C', 'D']) {
+        updatePalettePadRoute(patch, initialPageDefaultRoute(UIState.initialPage));
+    }
 }
 
 export function updateRitualNav() {

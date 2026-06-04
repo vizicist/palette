@@ -2,7 +2,7 @@ DEFINE_TYPES(resolumepath);
 DEFINE_TYPES(plugins);
 DEFINE_TYPES(log);
 DEFINE_TYPES(pitchset);
-DEFINE_TYPES(initialpage);
+DEFINE_TYPES(mode);
 DEFINE_TYPES(guisize);
 DEFINE_TYPES(mmtt);
 DEFINE_TYPES(destination);
@@ -59,8 +59,8 @@ LayerParams_InitializeTypes() {
 	LayerParams_pitchsetTypes.push_back("");
 	LayerParams_pitchsetTypes.push_back("stylusrmx");
 
-	LayerParams_initialpageTypes.push_back("pro");
-	LayerParams_initialpageTypes.push_back("bss");
+	LayerParams_modeTypes.push_back("pro");
+	LayerParams_modeTypes.push_back("bss");
 
 	LayerParams_guisizeTypes.push_back("small");
 	LayerParams_guisizeTypes.push_back("medium");

@@ -11,7 +11,7 @@ export const patchSigils = {
 
 export function normalizeInitialPage(page) {
     const value = String(page || '').trim().toLowerCase();
-    return ['pro', 'bss'].includes(value) ? value : 'bss';
+    return ['pro', 'bss'].includes(value) ? value : 'pro';
 }
 
 export const UIState = {
@@ -21,7 +21,7 @@ export const UIState = {
     lastSinglePatch: 'A',
     showingParams: false,
     activeAdventure: null,
-    initialPage: 'bss',
+    initialPage: 'pro',
     selectedPresets: new Map(),
     cursorActivityCounts: { A: 0, B: 0, C: 0, D: 0 },
     stepperTiming: {

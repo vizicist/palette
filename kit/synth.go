@@ -106,6 +106,19 @@ func (synth *Synth) SendANO() {
 	LogIfError(state.output.Send([]byte{status, data1, data2}))
 }
 
+func SendAllNotesOffToSynths() {
+	if Synths == nil {
+		return
+	}
+	for _, synth := range Synths {
+		if synth == nil {
+			continue
+		}
+		synth.SendANO()
+		synth.SendPitchBend(MidiPitchBendCenter)
+	}
+}
+
 func (synth *Synth) SendController(cnum uint8, cval uint8) {
 
 	if !synth.midiOutputEnabled() {

@@ -11,3 +11,7 @@ export function routeLabel(route) {
         route === Routes.both ? 'Both' :
         'Off';
 }
+
+export function initialPageDefaultRoute(initialPage) {
+    return initialPage === 'pro' ? Routes.bidule : Routes.samples;
+}

@@ -485,6 +485,7 @@ func GetInt(value string, i *int64) bool {
 }
 
 func ActivateGlobalParam(name string) {
+	name = canonicalGlobalParamName(name)
 	val, err := GetParam(name)
 	LogIfError(err)
 	err = SetAndApplyGlobalParam(name, val)
@@ -506,6 +507,9 @@ func SetAndApplyGlobalParam(name string, value string) (err error) {
 }
 
 func canonicalGlobalParamName(name string) string {
+	if name == "global.initialpage" {
+		return "global.mode"
+	}
 	return name
 }
 
@@ -526,7 +530,7 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	if strings.HasPrefix(name, "global.process.") {
 		process := strings.TrimPrefix(name, "global.process.")
 		if theProcessManager.IsAvailable(process) {
-			if IsTrueValue(value) {
+			if effectiveProcessRunit(process, IsTrueValue(value)) {
 				err = theProcessManager.StartRunning(process)
 			} else {
 				err = theProcessManager.StopRunning(process)
@@ -607,6 +611,16 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			LogError(err)
 			return err
 		}
+
+	case "global.mode":
+		mode := normalizeMode(value)
+		if mode != value {
+			if err := GlobalParams.SetParamWithString(name, mode); err != nil {
+				LogError(err)
+				return err
+			}
+		}
+		ApplyMode()
 
 	case "global.sampleplaybackcompressed":
 		SetSamplePlaybackServiceCompressed(IsTrueValue(value))

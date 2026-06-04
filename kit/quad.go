@@ -179,6 +179,7 @@ func (quad *Quad) Start() {
 
 	err := quad.Load("quad", "_Current")
 	LogIfError(err)
+	ApplyModeStepperRoutes()
 }
 
 func (quad *Quad) Status(source string) string {
