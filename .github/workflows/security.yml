@@ -38,7 +38,12 @@ jobs:
             BASE_SHA="${{ github.event.before }}"
           fi
           if [ -z "$BASE_SHA" ] || printf '%s' "$BASE_SHA" | grep -Eq '^0+$'; then
-            pre-commit run --all-files --show-diff-on-failure
+            if git rev-parse --verify "${HEAD_SHA}^" >/dev/null 2>&1; then
+              BASE_SHA="$(git rev-parse "${HEAD_SHA}^")"
+              pre-commit run --from-ref "$BASE_SHA" --to-ref "$HEAD_SHA" --show-diff-on-failure
+            else
+              pre-commit run --all-files --show-diff-on-failure
+            fi
           else
             pre-commit run --from-ref "$BASE_SHA" --to-ref "$HEAD_SHA" --show-diff-on-failure
           fi
