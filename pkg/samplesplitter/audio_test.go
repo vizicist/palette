@@ -92,6 +92,109 @@ func TestAudioManagerMixLoopsVoice(t *testing.T) {
 	}
 }
 
+func TestAudioManagerReverbWetZeroKeepsDryOutput(t *testing.T) {
+	audio := &AudioManager{
+		voices: map[string]*audioVoice{
+			"dry": {pcm: []int16{12000, -6000}},
+		},
+		reverb: newMonoReverb(audioSampleRate),
+	}
+	audio.reverb.SetWet(0)
+	out := make([]byte, 4)
+
+	completed := audio.mixIntoLocked(out)
+	if len(completed) != 0 {
+		t.Fatalf("completed = %v, want none", completed)
+	}
+	got := []int16{
+		int16(binary.LittleEndian.Uint16(out[0:2])),
+		int16(binary.LittleEndian.Uint16(out[2:4])),
+	}
+	want := []int16{12000, -6000}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("samples = %v, want %v", got, want)
+		}
+	}
+}
+
+func TestAudioManagerReverbAddsTail(t *testing.T) {
+	audio := &AudioManager{
+		voices: map[string]*audioVoice{
+			"impulse": {pcm: []int16{20000}},
+		},
+		reverb: newMonoReverb(audioSampleRate),
+	}
+	audio.reverb.SetWet(0.5)
+	out := make([]byte, 5000)
+
+	_ = audio.mixIntoLocked(out)
+
+	tail := int16(binary.LittleEndian.Uint16(out[1357*2 : 1357*2+2]))
+	if absInt16(tail) < 700 {
+		t.Fatalf("tail sample = %d, want audible reverb energy after impulse", tail)
+	}
+}
+
+func TestAudioManagerReverbIsAudibleAtMaxWet(t *testing.T) {
+	audio := &AudioManager{
+		voices: map[string]*audioVoice{
+			"impulse": {pcm: []int16{20000}},
+		},
+		reverb: newMonoReverb(audioSampleRate),
+	}
+	audio.reverb.SetWet(1)
+	out := make([]byte, 1000)
+
+	_ = audio.mixIntoLocked(out)
+
+	reflection := int16(binary.LittleEndian.Uint16(out[419*2 : 419*2+2]))
+	if absInt16(reflection) < 2500 {
+		t.Fatalf("early reflection = %d, want audible reverb at max wet", reflection)
+	}
+}
+
+func TestMonoReverbLengthScalesDecay(t *testing.T) {
+	reverb := newMonoReverb(audioSampleRate)
+	reverb.SetLength(1)
+	shortTail := reverb.maxTailFrames
+	shortFeedback := reverb.combs[0].feedback
+
+	reverb.SetLength(4)
+
+	if reverb.maxTailFrames != shortTail*4 {
+		t.Fatalf("maxTailFrames = %d, want %d", reverb.maxTailFrames, shortTail*4)
+	}
+	if reverb.combs[0].feedback <= shortFeedback {
+		t.Fatalf("feedback = %f, want greater than short feedback %f", reverb.combs[0].feedback, shortFeedback)
+	}
+}
+
+func TestAudioManagerReverbKeepsDrySignalPresent(t *testing.T) {
+	audio := &AudioManager{
+		voices: map[string]*audioVoice{
+			"impulse": {pcm: []int16{20000}},
+		},
+		reverb: newMonoReverb(audioSampleRate),
+	}
+	audio.reverb.SetWet(1)
+	out := make([]byte, 2)
+
+	_ = audio.mixIntoLocked(out)
+
+	first := int16(binary.LittleEndian.Uint16(out[0:2]))
+	if first < 17000 {
+		t.Fatalf("first sample = %d, want dry signal to stay present with reverb enabled", first)
+	}
+}
+
+func absInt16(v int16) int {
+	if v < 0 {
+		return -int(v)
+	}
+	return int(v)
+}
+
 func TestAudioManagerStopChannelStopsHeldNotes(t *testing.T) {
 	audio := &AudioManager{
 		voices: map[string]*audioVoice{

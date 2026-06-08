@@ -46,6 +46,8 @@ func (s Server) Handler() http.Handler {
 	mux.HandleFunc("/api/set_base_note", s.handleSetBaseNote)
 	mux.HandleFunc("/api/set_peak_start", s.handleSetPeakStart)
 	mux.HandleFunc("/api/set_compressed", s.handleSetCompressed)
+	mux.HandleFunc("/api/set_reverb", s.handleSetReverb)
+	mux.HandleFunc("/api/set_reverb_length", s.handleSetReverbLength)
 	mux.HandleFunc("/api/reload_sigils", s.handleReloadSigils)
 	mux.HandleFunc("/api/set_pitch_bend", s.handleSetPitchBend)
 	mux.HandleFunc("/api/stop_all", s.handleStopAll)
@@ -221,6 +223,24 @@ func (s Server) handleSetCompressed(w http.ResponseWriter, r *http.Request) {
 	enabled := parseBool(r.URL.Query().Get("enabled"))
 	s.State.SetCompressed(enabled)
 	writeJSON(w, map[string]any{"ok": true, "compressed": enabled}, http.StatusOK)
+}
+
+func (s Server) handleSetReverb(w http.ResponseWriter, r *http.Request) {
+	wet := clampReverbWet(parseFloat(r.URL.Query().Get("wet"), 0))
+	s.State.SetReverbWet(wet)
+	if s.Audio != nil {
+		s.Audio.SetReverbWet(wet)
+	}
+	writeJSON(w, map[string]any{"ok": true, "reverb_wet": wet}, http.StatusOK)
+}
+
+func (s Server) handleSetReverbLength(w http.ResponseWriter, r *http.Request) {
+	length := clampReverbLength(parseFloat(r.URL.Query().Get("length"), DefaultReverbLength))
+	s.State.SetReverbLength(length)
+	if s.Audio != nil {
+		s.Audio.SetReverbLength(length)
+	}
+	writeJSON(w, map[string]any{"ok": true, "reverb_length": length}, http.StatusOK)
 }
 
 func (s Server) handleReloadSigils(w http.ResponseWriter, r *http.Request) {

@@ -16,6 +16,10 @@ import (
 const samplesplitterPort = 9876
 const samplesplitterMidiPort = "16. Internal MIDI"
 const samplesplitterStatusTimeout = 500 * time.Millisecond
+const (
+	defaultSamplePlaybackReverbWet    = 0.0
+	defaultSamplePlaybackReverbLength = ss.DefaultReverbLength
+)
 
 var samplePlaybackService struct {
 	mutex   sync.Mutex
@@ -39,6 +43,8 @@ func StartSamplePlaybackService() error {
 	config.MIDIPortName = ""
 	config.FFmpegPath = ss.FindFFmpeg(runtimeDir)
 	config.Compressed = samplePlaybackCompressed()
+	config.ReverbWet = samplePlaybackReverbWet()
+	config.ReverbLength = samplePlaybackReverbLength()
 	if words, err := samplePlaybackWords(); err == nil {
 		config.DefaultWords = words
 	}
@@ -82,6 +88,34 @@ func samplePlaybackWords() (int, error) {
 	return 2, err
 }
 
+func samplePlaybackReverbWet() float64 {
+	wet, err := getSamplePlaybackFloatParam("global.sampleplaybackreverb", defaultSamplePlaybackReverbWet)
+	if err != nil {
+		LogIfError(err)
+	}
+	if wet < 0 {
+		return 0
+	}
+	if wet > 1 {
+		return 1
+	}
+	return wet
+}
+
+func samplePlaybackReverbLength() float64 {
+	length, err := getSamplePlaybackFloatParam("global.sampleplaybackreverblength", defaultSamplePlaybackReverbLength)
+	if err != nil {
+		LogIfError(err)
+	}
+	if length < ss.MinReverbLength {
+		return ss.MinReverbLength
+	}
+	if length > ss.MaxReverbLength {
+		return ss.MaxReverbLength
+	}
+	return length
+}
+
 func StopSamplePlaybackService() {
 	samplePlaybackService.mutex.Lock()
 	service := samplePlaybackService.service
@@ -112,6 +146,18 @@ func SetSamplePlaybackServiceCompressed(enabled bool) bool {
 func SetSamplePlaybackServiceWords(words int) bool {
 	return withSamplePlaybackService(func(service *ss.Service) {
 		service.SetDefaultWords(words)
+	})
+}
+
+func SetSamplePlaybackServiceReverbWet(wet float64) bool {
+	return withSamplePlaybackService(func(service *ss.Service) {
+		service.SetReverbWet(wet)
+	})
+}
+
+func SetSamplePlaybackServiceReverbLength(length float64) bool {
+	return withSamplePlaybackService(func(service *ss.Service) {
+		service.SetReverbLength(length)
 	})
 }
 

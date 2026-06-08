@@ -15,6 +15,9 @@ const (
 	DefaultSilenceThreshold = 0.01
 	DefaultSilenceMinimum   = 0.5
 	DefaultWordsPerSplit    = 2
+	DefaultReverbLength     = 4.0
+	MinReverbLength         = 0.25
+	MaxReverbLength         = 8.0
 	WaveformPoints          = 1200
 )
 
@@ -34,6 +37,8 @@ type Config struct {
 	MIDIPortName     string  `json:"midi_port_name,omitempty"`
 	PeakStartEnabled bool    `json:"peak_start_enabled"`
 	Compressed       bool    `json:"compressed"`
+	ReverbWet        float64 `json:"reverb_wet"`
+	ReverbLength     float64 `json:"reverb_length"`
 	DefaultMode      string  `json:"default_mode"`
 	DefaultInterval  float64 `json:"default_interval"`
 	DefaultWords     int     `json:"default_words_per_split"`
@@ -51,6 +56,7 @@ func DefaultConfig() Config {
 		DefaultMode:      DefaultSplitMode,
 		DefaultInterval:  DefaultIntervalSeconds,
 		DefaultWords:     DefaultWordsPerSplit,
+		ReverbLength:     DefaultReverbLength,
 		SilenceThreshold: DefaultSilenceThreshold,
 		SilenceMinimum:   DefaultSilenceMinimum,
 	}
@@ -85,6 +91,11 @@ func (c *Config) Normalize() error {
 	if c.SilenceMinimum <= 0 {
 		c.SilenceMinimum = DefaultSilenceMinimum
 	}
+	c.ReverbWet = clampReverbWet(c.ReverbWet)
+	if c.ReverbLength <= 0 {
+		c.ReverbLength = DefaultReverbLength
+	}
+	c.ReverbLength = clampReverbLength(c.ReverbLength)
 	if c.MP3Dir == "" {
 		return errors.New("mp3 directory is required")
 	}
@@ -97,4 +108,24 @@ func DefaultMP3Dir() string {
 		return filepath.Join(string(filepath.Separator), "mp3s")
 	}
 	return filepath.Join(userProfile, "mp3s")
+}
+
+func clampReverbWet(wet float64) float64 {
+	if wet < 0 {
+		return 0
+	}
+	if wet > 1 {
+		return 1
+	}
+	return wet
+}
+
+func clampReverbLength(length float64) float64 {
+	if length < MinReverbLength {
+		return MinReverbLength
+	}
+	if length > MaxReverbLength {
+		return MaxReverbLength
+	}
+	return length
 }

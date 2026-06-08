@@ -9,6 +9,7 @@ import (
 	"time"
 
 	json "github.com/goccy/go-json"
+	ss "github.com/vizicist/palette/pkg/samplesplitter"
 )
 
 // NoProcess when true, skip auto-starting processes
@@ -624,6 +625,28 @@ func ApplyGlobalParam(name string, value string) (err error) {
 
 	case "global.sampleplaybackcompressed":
 		SetSamplePlaybackServiceCompressed(IsTrueValue(value))
+
+	case "global.sampleplaybackreverb":
+		wet := 0.0
+		if GetFloat(value, &wet) {
+			if wet < 0 {
+				wet = 0
+			} else if wet > 1 {
+				wet = 1
+			}
+			SetSamplePlaybackServiceReverbWet(wet)
+		}
+
+	case "global.sampleplaybackreverblength":
+		length := defaultSamplePlaybackReverbLength
+		if GetFloat(value, &length) {
+			if length < ss.MinReverbLength {
+				length = ss.MinReverbLength
+			} else if length > ss.MaxReverbLength {
+				length = ss.MaxReverbLength
+			}
+			SetSamplePlaybackServiceReverbLength(length)
+		}
 
 	case "global.sampleplaybackwords":
 		words := int64(2)

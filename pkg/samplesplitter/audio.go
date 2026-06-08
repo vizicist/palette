@@ -33,6 +33,7 @@ type AudioManager struct {
 	channelOrder  map[int][]string
 	channelActive map[int]string
 	noteVoices    map[[2]int]string
+	reverb        *monoReverb
 	outputID      *int
 	outputName    *string
 	err           error
@@ -59,6 +60,216 @@ type audioVoice struct {
 	active   bool
 }
 
+type monoReverb struct {
+	wet               float64
+	length            float64
+	earlyTaps         []reverbTap
+	combs             []reverbComb
+	allpasses         []reverbAllpass
+	tailFrames        int
+	maxTailFrames     int
+	baseMaxTailFrames int
+}
+
+type reverbTap struct {
+	buffer []float64
+	index  int
+	gain   float64
+}
+
+type reverbComb struct {
+	buffer       []float64
+	index        int
+	filterStore  float64
+	feedback     float64
+	baseFeedback float64
+	damping      float64
+}
+
+type reverbAllpass struct {
+	buffer   []float64
+	index    int
+	feedback float64
+}
+
+func newMonoReverb(sampleRate int) *monoReverb {
+	scale := float64(sampleRate) / 44100.0
+	scaled := func(samples int) int {
+		n := int(math.Round(float64(samples) * scale))
+		if n < 1 {
+			return 1
+		}
+		return n
+	}
+	r := &monoReverb{
+		earlyTaps: []reverbTap{
+			newReverbTap(scaled(419), 0.24),
+			newReverbTap(scaled(683), -0.18),
+			newReverbTap(scaled(967), 0.15),
+			newReverbTap(scaled(1277), -0.12),
+			newReverbTap(scaled(1699), 0.09),
+		},
+		combs: []reverbComb{
+			newReverbComb(scaled(1357), 0.38, 0.22),
+			newReverbComb(scaled(1559), 0.41, 0.25),
+			newReverbComb(scaled(1777), 0.36, 0.23),
+			newReverbComb(scaled(2027), 0.40, 0.26),
+			newReverbComb(scaled(2251), 0.37, 0.22),
+			newReverbComb(scaled(2477), 0.39, 0.24),
+		},
+		allpasses: []reverbAllpass{
+			newReverbAllpass(scaled(113), 0.25),
+			newReverbAllpass(scaled(337), 0.25),
+		},
+		baseMaxTailFrames: sampleRate * 6 / 5,
+	}
+	r.SetLength(DefaultReverbLength)
+	return r
+}
+
+func newReverbTap(delay int, gain float64) reverbTap {
+	return reverbTap{
+		buffer: make([]float64, delay),
+		gain:   gain,
+	}
+}
+
+func newReverbComb(delay int, feedback, damping float64) reverbComb {
+	return reverbComb{
+		buffer:       make([]float64, delay),
+		feedback:     feedback,
+		baseFeedback: feedback,
+		damping:      damping,
+	}
+}
+
+func newReverbAllpass(delay int, feedback float64) reverbAllpass {
+	return reverbAllpass{
+		buffer:   make([]float64, delay),
+		feedback: feedback,
+	}
+}
+
+func (r *monoReverb) SetWet(wet float64) {
+	r.wet = clampReverbWet(wet)
+	if r.wet == 0 {
+		r.Reset()
+	}
+}
+
+func (r *monoReverb) SetLength(length float64) {
+	r.length = clampReverbLength(length)
+	if r.baseMaxTailFrames <= 0 {
+		r.baseMaxTailFrames = audioSampleRate * 6 / 5
+	}
+	r.maxTailFrames = int(math.Round(float64(r.baseMaxTailFrames) * r.length))
+	if r.maxTailFrames < 1 {
+		r.maxTailFrames = 1
+	}
+	if r.tailFrames > r.maxTailFrames {
+		r.tailFrames = r.maxTailFrames
+	}
+	for i := range r.combs {
+		baseFeedback := r.combs[i].baseFeedback
+		if baseFeedback <= 0 {
+			baseFeedback = r.combs[i].feedback
+			r.combs[i].baseFeedback = baseFeedback
+		}
+		r.combs[i].feedback = math.Pow(baseFeedback, 1/r.length)
+	}
+}
+
+func (r *monoReverb) Reset() {
+	for i := range r.earlyTaps {
+		clear(r.earlyTaps[i].buffer)
+		r.earlyTaps[i].index = 0
+	}
+	for i := range r.combs {
+		clear(r.combs[i].buffer)
+		r.combs[i].index = 0
+		r.combs[i].filterStore = 0
+	}
+	for i := range r.allpasses {
+		clear(r.allpasses[i].buffer)
+		r.allpasses[i].index = 0
+	}
+	r.tailFrames = 0
+}
+
+func (r *monoReverb) Active() bool {
+	return r.wet > 0 && r.tailFrames > 0
+}
+
+func (r *monoReverb) Process(sample int) int {
+	if r.wet <= 0 {
+		return sample
+	}
+
+	input := float64(sample)
+	if math.Abs(input) > 1 {
+		r.tailFrames = r.maxTailFrames
+	} else if r.tailFrames > 0 {
+		r.tailFrames--
+	}
+
+	earlySignal := 0.0
+	for i := range r.earlyTaps {
+		earlySignal += r.earlyTaps[i].Process(input)
+	}
+	tailSignal := 0.0
+	for i := range r.combs {
+		tailSignal += r.combs[i].Process(input * 0.32)
+	}
+	diffuseSignal := tailSignal / 3.0
+	for i := range r.allpasses {
+		diffuseSignal = r.allpasses[i].Process(diffuseSignal)
+	}
+	wetSignal := earlySignal + diffuseSignal
+
+	dryGain := 1.0 - r.wet*0.12
+	wetGain := r.wet * 0.85
+	mixed := input*dryGain + wetSignal*wetGain
+	if mixed > 32767 {
+		return 32767
+	}
+	if mixed < -32768 {
+		return -32768
+	}
+	return int(math.Round(mixed))
+}
+
+func (t *reverbTap) Process(input float64) float64 {
+	output := t.buffer[t.index] * t.gain
+	t.buffer[t.index] = input
+	t.index++
+	if t.index >= len(t.buffer) {
+		t.index = 0
+	}
+	return output
+}
+
+func (c *reverbComb) Process(input float64) float64 {
+	output := c.buffer[c.index]
+	c.filterStore = output*(1-c.damping) + c.filterStore*c.damping
+	c.buffer[c.index] = input + c.filterStore*c.feedback
+	c.index++
+	if c.index >= len(c.buffer) {
+		c.index = 0
+	}
+	return output
+}
+
+func (a *reverbAllpass) Process(input float64) float64 {
+	buffered := a.buffer[a.index]
+	output := buffered - input
+	a.buffer[a.index] = input + buffered*a.feedback
+	a.index++
+	if a.index >= len(a.buffer) {
+		a.index = 0
+	}
+	return output
+}
+
 func NewAudioManager(ffmpegPath string, state *State) (*AudioManager, error) {
 	if ffmpegPath == "" {
 		ffmpegPath = "ffmpeg"
@@ -77,6 +288,16 @@ func NewAudioManager(ffmpegPath string, state *State) (*AudioManager, error) {
 		channelOrder:  make(map[int][]string),
 		channelActive: make(map[int]string),
 		noteVoices:    make(map[[2]int]string),
+		reverb:        newMonoReverb(audioSampleRate),
+	}
+	if state != nil {
+		snapshot := state.Snapshot()
+		length := snapshot.ReverbLength
+		if length <= 0 {
+			length = DefaultReverbLength
+		}
+		a.reverb.SetLength(length)
+		a.reverb.SetWet(snapshot.ReverbWet)
 	}
 	if err := a.openDevice(nil); err != nil {
 		ctx.Free()
@@ -223,6 +444,26 @@ func (a *AudioManager) PreloadCompressed(paths []string) error {
 	return nil
 }
 
+func (a *AudioManager) SetReverbWet(wet float64) {
+	if a == nil {
+		return
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.ensureReverbLocked()
+	a.reverb.SetWet(wet)
+}
+
+func (a *AudioManager) SetReverbLength(length float64) {
+	if a == nil {
+		return
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.ensureReverbLocked()
+	a.reverb.SetLength(length)
+}
+
 func (a *AudioManager) ClearCache() {
 	if a == nil {
 		return
@@ -351,7 +592,7 @@ func (a *AudioManager) dataCallback(output, _ []byte, _ uint32) {
 	for i := range output {
 		output[i] = 0
 	}
-	if len(a.voices) == 0 {
+	if len(a.voices) == 0 && !a.reverbActiveLocked() {
 		return
 	}
 	completed := a.mixIntoLocked(output)
@@ -398,6 +639,9 @@ func (a *AudioManager) mixIntoLocked(output []byte) []string {
 		} else if mixed < -32768 {
 			mixed = -32768
 		}
+		if a.reverb != nil {
+			mixed = a.reverb.Process(mixed)
+		}
 		binary.LittleEndian.PutUint16(output[frame*2:frame*2+2], uint16(int16(mixed)))
 	}
 	return uniqueStrings(completed)
@@ -425,6 +669,16 @@ func (a *AudioManager) ensureVoiceMapsLocked() {
 	if a.noteVoices == nil {
 		a.noteVoices = make(map[[2]int]string)
 	}
+}
+
+func (a *AudioManager) ensureReverbLocked() {
+	if a.reverb == nil {
+		a.reverb = newMonoReverb(audioSampleRate)
+	}
+}
+
+func (a *AudioManager) reverbActiveLocked() bool {
+	return a.reverb != nil && a.reverb.Active()
 }
 
 func (a *AudioManager) stopChannelLocked(channel int) {
