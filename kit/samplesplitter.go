@@ -61,6 +61,7 @@ func StartSamplePlaybackService() error {
 	samplePlaybackService.service = service
 	samplePlaybackService.cancel = cancel
 	LogInfo("StartSamplePlaybackService", "mp3Dir", config.MP3Dir, "ffmpeg", config.FFmpegPath)
+	logSelectedSamplePlaybackFiles("StartSamplePlaybackService", service)
 	return nil
 }
 
@@ -126,10 +127,22 @@ func ReloadSamplePlaybackServiceSamples() error {
 	var reloadErr error
 	if !withSamplePlaybackService(func(service *ss.Service) {
 		reloadErr = service.ReloadSigilSamples()
+		if reloadErr == nil {
+			logSelectedSamplePlaybackFiles("ReloadSamplePlaybackServiceSamples", service)
+		}
 	}) {
 		return fmt.Errorf("sample playback service is not running")
 	}
 	return reloadErr
+}
+
+func logSelectedSamplePlaybackFiles(context string, service *ss.Service) {
+	if service == nil || service.State() == nil {
+		return
+	}
+	for _, file := range service.State().SelectedSampleFiles() {
+		LogInfo("SamplePlayback selected file", "context", context, "sigil", file.Sigil, "file", filepath.Base(file.Path), "path", file.Path)
+	}
 }
 
 func withSamplePlaybackService(fn func(*ss.Service)) bool {
@@ -270,24 +283,7 @@ func SamplesplitterRuntimeDir(exe string) string {
 }
 
 func SamplesplitterMP3Dir(runtimeDir string) string {
-	candidates := []string{
-		filepath.Join(runtimeDir, "mp3s"),
-		filepath.Clean(filepath.Join(runtimeDir, "..", "data_default", "samplesplitter", "mp3s")),
-		filepath.Clean(filepath.Join(runtimeDir, "..", "..", "data_default", "samplesplitter", "mp3s")),
-	}
-	if cwd, err := os.Getwd(); err == nil {
-		candidates = append(candidates,
-			filepath.Join(cwd, "data_default", "samplesplitter", "mp3s"),
-			filepath.Clean(filepath.Join(cwd, "..", "data_default", "samplesplitter", "mp3s")),
-			filepath.Clean(filepath.Join(cwd, "..", "..", "data_default", "samplesplitter", "mp3s")),
-		)
-	}
-	for _, candidate := range candidates {
-		if FileExists(candidate) {
-			return candidate
-		}
-	}
-	return filepath.Join(runtimeDir, "mp3s")
+	return ss.DefaultMP3Dir()
 }
 
 func SamplesplitterScriptPath() string {

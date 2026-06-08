@@ -15,7 +15,7 @@ import (
 
 func main() {
 	config := samplesplitter.DefaultConfig()
-	flag.StringVar(&config.MP3Dir, "dir", "mp3s", "Directory containing MP3 files")
+	flag.StringVar(&config.MP3Dir, "dir", samplesplitter.DefaultMP3Dir(), "Ignored; MP3 directory is always %USERPROFILE%\\mp3s")
 	flag.IntVar(&config.Port, "port", samplesplitter.DefaultPort, "HTTP port")
 	flag.IntVar(&config.BaseNote, "base-note", samplesplitter.DefaultBaseNote, "MIDI base note")
 	flag.StringVar(&config.MIDIPortName, "midi-port", config.MIDIPortName, "MIDI input port to listen to on startup")

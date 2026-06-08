@@ -630,8 +630,8 @@ func ApplyGlobalParam(name string, value string) (err error) {
 		if GetInt(value, &words) {
 			if words < 1 {
 				words = 1
-			} else if words > 5 {
-				words = 5
+			} else if words > 16 {
+				words = 16
 			}
 			SetSamplePlaybackServiceWords(int(words))
 			if err := ReloadSamplePlaybackServiceSamples(); err != nil {

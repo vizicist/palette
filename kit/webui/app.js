@@ -355,7 +355,7 @@ function setupSamplePlaybackControls() {
         const clampWords = (value) => {
             const numeric = Math.round(Number(value));
             if (!Number.isFinite(numeric)) return 2;
-            return Math.max(1, Math.min(5, numeric));
+            return Math.max(1, Math.min(16, numeric));
         };
         API.call('global.get', { name: 'global.sampleplaybackwords' })
             .then(value => {

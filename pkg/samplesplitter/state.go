@@ -81,6 +81,11 @@ type StateSnapshot struct {
 	AudioOutputName    *string                `json:"audio_output_name"`
 }
 
+type SelectedSampleFile struct {
+	Sigil string
+	Path  string
+}
+
 func NewState(config Config) *State {
 	return &State{
 		Config:         config,
@@ -129,6 +134,26 @@ func (s *State) Snapshot() StateSnapshot {
 		AudioOutputID:      s.AudioOutputID,
 		AudioOutputName:    s.AudioOutputName,
 	}
+}
+
+func (s *State) SelectedSampleFiles() []SelectedSampleFile {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	files := make([]SelectedSampleFile, 0, len(Sigils)+1)
+	seen := map[string]bool{}
+	for _, sigil := range Sigils {
+		sample, ok := s.SigilSamples[sigil]
+		if !ok || sample.CurrentFile == "" || sample.CueData == nil {
+			continue
+		}
+		files = append(files, SelectedSampleFile{Sigil: sigil, Path: sample.CurrentFile})
+		seen[sample.CurrentFile] = true
+	}
+	if s.CurrentFile != "" && !seen[s.CurrentFile] {
+		files = append(files, SelectedSampleFile{Sigil: "current", Path: s.CurrentFile})
+	}
+	return files
 }
 
 func (s *State) SetBaseNote(note int) {
@@ -398,11 +423,12 @@ func (s *State) LoadSigilDefaults(analyzer Analyzer, rng *rand.Rand) {
 	if rng == nil {
 		rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 	}
+	previous := s.previousSigilFiles()
 	loaded := make(map[string]SampleState)
 	var first *SampleState
 
 	for _, sigil := range Sigils {
-		mp3, err := ChooseRandomPrefixedMP3(s.Config.MP3Dir, sigil, rng)
+		mp3, err := ChooseRandomPrefixedMP3Excluding(s.Config.MP3Dir, sigil, previous[sigil], rng)
 		if err != nil {
 			loaded[sigil] = SampleState{Sigil: sigil, Error: "No MP3 files start with '" + sigil + "'"}
 			continue
@@ -436,6 +462,19 @@ func (s *State) LoadSigilDefaults(analyzer Analyzer, rng *rand.Rand) {
 		s.CueData = first.CueData
 		s.Waveform = first.Waveform
 	}
+}
+
+func (s *State) previousSigilFiles() map[string]string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	previous := make(map[string]string, len(Sigils))
+	for _, sigil := range Sigils {
+		if sample, ok := s.SigilSamples[sigil]; ok {
+			previous[sigil] = sample.CurrentFile
+		}
+	}
+	return previous
 }
 
 func (s *State) LoadFirstIfEmpty(analyzer Analyzer) {

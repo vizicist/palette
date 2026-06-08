@@ -57,10 +57,7 @@ func DefaultConfig() Config {
 }
 
 func (c *Config) Normalize() error {
-	if c.MP3Dir == "" {
-		c.MP3Dir = "mp3s"
-	}
-	c.MP3Dir = resolveDefaultMP3Dir(c.MP3Dir)
+	c.MP3Dir = DefaultMP3Dir()
 	abs, err := filepath.Abs(c.MP3Dir)
 	if err != nil {
 		return err
@@ -94,22 +91,10 @@ func (c *Config) Normalize() error {
 	return nil
 }
 
-func resolveDefaultMP3Dir(dir string) string {
-	if dir != "mp3s" {
-		return dir
+func DefaultMP3Dir() string {
+	userProfile := os.Getenv("USERPROFILE")
+	if userProfile == "" {
+		return filepath.Join(string(filepath.Separator), "mp3s")
 	}
-	if info, err := os.Stat(dir); err == nil && info.IsDir() {
-		return dir
-	}
-	candidates := []string{
-		filepath.Join("data_default", "samplesplitter", "mp3s"),
-		filepath.Clean(filepath.Join("..", "data_default", "samplesplitter", "mp3s")),
-		filepath.Clean(filepath.Join("..", "..", "data_default", "samplesplitter", "mp3s")),
-	}
-	for _, candidate := range candidates {
-		if info, err := os.Stat(candidate); err == nil && info.IsDir() {
-			return candidate
-		}
-	}
-	return dir
+	return filepath.Join(userProfile, "mp3s")
 }
