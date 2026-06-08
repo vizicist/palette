@@ -11,8 +11,8 @@ practical.
 
 The standalone command accepts these flags:
 
-- `--dir`: MP3 directory. If omitted, use the Palette default sample directory
-  when it can be found.
+- `--dir`: accepted for compatibility but ignored. MP3s are always loaded from
+  `%USERPROFILE%\mp3s`.
 - `--port`: HTTP port, default `9876`.
 - `--base-note`: MIDI note for split 0, default `48`.
 - `--midi-port`: preferred MIDI input port.

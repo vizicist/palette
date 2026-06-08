@@ -33,8 +33,11 @@ should preserve where practical.
 From this directory:
 
 ```bash
-go run . --dir /path/to/mp3s
+go run .
 ```
+
+MP3s are always loaded from `%USERPROFILE%\mp3s`. The `--dir` flag is retained
+for compatibility but is ignored.
 
 Build:
 
@@ -48,20 +51,18 @@ available, then falls back to `ffmpeg` on PATH.
 ## Legacy Python Usage
 
 ```bash
-py -3.11 samplesplitter.py --dir /path/to/mp3s
+py -3.11 samplesplitter.py
 ```
 
 The Python version requires Python 3.11, `pyo`, `mido`, `python-rtmidi`, and
 `ffmpeg`. It opens a browser at `http://localhost:9876` automatically unless
 `--no-open` is supplied.
 
-When run from the Palette source tree without `--dir`, the default MP3s are
-loaded from `../../data_default/samplesplitter/mp3s`. Installed builds still use
-the runtime `samplesplitter/mp3s` directory.
+MP3s are always loaded from `%USERPROFILE%\mp3s`.
 
 ```
 Options:
-  --dir DIR          Directory containing MP3 files (required)
+  --dir DIR          Ignored; MP3 directory is always %USERPROFILE%\mp3s
   --port PORT        HTTP port (default: 9876)
   --base-note NOTE   MIDI note number for split 0 (default: 48 = C3)
 ```

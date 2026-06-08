@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 PORT="${PORT:-9876}"
-MP3_DIR="${MP3_DIR:-mp3s}"
+MP3_DIR="${USERPROFILE:?USERPROFILE is required}/mp3s"
 URL="http://localhost:${PORT}/"
 STATE_URL="http://localhost:${PORT}/api/state"
 LOG_FILE="${TMPDIR:-/tmp}/samplesplitter-${PORT}.log"
@@ -53,7 +53,7 @@ if ! "$PYTHON" -c "import pyo, mido, rtmidi" >/dev/null 2>&1; then
 fi
 
 echo "Starting Sample Splitter on $URL"
-PYTHONUNBUFFERED=1 "$PYTHON" samplesplitter.py --dir "$MP3_DIR" --port "$PORT" --no-open >"$LOG_FILE" 2>&1 &
+PYTHONUNBUFFERED=1 "$PYTHON" samplesplitter.py --port "$PORT" --no-open >"$LOG_FILE" 2>&1 &
 SERVER_PID=$!
 
 cleanup() {
