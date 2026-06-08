@@ -149,6 +149,26 @@ func (s *Service) SetCompressed(enabled bool) {
 	s.state.SetCompressed(enabled)
 }
 
+func (s *Service) SetReverbWet(wet float64) {
+	if s == nil || s.state == nil {
+		return
+	}
+	s.state.SetReverbWet(wet)
+	if s.audio != nil {
+		s.audio.SetReverbWet(wet)
+	}
+}
+
+func (s *Service) SetReverbLength(length float64) {
+	if s == nil || s.state == nil {
+		return
+	}
+	s.state.SetReverbLength(length)
+	if s.audio != nil {
+		s.audio.SetReverbLength(length)
+	}
+}
+
 func (s *Service) SetDefaultWords(words int) {
 	if s == nil || s.state == nil {
 		return

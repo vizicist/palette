@@ -1,6 +1,10 @@
 package kit
 
-import "testing"
+import (
+	"testing"
+
+	ss "github.com/vizicist/palette/pkg/samplesplitter"
+)
 
 func TestSamplePlaybackVelocityUsesSamplePlaybackVolume(t *testing.T) {
 	oldParamDefs := ParamDefs
@@ -48,6 +52,17 @@ func TestSamplePlaybackVolumeDefaultsWhenParamsUnavailable(t *testing.T) {
 	got := samplePlaybackVelocityFromPressure(nil, 1.0)
 	if got != 127 {
 		t.Fatalf("velocity = %d, want default 127", got)
+	}
+}
+
+func TestSamplePlaybackReverbLengthDefaultsWhenParamsUnavailable(t *testing.T) {
+	oldGlobalParams := GlobalParams
+	defer func() { GlobalParams = oldGlobalParams }()
+
+	GlobalParams = nil
+	got := samplePlaybackReverbLength()
+	if got != ss.DefaultReverbLength {
+		t.Fatalf("reverb length = %v, want %v", got, ss.DefaultReverbLength)
 	}
 }
 

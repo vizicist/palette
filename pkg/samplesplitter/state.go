@@ -73,6 +73,8 @@ type StateSnapshot struct {
 	PitchBendSemitones float64                `json:"pitch_bend_semitones"`
 	ActiveVoices       []string               `json:"active_voices"`
 	Compressed         bool                   `json:"compressed"`
+	ReverbWet          float64                `json:"reverb_wet"`
+	ReverbLength       float64                `json:"reverb_length"`
 	Busy               bool                   `json:"busy"`
 	BusyMessage        string                 `json:"busy_message,omitempty"`
 	PyoReady           bool                   `json:"pyo_ready"`
@@ -127,6 +129,8 @@ func (s *State) Snapshot() StateSnapshot {
 		PitchBendSemitones: round4(s.PitchBendSemis[-1]),
 		ActiveVoices:       append([]string(nil), s.ActiveVoices...),
 		Compressed:         s.Config.Compressed,
+		ReverbWet:          s.Config.ReverbWet,
+		ReverbLength:       s.Config.ReverbLength,
 		Busy:               s.Busy,
 		BusyMessage:        s.BusyMessage,
 		PyoReady:           s.PyoReady,
@@ -172,6 +176,18 @@ func (s *State) SetCompressed(enabled bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.Config.Compressed = enabled
+}
+
+func (s *State) SetReverbWet(wet float64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Config.ReverbWet = clampReverbWet(wet)
+}
+
+func (s *State) SetReverbLength(length float64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Config.ReverbLength = clampReverbLength(length)
 }
 
 func (s *State) SetDefaultWords(words int) {
