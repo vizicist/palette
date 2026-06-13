@@ -176,3 +176,85 @@ func TestProModeSwallowsDirectSamplesplitterSynthSends(t *testing.T) {
 		t.Fatal("pro mode should swallow SampleSplitter pitch bends")
 	}
 }
+
+func TestSetRouteStopsActiveCursorNoteAndPendingSound(t *testing.T) {
+	cleanup := setupModeTest(t, "bss")
+	defer cleanup()
+
+	oldCursorManager := theCursorManager
+	oldScheduler := theScheduler
+	oldQuad := theQuad
+	oldLog := theLog
+	defer func() {
+		theCursorManager = oldCursorManager
+		theScheduler = oldScheduler
+		theQuad = oldQuad
+		theLog = oldLog
+	}()
+
+	t.Setenv("PALETTE_DATAROOT", t.TempDir())
+	InitLog("")
+	InitializeClicks()
+	theCursorManager = NewCursorManager()
+	theScheduler = NewScheduler()
+	theQuad = NewQuad()
+	stepper := NewStepper()
+	theStepper = stepper
+
+	patch := NewPatch("A")
+	synth := &Synth{name: "test"}
+	patch.synth = synth
+	theQuad.patch["A"] = patch
+	if err := patch.SetParam("stepper.route", "bidule"); err != nil {
+		t.Fatalf("set initial route: %v", err)
+	}
+
+	noteOn := NewNoteOn(synth, 60, 100)
+	theCursorManager.activeCursors[42] = &ActiveCursor{
+		Current:     NewCursorEvent(42, "A", "drag", CursorPos{X: 0.5, Y: 0.5, Z: 0.5}),
+		NoteOn:      noteOn,
+		NoteOnClick: CurrentClick() + 8,
+	}
+	ScheduleAt(CurrentClick()+8, "A", noteOn)
+	ScheduleAt(CurrentClick()+9, "A", NewNoteOff(synth, 60, 100))
+	theScheduler.insertScheduleElement(NewSchedElement(CurrentClick()+10, "A", NewPitchBend(synth, MidiPitchBendCenter)))
+
+	if _, err := stepper.SetRoute("A", "samplesplitter"); err != nil {
+		t.Fatalf("SetRoute: %v", err)
+	}
+
+	ac := theCursorManager.activeCursors[42]
+	if ac == nil {
+		t.Fatal("active cursor should remain present after route change")
+	}
+	if ac.NoteOn != nil {
+		t.Fatal("route change did not clear active cursor NoteOn")
+	}
+	if hasSoundEventWithTag(theScheduler, "A") {
+		t.Fatal("route change left pending sound events for patch A")
+	}
+	if got := stepper.config.RouteForPatch("A"); got != StepperRouteSamplesplitter {
+		t.Fatalf("route = %q, want %q", got, StepperRouteSamplesplitter)
+	}
+}
+
+func hasSoundEventWithTag(sched *Scheduler, tag string) bool {
+	sched.pendingMutex.RLock()
+	for _, se := range sched.pendingScheduled {
+		if se.Tag == tag && isSoundEvent(se.Value) {
+			sched.pendingMutex.RUnlock()
+			return true
+		}
+	}
+	sched.pendingMutex.RUnlock()
+
+	sched.mutex.RLock()
+	defer sched.mutex.RUnlock()
+	for i := sched.schedList.Front(); i != nil; i = i.Next() {
+		se := i.Value.(*SchedElement)
+		if se.Tag == tag && isSoundEvent(se.Value) {
+			return true
+		}
+	}
+	return false
+}

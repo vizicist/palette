@@ -233,6 +233,52 @@ func (sched *Scheduler) DeleteSamplePlaybackStarts(tag string, sigilChannel int)
 	}
 }
 
+func (sched *Scheduler) DeleteSoundEventsWithTag(tag string) int {
+	if sched == nil {
+		return 0
+	}
+
+	deleted := 0
+	sched.pendingMutex.Lock()
+	keptPending := sched.pendingScheduled[:0]
+	for _, se := range sched.pendingScheduled {
+		if se.Tag == tag && isSoundEvent(se.Value) {
+			deleted++
+			continue
+		}
+		keptPending = append(keptPending, se)
+	}
+	sched.pendingScheduled = keptPending
+	sched.pendingMutex.Unlock()
+
+	sched.mutex.Lock()
+	defer sched.mutex.Unlock()
+
+	var nexti *list.Element
+	for i := sched.schedList.Front(); i != nil; i = nexti {
+		nexti = i.Next()
+		se := i.Value.(*SchedElement)
+		if se.Tag == tag && isSoundEvent(se.Value) {
+			sched.schedList.Remove(i)
+			deleted++
+		}
+	}
+	if deleted > 0 {
+		LogInfo("DeleteSoundEventsWithTag", "tag", tag, "deleted", deleted)
+	}
+	return deleted
+}
+
+func isSoundEvent(value any) bool {
+	switch value.(type) {
+	case *NoteOn, *NoteOff, *PitchBend, *StepperSamplePlaybackStop,
+		*SamplePlaybackStart, *SamplePlaybackStop, *SamplePlaybackPitch:
+		return true
+	default:
+		return false
+	}
+}
+
 func samplePlaybackEventChannel(value any) int {
 	switch v := value.(type) {
 	case *SamplePlaybackStart:

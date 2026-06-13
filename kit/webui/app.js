@@ -135,6 +135,7 @@ async function startSpacePalette() {
     setAdvancedMode(UIState.advancedMode, false);
     await refreshStepperStatus();
     await loadPresets();
+    await syncAttractStateFromEngine();
 }
 
 async function showSigilSequencer() {
@@ -1072,6 +1073,17 @@ async function exitAttractMode() {
     await API.call('global.attract', { onoff: 'false' }).catch(() => {});
     await silenceAll();
     hideAttract();
+}
+
+async function syncAttractStateFromEngine() {
+    try {
+        const snapshot = await requestUISnapshot();
+        if (snapshot && snapshot.status) {
+            handleUIStatus(snapshot.status);
+        }
+    } catch (e) {
+        // Ignore transient API errors.
+    }
 }
 
 function handleUIStatus(status) {

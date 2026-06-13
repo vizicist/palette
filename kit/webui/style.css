@@ -347,12 +347,12 @@ body.initial-bss #ritual-nav {
 /* Attract mode overlay */
 #attract-overlay {
     position: fixed;
-    top: var(--top-chrome-height);
-    left: 0;
-    width: 100%;
-    height: calc(100% - var(--top-chrome-height));
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
     background: #000;
-    z-index: 200;
+    z-index: 260;
     display: flex;
     align-items: center;
     justify-content: center;
