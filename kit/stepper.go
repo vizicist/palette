@@ -239,6 +239,18 @@ func (s *Stepper) ToggleStep(patch string, step int) (string, error) {
 }
 
 func (s *Stepper) SetRoute(patch string, route string) (string, error) {
+	if !validStepperRoute(route) {
+		return "", fmt.Errorf("stepper.setroute: bad route=%s", route)
+	}
+	palettePatch := GetPatch(patch)
+	if palettePatch == nil {
+		return "", fmt.Errorf("no such patch: %s", patch)
+	}
+	oldRoute := s.config.RouteForPatch(patch)
+	newRoute := CoerceStepperRouteForMode(StepperRoute(route))
+	if oldRoute != newRoute {
+		s.stopLiveSoundForRouteChange(patch, palettePatch)
+	}
 	if err := s.config.SetRoute(patch, route); err != nil {
 		return "", err
 	}
@@ -246,6 +258,27 @@ func (s *Stepper) SetRoute(patch string, route string) (string, error) {
 	status, err := s.Status()
 	NotifyStepperChanged()
 	return status, err
+}
+
+func (s *Stepper) stopLiveSoundForRouteChange(patch string, palettePatch *Patch) {
+	reason := "stepper route change"
+	if theScheduler != nil {
+		theScheduler.DeleteSoundEventsWithTag(patch)
+	}
+	if theCursorManager != nil {
+		theCursorManager.StopActiveSoundForTag(patch, reason)
+	}
+	if s != nil {
+		s.StopSamplesplitterVoice(patch)
+	}
+	stopSamplePlaybackChannelForPatch(patch, reason)
+	if palettePatch == nil {
+		return
+	}
+	if synth := palettePatch.Synth(); synth != nil {
+		synth.SendANO()
+		synth.SendPitchBend(MidiPitchBendCenter)
+	}
 }
 
 func (s *Stepper) Status() (string, error) {

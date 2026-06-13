@@ -688,14 +688,74 @@ func cleanupDeletedActiveCursor(ac *ActiveCursor, reason string) {
 	}
 }
 
+func (cm *CursorManager) StopActiveSoundForTag(tag string, reason string) {
+	if cm == nil {
+		return
+	}
+
+	cm.executeMutex.Lock()
+	defer cm.executeMutex.Unlock()
+
+	noteOffs := []*NoteOff{}
+	sampleStops := []struct {
+		gid      int
+		tag      string
+		playback *ActiveSamplePlayback
+	}{}
+
+	cm.activeMutex.Lock()
+	for _, ac := range cm.activeCursors {
+		if ac == nil {
+			continue
+		}
+		if tag != "*" && ac.Current.Tag != tag {
+			continue
+		}
+		if ac.NoteOn != nil {
+			noteOffs = append(noteOffs, NewNoteOffFromNoteOn(ac.NoteOn))
+			ac.NoteOn = nil
+			ac.NoteOnClick = 0
+		}
+		if ac.ActiveSamplePlayback != nil {
+			sampleStops = append(sampleStops, struct {
+				gid      int
+				tag      string
+				playback *ActiveSamplePlayback
+			}{
+				gid:      ac.Current.GID,
+				tag:      ac.Current.Tag,
+				playback: ac.ActiveSamplePlayback,
+			})
+			ac.ActiveSamplePlayback = nil
+		}
+	}
+	cm.activeMutex.Unlock()
+
+	for _, noteOff := range noteOffs {
+		if noteOff == nil || noteOff.Synth == nil {
+			continue
+		}
+		noteOff.Synth.SendNoteToMidiOutput(noteOff)
+	}
+	for _, stop := range sampleStops {
+		stopSamplePlayback(stop.tag, stop.playback, reason, stop.gid)
+	}
+}
+
 func stopActiveSamplePlayback(ac *ActiveCursor, reason string) bool {
 	if ac == nil || ac.ActiveSamplePlayback == nil {
 		return false
 	}
 	playback := ac.ActiveSamplePlayback
 	ac.ActiveSamplePlayback = nil
-	tag := ac.Current.Tag
-	LogInfo("stopActiveSamplePlayback", "reason", reason, "gid", ac.Current.GID, "patch", playback.Patch, "sigilChannel", playback.SigilChannel, "sampleSelector", playback.SampleSelector, "voiceKey", playback.VoiceKey)
+	return stopSamplePlayback(ac.Current.Tag, playback, reason, ac.Current.GID)
+}
+
+func stopSamplePlayback(tag string, playback *ActiveSamplePlayback, reason string, gid int) bool {
+	if playback == nil {
+		return false
+	}
+	LogInfo("stopActiveSamplePlayback", "reason", reason, "gid", gid, "patch", playback.Patch, "sigilChannel", playback.SigilChannel, "sampleSelector", playback.SampleSelector, "voiceKey", playback.VoiceKey)
 	if theScheduler != nil {
 		theScheduler.DeleteSamplePlaybackStarts(tag, playback.SigilChannel)
 		ScheduleAt(CurrentClick(), tag, playback.StopEvent())

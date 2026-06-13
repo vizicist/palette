@@ -311,6 +311,16 @@ func (event *SamplePlaybackPitch) Trigger() {
 	}
 }
 
+func stopSamplePlaybackChannelForPatch(patch string, reason string) bool {
+	sigilChannel := SamplePlaybackChannelForPatch(patch)
+	stopped := withSamplePlaybackService(func(service *ss.Service) {
+		LogInfo("stopSamplePlaybackChannelForPatch", "reason", reason, "patch", patch, "sigilChannel", sigilChannel)
+		service.StopChannel(sigilChannel)
+		service.MIDIPitchBend(sigilChannel, MidiPitchBendCenter)
+	})
+	return stopped
+}
+
 func samplePlaybackVoiceKey(ce CursorEvent) string {
 	return fmt.Sprintf("cursor-%s-%d", ce.Tag, ce.GID)
 }
