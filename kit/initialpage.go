@@ -64,7 +64,7 @@ func ApplyMode() {
 
 func ApplyModeStepperRoutes() {
 	changed := false
-	for _, patchName := range []string{"A", "B", "C", "D"} {
+	for _, patchName := range patchNames {
 		patch := GetPatch(patchName)
 		if patch == nil {
 			continue

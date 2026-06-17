@@ -31,7 +31,7 @@ func uiStatusSnapshot() EngineStatusSnapshot {
 	}
 	if theQuad != nil {
 		snapshot.Patches = map[string]string{}
-		for _, patch := range []string{"A", "B", "C", "D"} {
+		for _, patch := range patchNames {
 			if p := Patchs[patch]; p != nil {
 				snapshot.Patches[patch] = p.Status()
 			}

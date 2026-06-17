@@ -83,7 +83,7 @@ func samplePlaybackCompressed() bool {
 func samplePlaybackWords() (int, error) {
 	words, err := GetParamInt("global.sampleplaybackwords")
 	if err == nil {
-		return words, nil
+		return clampSamplePlaybackWords(words), nil
 	}
 	return 2, err
 }
@@ -93,6 +93,10 @@ func samplePlaybackReverbWet() float64 {
 	if err != nil {
 		LogIfError(err)
 	}
+	return clampSamplePlaybackReverbWet(wet)
+}
+
+func clampSamplePlaybackReverbWet(wet float64) float64 {
 	if wet < 0 {
 		return 0
 	}
@@ -107,6 +111,10 @@ func samplePlaybackReverbLength() float64 {
 	if err != nil {
 		LogIfError(err)
 	}
+	return clampSamplePlaybackReverbLength(length)
+}
+
+func clampSamplePlaybackReverbLength(length float64) float64 {
 	if length < ss.MinReverbLength {
 		return ss.MinReverbLength
 	}
@@ -114,6 +122,16 @@ func samplePlaybackReverbLength() float64 {
 		return ss.MaxReverbLength
 	}
 	return length
+}
+
+func clampSamplePlaybackWords(words int) int {
+	if words < 1 {
+		return 1
+	}
+	if words > 16 {
+		return 16
+	}
+	return words
 }
 
 func StopSamplePlaybackService() {

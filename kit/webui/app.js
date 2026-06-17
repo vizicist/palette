@@ -1,6 +1,6 @@
 import { API } from './api.js';
 import { initialPageDefaultRoute, Routes, routeLabel } from './routes.js';
-import { stepperNumSteps, samplePlaybackQuantValues, UIState } from './state.js';
+import { patchNames, stepperNumSteps, samplePlaybackQuantValues, UIState } from './state.js';
 import { applyUISnapshot, requestUISnapshot, setupUIStateFeed } from './ui_nats.js';
 import {
     applyInitialPageMode,
@@ -209,13 +209,13 @@ async function stopStepperQuietly() {
     try {
         await API.stepperStop();
     } catch (e) { /* Stepper may be unavailable during startup */ }
-    await Promise.all(['A', 'B', 'C', 'D'].map(patch =>
+    await Promise.all(patchNames.map(patch =>
         API.stepperSetRecord(patch, false).catch(err => console.error(`Failed to disable stepper recording for ${patch}:`, err))
     ));
 }
 
 async function setStepperDefaults() {
-    await Promise.all(['A', 'B', 'C', 'D'].flatMap(patch => [
+    await Promise.all(patchNames.flatMap(patch => [
         API.stepperSetRecord(patch, true).catch(err => console.error(`Failed to enable stepper recording for ${patch}:`, err)),
         API.stepperSetRoute(patch, Routes.samples).catch(err => console.error(`Failed to set stepper route for ${patch}:`, err))
     ]));
@@ -460,7 +460,7 @@ function handleStepperStatus(status) {
     syncStepperTiming(status);
     renderStepperIndicator();
 
-    for (const patch of ['A', 'B', 'C', 'D']) {
+    for (const patch of patchNames) {
         const track = status.tracks[patch];
         if (!track) continue;
         updatePalettePadRoute(patch, track.route || initialPageDefaultRoute(UIState.initialPage));
@@ -709,7 +709,7 @@ function setupParamControls() {
                 if (UIState.currentCategory === 'global') {
                     await API.setGlobalParam(paramName, valueStr);
                 } else if (UIState.currentPatch === '*') {
-                    for (const p of ['A', 'B', 'C', 'D']) {
+                    for (const p of patchNames) {
                         await API.setPatchParam(p, paramName, valueStr);
                     }
                 } else {
@@ -757,7 +757,7 @@ function setupParamControls() {
                 if (UIState.currentCategory === 'global') {
                     await API.setGlobalParam(paramName, valueStr);
                 } else if (UIState.currentPatch === '*') {
-                    for (const p of ['A', 'B', 'C', 'D']) {
+                    for (const p of patchNames) {
                         await API.setPatchParam(p, paramName, valueStr);
                     }
                 } else {
@@ -784,7 +784,7 @@ function setupParamControls() {
                 if (UIState.currentCategory === 'global') {
                     await API.setGlobalParam(paramName, valueStr);
                 } else if (UIState.currentPatch === '*') {
-                    for (const p of ['A', 'B', 'C', 'D']) {
+                    for (const p of patchNames) {
                         await API.setPatchParam(p, paramName, valueStr);
                     }
                 } else {
@@ -819,7 +819,7 @@ function setupParamControls() {
                     if (UIState.currentCategory === 'global') {
                         await API.setGlobalParam(paramName, valueStr);
                     } else if (UIState.currentPatch === '*') {
-                        for (const p of ['A', 'B', 'C', 'D']) {
+                        for (const p of patchNames) {
                             await API.setPatchParam(p, paramName, valueStr);
                         }
                     } else {
@@ -851,7 +851,7 @@ function setupParamHeaderButtons() {
 
                 // Apply all values in a single batch call per patch
                 if (UIState.currentPatch === '*') {
-                    await Promise.all(['A', 'B', 'C', 'D'].map(p =>
+                    await Promise.all(patchNames.map(p =>
                         API.setPatchParams(p, initValues)
                     ));
                 } else {
@@ -877,7 +877,7 @@ function setupParamHeaderButtons() {
 
                 // Apply all values in a single batch call per patch
                 if (UIState.currentPatch === '*') {
-                    await Promise.all(['A', 'B', 'C', 'D'].map(p =>
+                    await Promise.all(patchNames.map(p =>
                         API.setPatchParams(p, randValues)
                     ));
                 } else {
@@ -908,7 +908,7 @@ async function loadPreset(name) {
             }
         } else if (UIState.currentPatch === '*') {
             // Load to all patches
-            for (const p of ['A', 'B', 'C', 'D']) {
+            for (const p of patchNames) {
                 await API.loadPatch(p, UIState.currentCategory, name);
             }
         } else {
@@ -923,7 +923,7 @@ async function loadPreset(name) {
 
 function handleCursorActivity(activity) {
     if (!UIState.wantsCursorActivity()) return;
-    for (const patch of ['A', 'B', 'C', 'D']) {
+    for (const patch of patchNames) {
         const count = Number(activity && activity[patch]) || 0;
         if (UIState.activeAdventure === 'sigil' && count > UIState.cursorActivityCounts[patch]) {
             flashSigilForPatch(patch);
@@ -1058,7 +1058,7 @@ function setupAttractOverlay() {
 
 async function silenceAll() {
     try {
-        for (const p of ['A', 'B', 'C', 'D']) {
+        for (const p of patchNames) {
             API.setPatchParam(p, 'misc.looping_on', 'false');
             API.call('patch.clear', { patch: p });
         }

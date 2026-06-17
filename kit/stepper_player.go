@@ -104,7 +104,7 @@ func (p *StepperPlayer) StopAllSamplesplitterVoices() {
 
 func (p *StepperPlayer) ResetPitchBends() {
 	synths := map[*Synth]bool{}
-	for _, patch := range []string{"A", "B", "C", "D"} {
+	for _, patch := range patchNames {
 		palettePatch := GetPatch(patch)
 		if palettePatch != nil {
 			if synth := palettePatch.Synth(); synth != nil {

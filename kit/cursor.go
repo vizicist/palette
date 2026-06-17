@@ -50,7 +50,6 @@ type CursorManager struct {
 	// activeMutex   sync.RWMutex
 	activeMutex   sync.Mutex
 	activeCursors map[int]*ActiveCursor // map of Gid to ActiveCursor
-	activity      map[string]int64
 
 	GIDToLoopedGIDMutex sync.RWMutex
 	GIDToLoopedGID      map[int]int
@@ -147,7 +146,6 @@ func NewActiveCursor(ce CursorEvent) *ActiveCursor {
 func NewCursorManager() *CursorManager {
 	cm := &CursorManager{
 		activeCursors:  map[int]*ActiveCursor{},
-		activity:       map[string]int64{},
 		GIDToLoopedGID: map[int]int{},
 		activeMutex:    sync.Mutex{},
 		handlers:       map[string]CursorHandler{},
@@ -158,20 +156,11 @@ func NewCursorManager() *CursorManager {
 	return cm
 }
 
-func (cm *CursorManager) recordActivity(ce CursorEvent) {
-	if ce.Ddu != "down" && ce.Ddu != "drag" {
-		return
-	}
-	if ce.Tag != "A" && ce.Tag != "B" && ce.Tag != "C" && ce.Tag != "D" {
-		return
-	}
-	cm.activeMutex.Lock()
-	cm.activity[ce.Tag]++
-	cm.activeMutex.Unlock()
-}
-
 func (cm *CursorManager) ActivitySnapshot() map[string]int64 {
-	snapshot := map[string]int64{"A": 0, "B": 0, "C": 0, "D": 0}
+	snapshot := make(map[string]int64, len(patchNames))
+	for _, patch := range patchNames {
+		snapshot[patch] = 0
+	}
 	cm.activeMutex.Lock()
 	defer cm.activeMutex.Unlock()
 	for _, ac := range cm.activeCursors {
@@ -418,7 +407,6 @@ var BugFixWarningCount = 0
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
 	theEngine.RecordCursorEvent(ce)
-	cm.recordActivity(ce)
 
 	fadeThreshold, err := GetParamFloat("global.looping_fadethreshold")
 	if err != nil {

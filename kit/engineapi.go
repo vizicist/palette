@@ -9,7 +9,6 @@ import (
 	"time"
 
 	json "github.com/goccy/go-json"
-	ss "github.com/vizicist/palette/pkg/samplesplitter"
 )
 
 // NoProcess when true, skip auto-starting processes
@@ -629,34 +628,19 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	case "global.sampleplaybackreverb":
 		wet := 0.0
 		if GetFloat(value, &wet) {
-			if wet < 0 {
-				wet = 0
-			} else if wet > 1 {
-				wet = 1
-			}
-			SetSamplePlaybackServiceReverbWet(wet)
+			SetSamplePlaybackServiceReverbWet(clampSamplePlaybackReverbWet(wet))
 		}
 
 	case "global.sampleplaybackreverblength":
 		length := defaultSamplePlaybackReverbLength
 		if GetFloat(value, &length) {
-			if length < ss.MinReverbLength {
-				length = ss.MinReverbLength
-			} else if length > ss.MaxReverbLength {
-				length = ss.MaxReverbLength
-			}
-			SetSamplePlaybackServiceReverbLength(length)
+			SetSamplePlaybackServiceReverbLength(clampSamplePlaybackReverbLength(length))
 		}
 
 	case "global.sampleplaybackwords":
 		words := int64(2)
 		if GetInt(value, &words) {
-			if words < 1 {
-				words = 1
-			} else if words > 16 {
-				words = 16
-			}
-			SetSamplePlaybackServiceWords(int(words))
+			SetSamplePlaybackServiceWords(clampSamplePlaybackWords(int(words)))
 			if err := ReloadSamplePlaybackServiceSamples(); err != nil {
 				LogWarn("global.sampleplaybackwords reload failed", "err", err)
 			}

@@ -71,7 +71,7 @@ func NewStepper() *Stepper {
 		sampleVoices:      sampleVoices,
 	}
 	s.player = NewStepperPlayer(config, sampleVoices, s.stepLength, s.pitchBendValue)
-	for _, patch := range []string{"A", "B", "C", "D"} {
+	for _, patch := range patchNames {
 		s.tracks[patch] = &StepperTrack{
 			Recording:       false,
 			lastRecordStep:  -1,
@@ -305,7 +305,7 @@ func (s *Stepper) StatusSnapshot() (stepperStatus, error) {
 		StepLength:      s.stepLength(),
 		Tracks:          map[string]stepperTrack{},
 	}
-	for _, patch := range []string{"A", "B", "C", "D"} {
+	for _, patch := range patchNames {
 		track := s.tracks[patch]
 		steps := make([][]*StepperEvent, StepperNumSteps)
 		for i := range track.Steps {
@@ -408,7 +408,7 @@ func (s *Stepper) AdvanceTo(click Clicks) {
 	s.lastPlayCycle = cycle
 
 	eventsByPatch := map[string][]StepperEvent{}
-	for _, patch := range []string{"A", "B", "C", "D"} {
+	for _, patch := range patchNames {
 		for _, event := range s.tracks[patch].Steps[step] {
 			eventsByPatch[patch] = append(eventsByPatch[patch], *event)
 		}
@@ -515,7 +515,7 @@ func (s *Stepper) pitchBendValue(pressure float64) int {
 }
 
 func (s *Stepper) trackForPatch(patch string) (*StepperTrack, error) {
-	if patch != "A" && patch != "B" && patch != "C" && patch != "D" {
+	if !isPatchName(patch) {
 		return nil, fmt.Errorf("bad stepper patch=%s", patch)
 	}
 	track, ok := s.tracks[patch]
