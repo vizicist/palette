@@ -350,39 +350,6 @@ func SamplesplitterMP3Dir(runtimeDir string) string {
 	return ss.DefaultMP3Dir()
 }
 
-func SamplesplitterScriptPath() string {
-	candidates := []string{}
-	if currentExe, err := os.Executable(); err == nil {
-		exeDir := filepath.Dir(currentExe)
-		candidates = append(candidates,
-			filepath.Clean(filepath.Join(exeDir, "..", "samplesplitter", "samplesplitter.py")),
-			filepath.Clean(filepath.Join(exeDir, "..", "..", "samplesplitter", "samplesplitter.py")),
-		)
-	}
-	if paletteDir := PaletteDir(); paletteDir != "" {
-		candidates = append(candidates, filepath.Join(paletteDir, "samplesplitter", "samplesplitter.py"))
-	}
-	if paletteDir := os.Getenv("PALETTE"); paletteDir != "" {
-		candidates = append(candidates, filepath.Join(paletteDir, "samplesplitter", "samplesplitter.py"))
-	}
-	if cwd, err := os.Getwd(); err == nil {
-		candidates = append(candidates,
-			filepath.Join(cwd, "cmd", "samplesplitter", "samplesplitter.py"),
-			filepath.Join(cwd, "samplesplitter", "samplesplitter.py"),
-			filepath.Clean(filepath.Join(cwd, "..", "cmd", "samplesplitter", "samplesplitter.py")),
-			filepath.Clean(filepath.Join(cwd, "..", "samplesplitter", "samplesplitter.py")),
-			filepath.Clean(filepath.Join(cwd, "..", "..", "cmd", "samplesplitter", "samplesplitter.py")),
-			filepath.Clean(filepath.Join(cwd, "..", "..", "samplesplitter", "samplesplitter.py")),
-		)
-	}
-	for _, candidate := range candidates {
-		if FileExists(candidate) {
-			return candidate
-		}
-	}
-	return ""
-}
-
 func samplesplitterWebIsListening() bool {
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", samplesplitterPort), samplesplitterStatusTimeout)
 	if err != nil {

@@ -81,9 +81,9 @@ There are two supported Go paths:
 - The standalone executable in `cmd/samplesplitter`, useful for direct browser
   and MIDI-driven sample playback outside the full Palette runtime.
 
-The legacy Python SampleSplitter is still present in `cmd/samplesplitter` for
-comparison and manual standalone testing, but new Palette behavior should use
-the Go implementation.
+The legacy Python SampleSplitter has moved to the standalone
+`vizicist/samplesplitter` repository for comparison and manual standalone
+testing. New Palette behavior should use the Go implementation.
 
 SampleSplitter loads MP3 files, splits them into playable chunks, optionally
 compresses/normalizes them, supports peak-position playback, exposes a browser
