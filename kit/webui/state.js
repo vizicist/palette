@@ -2,6 +2,8 @@ export const stepperNumSteps = 8;
 
 export const samplePlaybackQuantValues = [0, 0.25, 0.5, 1];
 
+export const patchNames = ['A', 'B', 'C', 'D'];
+
 export const patchSigils = {
     A: 'chaos',
     B: 'oracle',

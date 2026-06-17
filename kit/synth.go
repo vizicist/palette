@@ -5,6 +5,12 @@ import (
 	json "github.com/goccy/go-json"
 	"os"
 	"sync"
+	"time"
+)
+
+const (
+	maxMIDINoteDuration      = 30 * time.Second
+	midiNoteWatchdogInterval = time.Second
 )
 
 type PortChannel struct {
@@ -22,6 +28,7 @@ type Synth struct {
 	noteMutex     sync.RWMutex
 	noteDown      []bool
 	noteDownCount []int
+	noteOnTimes   [][]time.Time
 	state         *MidiPortChannelState
 }
 
@@ -82,6 +89,8 @@ func (synth *Synth) midiOutputEnabled() bool {
 // SendANO sends all-notes-off
 func (synth *Synth) SendANO() {
 
+	synth.clearNoteDowns()
+
 	if !synth.midiOutputEnabled() {
 		return
 	}
@@ -91,8 +100,6 @@ func (synth *Synth) SendANO() {
 		LogIfError(err)
 		return
 	}
-	synth.clearNoteDowns()
-
 	// send All Notes Off
 	status := 0xb0 | byte(synth.portchannel.channel-1)
 	data1 := byte(0x7b)
@@ -240,13 +247,12 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 		//     Warn("SendPhraseElementToSynth: Ignoring second noteon")
 		// }
 
-		synth.noteMutex.Lock()
-
-		synth.noteDown[pitch] = true
-		synth.noteDownCount[pitch]++
-		downCount := synth.noteDownCount[pitch]
-
-		synth.noteMutex.Unlock()
+		downCount := 0
+		if velocity == 0 {
+			downCount = synth.recordNoteOff(pitch)
+		} else {
+			downCount = synth.recordNoteOn(pitch, time.Now())
+		}
 
 		LogOfType("note", "SendNoteOnToSynth",
 			"synth", synth,
@@ -258,13 +264,7 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 		status |= NoteOffStatus
 		data2 = 0
 
-		synth.noteMutex.Lock()
-
-		synth.noteDown[pitch] = false
-		synth.noteDownCount[pitch]--
-		downCount := synth.noteDownCount[pitch]
-
-		synth.noteMutex.Unlock()
+		downCount := synth.recordNoteOff(pitch)
 
 		LogOfType("note", "SendNoteOffToSynth",
 			"synth", synth,
@@ -278,6 +278,77 @@ func (synth *Synth) SendNoteToMidiOutput(value any) {
 	}
 
 	synth.SendBytesToMidiOutput([]byte{status, data1, data2})
+}
+
+func (synth *Synth) recordNoteOn(pitch uint8, at time.Time) int {
+	synth.noteMutex.Lock()
+	defer synth.noteMutex.Unlock()
+
+	synth.ensureNoteTrackingLocked()
+	idx := int(pitch)
+	synth.noteOnTimes[idx] = append(synth.noteOnTimes[idx], at)
+	synth.noteDownCount[idx] = len(synth.noteOnTimes[idx])
+	synth.noteDown[idx] = synth.noteDownCount[idx] > 0
+	return synth.noteDownCount[idx]
+}
+
+func (synth *Synth) recordNoteOff(pitch uint8) int {
+	synth.noteMutex.Lock()
+	defer synth.noteMutex.Unlock()
+
+	synth.ensureNoteTrackingLocked()
+	idx := int(pitch)
+	if len(synth.noteOnTimes[idx]) > 0 {
+		synth.noteOnTimes[idx] = synth.noteOnTimes[idx][1:]
+	}
+	synth.noteDownCount[idx] = len(synth.noteOnTimes[idx])
+	synth.noteDown[idx] = synth.noteDownCount[idx] > 0
+	return synth.noteDownCount[idx]
+}
+
+func (synth *Synth) SendExpiredNoteOffs(now time.Time, maxAge time.Duration) int {
+	if synth == nil || maxAge <= 0 {
+		return 0
+	}
+	expired := synth.expireLongNotes(now, maxAge)
+	for _, pitch := range expired {
+		LogWarn("MIDI note watchdog expired long note",
+			"synth", synth.name,
+			"channel", synth.portchannel.channel,
+			"pitch", pitch,
+			"maxAgeSeconds", maxAge.Seconds())
+		status := NoteOffStatus | byte(synth.portchannel.channel-1)
+		synth.SendBytesToMidiOutput([]byte{status, pitch, 0})
+	}
+	return len(expired)
+}
+
+func (synth *Synth) expireLongNotes(now time.Time, maxAge time.Duration) []uint8 {
+	synth.noteMutex.Lock()
+	defer synth.noteMutex.Unlock()
+
+	synth.ensureNoteTrackingLocked()
+	expired := []uint8{}
+	for pitch := range synth.noteOnTimes {
+		for len(synth.noteOnTimes[pitch]) > 0 && now.Sub(synth.noteOnTimes[pitch][0]) > maxAge {
+			expired = append(expired, uint8(pitch))
+			synth.noteOnTimes[pitch] = synth.noteOnTimes[pitch][1:]
+		}
+		synth.noteDownCount[pitch] = len(synth.noteOnTimes[pitch])
+		synth.noteDown[pitch] = synth.noteDownCount[pitch] > 0
+	}
+	return expired
+}
+
+func SendExpiredMIDINoteOffs(now time.Time, maxAge time.Duration) int {
+	if Synths == nil {
+		return 0
+	}
+	expired := 0
+	for _, synth := range Synths {
+		expired += synth.SendExpiredNoteOffs(now, maxAge)
+	}
+	return expired
 }
 
 func (synth *Synth) SendBytesToMidiOutput(bytes []byte) {
@@ -339,9 +410,23 @@ func (synth *Synth) clearNoteDowns() {
 	synth.noteMutex.Lock()
 	defer synth.noteMutex.Unlock()
 
+	synth.ensureNoteTrackingLocked()
 	for i := range synth.noteDown {
 		synth.noteDown[i] = false
 		synth.noteDownCount[i] = 0
+		synth.noteOnTimes[i] = nil
+	}
+}
+
+func (synth *Synth) ensureNoteTrackingLocked() {
+	if len(synth.noteDown) != 128 {
+		synth.noteDown = make([]bool, 128)
+	}
+	if len(synth.noteDownCount) != 128 {
+		synth.noteDownCount = make([]int, 128)
+	}
+	if len(synth.noteOnTimes) != 128 {
+		synth.noteOnTimes = make([][]time.Time, 128)
 	}
 }
 
@@ -372,6 +457,7 @@ func OpenNewSynth(name string, port string, channel int, bank int, program int) 
 		// midiChannelOut: midiChannelOut,
 		noteDown:      make([]bool, 128),
 		noteDownCount: make([]int, 128),
+		noteOnTimes:   make([][]time.Time, 128),
 		state:         state,
 	}
 	sp.clearNoteDowns() // debugging, shouldn't be needed

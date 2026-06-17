@@ -122,10 +122,12 @@ func (sched *Scheduler) Start() {
 	// sched.time0 = <-tick.C
 
 	nonRealtime := false
+	lastMIDINoteWatchdog := time.Now()
 
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for range tick.C {
 		// sched.now = now
+		now := time.Now()
 		uptimesecs := Uptime()
 
 		// XXX - should lock from here?
@@ -153,6 +155,10 @@ func (sched *Scheduler) Start() {
 
 		theProcessManager.checkProcess()
 		theAttractManager.checkAttract()
+		if now.Sub(lastMIDINoteWatchdog) >= midiNoteWatchdogInterval {
+			SendExpiredMIDINoteOffs(now, maxMIDINoteDuration)
+			lastMIDINoteWatchdog = now
+		}
 	}
 	LogInfo("StartRealtime ends")
 }
@@ -203,31 +209,12 @@ func (sched *Scheduler) DeleteCursorEventsWhoseGIDIs(gid int) {
 }
 
 func (sched *Scheduler) DeleteSamplePlaybackStarts(tag string, sigilChannel int) {
-	deleted := 0
-	sched.pendingMutex.Lock()
-	keptPending := sched.pendingScheduled[:0]
-	for _, se := range sched.pendingScheduled {
+	deleted := sched.deleteEvents(func(se *SchedElement) bool {
 		if se.Tag == tag && samplePlaybackEventChannel(se.Value) == sigilChannel {
-			deleted++
-			continue
+			return true
 		}
-		keptPending = append(keptPending, se)
-	}
-	sched.pendingScheduled = keptPending
-	sched.pendingMutex.Unlock()
-
-	sched.mutex.Lock()
-	defer sched.mutex.Unlock()
-
-	var nexti *list.Element
-	for i := sched.schedList.Front(); i != nil; i = nexti {
-		nexti = i.Next()
-		se := i.Value.(*SchedElement)
-		if se.Tag == tag && samplePlaybackEventChannel(se.Value) == sigilChannel {
-			sched.schedList.Remove(i)
-			deleted++
-		}
-	}
+		return false
+	})
 	if deleted > 0 {
 		LogInfo("DeleteSamplePlaybackStarts", "tag", tag, "sigilChannel", sigilChannel, "deleted", deleted)
 	}
@@ -238,33 +225,53 @@ func (sched *Scheduler) DeleteSoundEventsWithTag(tag string) int {
 		return 0
 	}
 
-	deleted := 0
+	deleted := sched.deleteEvents(func(se *SchedElement) bool {
+		return se.Tag == tag && isSoundEvent(se.Value)
+	})
+	if deleted > 0 {
+		LogInfo("DeleteSoundEventsWithTag", "tag", tag, "deleted", deleted)
+	}
+	return deleted
+}
+
+func (sched *Scheduler) deleteEvents(match func(*SchedElement) bool) int {
+	return sched.deletePendingEvents(match) + sched.deleteScheduledEvents(match, nil)
+}
+
+func (sched *Scheduler) deletePendingEvents(match func(*SchedElement) bool) int {
 	sched.pendingMutex.Lock()
+	defer sched.pendingMutex.Unlock()
+
 	keptPending := sched.pendingScheduled[:0]
+	deleted := 0
 	for _, se := range sched.pendingScheduled {
-		if se.Tag == tag && isSoundEvent(se.Value) {
+		if match(se) {
 			deleted++
 			continue
 		}
 		keptPending = append(keptPending, se)
 	}
 	sched.pendingScheduled = keptPending
-	sched.pendingMutex.Unlock()
+	return deleted
+}
 
+func (sched *Scheduler) deleteScheduledEvents(match func(*SchedElement) bool, onDelete func(*SchedElement)) int {
 	sched.mutex.Lock()
 	defer sched.mutex.Unlock()
 
+	deleted := 0
 	var nexti *list.Element
 	for i := sched.schedList.Front(); i != nil; i = nexti {
 		nexti = i.Next()
 		se := i.Value.(*SchedElement)
-		if se.Tag == tag && isSoundEvent(se.Value) {
-			sched.schedList.Remove(i)
-			deleted++
+		if !match(se) {
+			continue
 		}
-	}
-	if deleted > 0 {
-		LogInfo("DeleteSoundEventsWithTag", "tag", tag, "deleted", deleted)
+		if onDelete != nil {
+			onDelete(se)
+		}
+		sched.schedList.Remove(i)
+		deleted++
 	}
 	return deleted
 }
@@ -316,51 +323,32 @@ func (sched *Scheduler) FadeEventsWithTag(tag string) {
 }
 
 func (sched *Scheduler) FilterEventsWithTag(tag string) {
-
-	sched.mutex.Lock()
-	defer sched.mutex.Unlock()
-
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	var nexti *list.Element
-	for i := sched.schedList.Front(); i != nil; i = nexti {
-		nexti = i.Next()
-		se := i.Value.(*SchedElement)
-		if se.Tag != tag {
-			continue
-		}
+	sched.deleteScheduledEvents(func(se *SchedElement) bool {
+		return se.Tag == tag
+	}, func(se *SchedElement) {
 		ce, isce := se.Value.(CursorEvent)
 		if isce && ce.Ddu == "up" && rnd.Float32() < 0.5 {
 			theCursorManager.DeleteActiveCursor(ce.GID)
 		}
-		sched.schedList.Remove(i)
-	}
+	})
 }
 
 func (sched *Scheduler) DeleteEventsWithTag(tag string) {
-
-	sched.mutex.Lock()
-
-	var nexti *list.Element
-	for i := sched.schedList.Front(); i != nil; i = nexti {
-		nexti = i.Next()
-		se := i.Value.(*SchedElement)
-		if se.Tag != tag {
-			continue
-		}
+	sched.deleteScheduledEvents(func(se *SchedElement) bool {
+		return se.Tag == tag
+	}, func(se *SchedElement) {
 		ce, isce := se.Value.(CursorEvent)
 		if isce && ce.Ddu == "up" {
 			theCursorManager.DeleteActiveCursor(ce.GID)
 		}
-		sched.schedList.Remove(i)
-	}
-
-	sched.mutex.Unlock()
+	})
 }
 
 func (sched *Scheduler) CountEventsWithTag(tag string) int {
 
-	sched.mutex.Lock() // should be Rlock?
-	defer sched.mutex.Unlock()
+	sched.mutex.RLock()
+	defer sched.mutex.RUnlock()
 
 	count := 0
 	for i := sched.schedList.Front(); i != nil; i = i.Next() {
@@ -506,8 +494,8 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 
 func (sched *Scheduler) ToString() string {
 
-	sched.mutex.Lock()
-	defer sched.mutex.Unlock()
+	sched.mutex.RLock()
+	defer sched.mutex.RUnlock()
 
 	s := "Scheduler{"
 	for i := sched.schedList.Front(); i != nil; i = i.Next() {
@@ -534,8 +522,8 @@ func (sched *Scheduler) ToString() string {
 
 func (sched *Scheduler) PendingToString() string {
 
-	sched.pendingMutex.Lock()
-	defer sched.pendingMutex.Unlock()
+	sched.pendingMutex.RLock()
+	defer sched.pendingMutex.RUnlock()
 
 	s := "pendingScheduled{"
 	for _, se := range sched.pendingScheduled {
