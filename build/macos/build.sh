@@ -69,7 +69,7 @@ copy_data_dir() {
 copy_data_dir data_default
 copy_data_dir data_dexed
 
-if [ -f "$PALETTE_SOURCE/cmd/samplesplitter/samplesplitter.py" ]; then
+if [ -f "$PALETTE_SOURCE/cmd/samplesplitter/static/index.html" ]; then
     echo "================ Copying samplesplitter"
     /usr/bin/ditto "$PALETTE_SOURCE/cmd/samplesplitter" "$SHIP/samplesplitter"
     rm -rf "$SHIP/samplesplitter/.git" "$SHIP/samplesplitter/__pycache__"
@@ -77,7 +77,7 @@ if [ -f "$PALETTE_SOURCE/cmd/samplesplitter/samplesplitter.py" ]; then
         /usr/bin/ditto "$PALETTE_SOURCE/data_default/samplesplitter" "$SHIP/samplesplitter"
     fi
 else
-    echo "Error: samplesplitter source is missing under cmd/samplesplitter" >&2
+    echo "Error: samplesplitter static UI is missing under cmd/samplesplitter/static" >&2
     exit 1
 fi
 

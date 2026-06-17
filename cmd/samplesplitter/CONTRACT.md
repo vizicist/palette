@@ -1,11 +1,11 @@
 # SampleSplitter Compatibility Contract
 
-The Go implementation is the reference implementation. The Python
-implementation is legacy standalone.
+The Go implementation is the reference implementation. The legacy Python
+implementation lives in the standalone `vizicist/samplesplitter` repository.
 
 This contract describes behavior that should stay stable across the Go
-standalone server, the in-engine Go service, and the legacy Python server where
-practical.
+standalone server, the in-engine Go service, and the external legacy Python
+server where practical.
 
 ## CLI
 
@@ -16,8 +16,8 @@ The standalone command accepts these flags:
 - `--port`: HTTP port, default `9876`.
 - `--base-note`: MIDI note for split 0, default `48`.
 - `--midi-port`: preferred MIDI input port.
-- `--no-open`: accepted by both implementations. Python may suppress browser
-  launch; Go accepts it for compatibility.
+- `--no-open`: accepted for compatibility. Go currently accepts it without
+  opening a browser.
 
 ## HTTP API
 
@@ -93,4 +93,4 @@ without hidden local assumptions.
 
 - Palette's in-engine SamplePlayback uses the Go service directly.
 - Palette should not depend on MIDI routing into the in-engine service.
-- Standalone Go and legacy Python may still support MIDI input for external use.
+- Standalone Go still supports MIDI input for external use.

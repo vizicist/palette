@@ -124,9 +124,9 @@ copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
 copy %PALETTE_SOURCE%\binaries\nats\nats.exe %bin% >nul
 
 echo ================ Copying samplesplitter
-if not exist "%PALETTE_SOURCE%\cmd\samplesplitter\samplesplitter.py" (
-	echo The samplesplitter source is missing under:
-	echo     %PALETTE_SOURCE%\cmd\samplesplitter
+if not exist "%PALETTE_SOURCE%\cmd\samplesplitter\static\index.html" (
+	echo The samplesplitter static UI is missing under:
+	echo     %PALETTE_SOURCE%\cmd\samplesplitter\static
 	goto getout
 )
 if not exist "%PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe" (

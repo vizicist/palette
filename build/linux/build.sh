@@ -21,7 +21,7 @@ mkdir -p "$BIN"
 # Copy VERSION file
 cp "$PALETTE_SOURCE/VERSION" "$SHIP/"
 
-if [ -f "$PALETTE_SOURCE/cmd/samplesplitter/samplesplitter.py" ]; then
+if [ -f "$PALETTE_SOURCE/cmd/samplesplitter/static/index.html" ]; then
     echo "================ Copying samplesplitter"
     cp -R "$PALETTE_SOURCE/cmd/samplesplitter" "$SHIP/samplesplitter"
     rm -rf "$SHIP/samplesplitter/.git" "$SHIP/samplesplitter/__pycache__"
@@ -29,7 +29,7 @@ if [ -f "$PALETTE_SOURCE/cmd/samplesplitter/samplesplitter.py" ]; then
         cp -R "$PALETTE_SOURCE/data_default/samplesplitter/." "$SHIP/samplesplitter/"
     fi
 else
-    echo "Error: samplesplitter source is missing under cmd/samplesplitter" >&2
+    echo "Error: samplesplitter static UI is missing under cmd/samplesplitter/static" >&2
     exit 1
 fi
 

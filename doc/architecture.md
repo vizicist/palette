@@ -129,9 +129,9 @@ SampleSplitter now has two relevant forms:
   `global.process.samplesplitter`. This is the path used by Palette
   SamplePlayback.
 - The standalone Go executable in `cmd/samplesplitter`, with the same browser
-  UI and MIDI-facing behavior for standalone use. The Python implementation is
-  retained in `cmd/samplesplitter` as a legacy standalone reference and should
-  not be the Palette runtime path.
+  UI and MIDI-facing behavior for standalone use. The legacy Python
+  implementation has moved to the standalone `vizicist/samplesplitter`
+  repository and should not be the Palette runtime path.
 
 ## Engine Startup
 
