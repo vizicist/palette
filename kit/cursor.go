@@ -406,8 +406,6 @@ var BugFixWarningCount = 0
 
 func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 
-	theEngine.RecordCursorEvent(ce)
-
 	fadeThreshold, err := GetParamFloat("global.looping_fadethreshold")
 	if err != nil {
 		LogIfError(err)

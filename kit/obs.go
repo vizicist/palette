@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -157,7 +158,10 @@ func ObsAutoSetup() error {
 		existingInputs[inp.InputName] = true
 	}
 
-	// Add window capture for Resolume if not present
+	resolumeWindowSettings := obsResolumeWindowSettings()
+
+	// Add or update window capture for Resolume. The executable may be
+	// Avenue.exe or Arena.exe depending on the installed Resolume edition.
 	if !existingInputs[obsWindowInput] {
 		LogOfType("obs", "Creating Resolume window capture input")
 		_, err = client.Inputs.CreateInput(
@@ -165,15 +169,22 @@ func ObsAutoSetup() error {
 				WithSceneName(obsSceneName).
 				WithInputName(obsWindowInput).
 				WithInputKind("window_capture").
-				WithInputSettings(map[string]any{
-					"window":   "Arena:Qt5152QWindowIcon:Arena.exe",
-					"priority": 2, // match by executable
-					"method":   2, // WGC (Windows Graphics Capture)
-				}).
+				WithInputSettings(resolumeWindowSettings).
 				WithSceneItemEnabled(true),
 		)
 		if err != nil {
 			LogOfType("obs", "Failed to create window capture", "err", err)
+		}
+	} else {
+		LogOfType("obs", "Updating Resolume window capture input")
+		_, err = client.Inputs.SetInputSettings(
+			inputs.NewSetInputSettingsParams().
+				WithInputName(obsWindowInput).
+				WithInputSettings(resolumeWindowSettings).
+				WithOverlay(true),
+		)
+		if err != nil {
+			LogOfType("obs", "Failed to update window capture", "err", err)
 		}
 	}
 
@@ -227,6 +238,54 @@ func ObsAutoSetup() error {
 
 	LogOfType("obs", "OBS auto-setup complete", "scene", obsSceneName, "recordDir", recordDir)
 	return nil
+}
+
+func obsResolumeWindowSettings() map[string]any {
+	appName := obsResolumeAppName()
+	return map[string]any{
+		"window":   fmt.Sprintf("%s:Qt5152QWindowIcon:%s.exe", appName, appName),
+		"priority": 2, // match by executable
+		"method":   2, // WGC (Windows Graphics Capture)
+	}
+}
+
+func obsResolumeAppName() string {
+	configuredPath, err := GetParam("global.resolumepath")
+	if err == nil && configuredPath != "" && FileExists(configuredPath) {
+		if appName := resolumeAppNameFromPath(configuredPath); appName != "" {
+			return appName
+		}
+	}
+
+	for _, path := range []string{
+		"C:/Program Files/Resolume Avenue/Avenue.exe",
+		"C:/Program Files/Resolume Arena/Arena.exe",
+	} {
+		if FileExists(path) {
+			if appName := resolumeAppNameFromPath(path); appName != "" {
+				return appName
+			}
+		}
+	}
+
+	if err == nil && configuredPath != "" {
+		if appName := resolumeAppNameFromPath(configuredPath); appName != "" {
+			return appName
+		}
+	}
+	return "Avenue"
+}
+
+func resolumeAppNameFromPath(path string) string {
+	base := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	switch {
+	case strings.EqualFold(base, "Arena"):
+		return "Arena"
+	case strings.EqualFold(base, "Avenue"):
+		return "Avenue"
+	default:
+		return ""
+	}
 }
 
 // ObsIsRunning probes the OBS WebSocket port with a short TCP dial.
@@ -326,30 +385,37 @@ func ObsRecordClip() (string, error) {
 
 	obsRecording = true
 	obsRecordStart = time.Now()
-	obsRecordStopChan = make(chan struct{})
+	stopChan := make(chan struct{})
+	obsRecordStopChan = stopChan
 
 	// Auto-stop after duration
-	go func() {
+	go func(stopChan <-chan struct{}) {
 		select {
 		case <-time.After(time.Duration(obsRecordSeconds) * time.Second):
-		case <-obsRecordStopChan:
+		case <-stopChan:
+			return
 		}
 
 		obsRecordMu.Lock()
 		wasRecording := obsRecording
-		obsRecording = false
+		if wasRecording {
+			obsRecording = false
+			obsRecordStopChan = nil
+		}
 		obsRecordMu.Unlock()
 
-		if wasRecording {
-			err := ObsCommand("recordstop")
-			if err != nil {
-				LogOfType("obs", "ObsRecordClip auto-stop failed", "err", err)
-			} else {
-				LogOfType("obs", "ObsRecordClip finished")
-			}
-			NotifyOBSRecordChanged()
+		if !wasRecording {
+			return
 		}
-	}()
+
+		err := ObsCommand("recordstop")
+		if err != nil {
+			LogOfType("obs", "ObsRecordClip auto-stop failed", "err", err)
+		} else {
+			LogOfType("obs", "ObsRecordClip finished")
+		}
+		NotifyOBSRecordChanged()
+	}(stopChan)
 
 	LogOfType("obs", "ObsRecordClip started", "seconds", obsRecordSeconds)
 	obsRecordMu.Unlock()
@@ -367,10 +433,21 @@ func ObsRecordStop() (string, error) {
 	}
 
 	obsRecording = false
-	close(obsRecordStopChan)
+	stopChan := obsRecordStopChan
+	obsRecordStopChan = nil
+	if stopChan != nil {
+		close(stopChan)
+	}
 	obsRecordMu.Unlock()
-	NotifyOBSRecordChanged()
 
+	err := ObsCommand("recordstop")
+	if err != nil {
+		NotifyOBSRecordChanged()
+		return "", fmt.Errorf("ObsRecordStop stop: %w", err)
+	}
+
+	LogOfType("obs", "ObsRecordClip stopped early")
+	NotifyOBSRecordChanged()
 	return `{"recording":false}`, nil
 }
 
