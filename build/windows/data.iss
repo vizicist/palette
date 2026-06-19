@@ -44,6 +44,12 @@ Source: "ship\{#DataDir}\*"; DestDir: "{code:PaletteDataBase}\{#DataDir}"; Flags
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
+[InstallDelete]
+Type: files; Name: "{code:PaletteDataBase}\{#DataDir}\saved\quad\Filagree_Dance.json"
+Type: files; Name: "{code:PaletteDataBase}\{#DataDir}\saved\quad\Jigsaw_Puzzles.json"
+Type: files; Name: "{code:PaletteDataBase}\{#DataDir}\saved\quad\Pretty_Pulses.json"
+Type: files; Name: "{code:PaletteDataBase}\{#DataDir}\saved\quad\Too Many_Triangles.json"
+
 [Registry]
 Root: HKA; Subkey: "{code:EnvKey}"; \
     ValueType: expandsz; ValueName: "PALETTE_DATA"; ValueData: "{#Data}"; Flags: preservestringtype
