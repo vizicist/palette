@@ -1102,12 +1102,6 @@ class ProGuiApp(tk.Tk):
     def stopProcess(self,processName):
         palette.palette_global_api("set","\"name\":\"global.process."+processName+"\",\"value\":\"false\"")
 
-    def startRecording(self):
-        palette.palette_global_api("startrecording")
-
-    def stopRecording(self):
-        palette.palette_global_api("stoprecording")
-
     def exit(self):
         os._exit(0)  # This is a hard exit, killing all the background threads
 
@@ -2233,8 +2227,6 @@ class PagePerformMain(tk.Frame):
         # self.makePerformButton("Start_All", self.controller.startAll)
         # self.makePerformButton("Stop_All", self.controller.stopAll)
         # self.makePerformButton("Exit", self.controller.exit)
-        # self.makePerformButton("Start_Recording", self.controller.startRecording)
-        # self.makePerformButton("Stop_Recording", self.controller.stopRecording)
 
     def button_cget(self,button,name):
         text = button.cget(name)

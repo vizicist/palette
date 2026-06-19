@@ -5,14 +5,25 @@ import (
 	"log"
 
 	"github.com/andreykaipov/goobs"
+	"github.com/joho/godotenv"
+	"github.com/vizicist/palette/kit"
 )
 
 func main() {
-	client, err := goobs.New("localhost:4455", goobs.WithPassword("pKK24mvItL7DRJL8"))
+	myenv, err := godotenv.Read(kit.EnvFilePath())
+	if err != nil {
+		log.Fatalf("cannot read OBS env file: %v", err)
+	}
+	password := myenv["OBS_PASSWORD"]
+	if password == "" {
+		log.Fatal("OBS_PASSWORD not set in OBS env file")
+	}
+
+	client, err := goobs.New("localhost:4455", goobs.WithPassword(password))
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func(){
+	defer func() {
 		_ = client.Disconnect()
 	}()
 

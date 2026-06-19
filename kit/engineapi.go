@@ -102,9 +102,6 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"get":                  globalGet,
 	"getwithprefix":        globalGet,
 	"showclip":             globalShowClip,
-	"startrecording":       globalStartRecording,
-	"stoprecording":        globalStopRecording,
-	"startplayback":        globalStartPlayback,
 	"save":                 globalSave,
 	"done":                 globalDone,
 	"audio_reset":          globalAudioReset,
@@ -285,14 +282,6 @@ func globalShowClip(api string, apiargs map[string]string) (string, error) {
 	return "", nil
 }
 
-func globalStartRecording(api string, apiargs map[string]string) (string, error) {
-	return theEngine.StartRecording()
-}
-
-func globalStopRecording(api string, apiargs map[string]string) (string, error) {
-	return theEngine.StopRecording()
-}
-
 func globalObsRecord(api string, apiargs map[string]string) (string, error) {
 	return ObsRecordClip()
 }
@@ -307,14 +296,6 @@ func globalObsSetup(api string, apiargs map[string]string) (string, error) {
 		return "", err
 	}
 	return `{"status":"ok"}`, nil
-}
-
-func globalStartPlayback(api string, apiargs map[string]string) (string, error) {
-	fname, err := needStringArg("filename", api, apiargs)
-	if err != nil {
-		return "", err
-	}
-	return "", theEngine.StartPlayback(fname)
 }
 
 func globalSave(api string, apiargs map[string]string) (string, error) {

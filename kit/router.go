@@ -82,10 +82,8 @@ func (r *Router) InputListenOnce() {
 	select {
 	case msg := <-r.oscInputChan:
 		r.handleOscInput(msg)
-		theEngine.RecordOscEvent(&msg)
 	case event := <-r.midiInputChan:
 		r.HandleMidiEvent(event)
-		theEngine.RecordMidiEvent(&event)
 	case event := <-r.cursorInput:
 		ScheduleAt(CurrentClick(), event.Tag, event)
 	default:

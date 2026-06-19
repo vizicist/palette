@@ -8,21 +8,6 @@ import (
 	midi "gitlab.com/gomidi/midi/v2"
 )
 
-type RecordingEvent struct {
-	Event string
-	Value any
-	// PlaybackEvent *PlaybackEvent `json:"PlaybackEvent"`
-	// CursorEvent   *CursorEvent   `json:"CursorEvent"`
-	// MidiEvent     *MidiEvent     `json:"MidiEvent"`
-	// OscEvent      *OscEvent      `json:"OscEvent"`
-}
-
-// PlaybackEvent is for start/stop
-type PlaybackEvent struct {
-	Click     Clicks `json:"Click"`
-	IsRunning bool   `json:"IsRunning"`
-}
-
 type MIDIEventHandler func(MidiEvent)
 
 type OscEvent struct {
