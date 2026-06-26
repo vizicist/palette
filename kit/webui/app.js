@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupAppTitleFit();
     setupRitualNav();
     setupControls();
+    setupVirtualKeyboard();
     setupHelpOverlay();
     setupAttractOverlay();
     setupCategoryTabs();
@@ -166,23 +167,7 @@ async function loadPresets() {
     try {
         const list = await API.getSavedList(UIState.currentCategory);
 
-        // Handle both array and newline-separated string formats
-        let presets;
-        if (Array.isArray(list)) {
-            // Strip category prefix (e.g., "quad.All_Moire" -> "All_Moire")
-            presets = list.map(p => {
-                const dotIdx = p.indexOf('.');
-                return dotIdx >= 0 ? p.substring(dotIdx + 1) : p;
-            });
-        } else {
-            presets = list.split('\n');
-        }
-
-        // Trim, remove carriage returns, and filter out empty, underscore-prefixed, and curly-brace-prefixed presets
-        presets = presets.map(p => p.trim().replace(/\r/g, '')).filter(p => p && !p.startsWith('_') && !p.startsWith('{'));
-
-        // Sort alphabetically (case-insensitive)
-        presets.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+        const presets = savedPresetNamesFromList(list);
 
         if (presets.length === 0) {
             grid.innerHTML = '<div class="loading">No presets found</div>';
@@ -203,6 +188,22 @@ async function loadPresets() {
     } catch (e) {
         grid.innerHTML = `<div class="error">${e.message}</div>`;
     }
+}
+
+function savedPresetNamesFromList(list) {
+    let presets;
+    if (Array.isArray(list)) {
+        presets = list.map(p => {
+            const dotIdx = p.indexOf('.');
+            return dotIdx >= 0 ? p.substring(dotIdx + 1) : p;
+        });
+    } else {
+        presets = String(list || '').split('\n');
+    }
+
+    presets = presets.map(p => p.trim().replace(/\r/g, '')).filter(p => p && !p.startsWith('_') && !p.startsWith('{'));
+    presets.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    return presets;
 }
 
 async function stopStepperQuietly() {
@@ -519,7 +520,9 @@ async function loadParams() {
         // Parse "name=value\n" format
         const lines = paramsStr.split('\n').filter(l => l.trim());
         if (lines.length === 0) {
-            grid.innerHTML = '<div class="loading">No parameters found</div>';
+            grid.innerHTML = paramHeaderHtml({ includeInitRand: false }) +
+                '<div class="param-list"><div class="loading">No parameters found</div></div>';
+            setupParamHeaderButtons();
             return;
         }
 
@@ -554,11 +557,7 @@ async function loadParams() {
         }
 
         // Build parameter list HTML
-        let html = '<div class="param-header">';
-        html += '<button class="param-header-btn" id="btn-param-init">Init</button>';
-        html += '<button class="param-header-btn" id="btn-param-rand">Rand</button>';
-        html += '<button class="param-header-btn" id="btn-param-save">Save As</button>';
-        html += '</div>';
+        let html = paramHeaderHtml({ includeInitRand: true });
         html += '<div class="param-list">';
 
         for (const p of params) {
@@ -673,6 +672,18 @@ async function loadParams() {
     } catch (e) {
         grid.innerHTML = `<div class="error">${e.message}</div>`;
     }
+}
+
+function paramHeaderHtml({ includeInitRand }) {
+    let html = '<div class="param-header">';
+    if (includeInitRand) {
+        html += '<button class="param-header-btn" id="btn-param-init">Init</button>';
+        html += '<button class="param-header-btn" id="btn-param-rand">Rand</button>';
+    }
+    html += '<button class="param-header-btn" id="btn-param-save">Save As</button>';
+    html += '<button class="param-header-btn danger" id="btn-param-remove">Remove</button>';
+    html += '</div>';
+    return html;
 }
 
 function setupParamControls() {
@@ -892,6 +903,326 @@ function setupParamHeaderButtons() {
             }
         });
     }
+
+    const saveBtn = document.getElementById('btn-param-save');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            await handleSaveAs(saveBtn);
+        });
+    }
+
+    const removeBtn = document.getElementById('btn-param-remove');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', async () => {
+            await handleRemovePreset(removeBtn);
+        });
+    }
+}
+
+async function handleSaveAs(button) {
+    try {
+        const presetChoices = UIState.currentCategory === 'patch' ? await savedPresetNamesForCategory('patch') : [];
+        const filename = await showVirtualKeyboard({
+            title: saveAsTitle(),
+            initialValue: '',
+            actionLabel: 'Save',
+            choices: presetChoices,
+            choiceLabel: 'Current Patch names'
+        });
+        if (!filename) return;
+
+        const error = presetFilenameValidationError(filename);
+        if (error) {
+            alert(error);
+            return;
+        }
+        const cleanName = normalizePresetFilename(filename);
+        await saveCurrentParamsAs(cleanName);
+        UIState.selectedPresets.set(UIState.presetKey(), cleanName);
+        button.textContent = 'Saved';
+        setTimeout(() => { button.textContent = 'Save As'; }, 900);
+    } catch (err) {
+        if (err && err.cancelled) return;
+        console.error('Save As failed:', err);
+        alert('Save As failed: ' + err.message);
+    }
+}
+
+async function savedPresetNamesForCategory(category) {
+    try {
+        return savedPresetNamesFromList(await API.getSavedList(category));
+    } catch (err) {
+        console.error('Failed to load preset names:', err);
+        return [];
+    }
+}
+
+async function handleRemovePreset(button) {
+    try {
+        const presetChoices = await savedPresetNamesForCategory(UIState.currentCategory);
+        const filename = await showVirtualKeyboard({
+            title: removeTitle(),
+            initialValue: '',
+            actionLabel: 'Remove',
+            choices: presetChoices,
+            choiceLabel: `Current ${UIState.currentCategory} names`
+        });
+        if (!filename) return;
+
+        const error = presetFilenameValidationError(filename);
+        if (error) {
+            alert(error);
+            return;
+        }
+        const cleanName = normalizePresetFilename(filename);
+        await removeCurrentPreset(cleanName);
+        if (UIState.selectedPresets.get(UIState.presetKey()) === cleanName) {
+            UIState.selectedPresets.delete(UIState.presetKey());
+        }
+        button.textContent = 'Removed';
+        setTimeout(() => { button.textContent = 'Remove'; }, 900);
+    } catch (err) {
+        if (err && err.cancelled) return;
+        console.error('Remove failed:', err);
+        alert('Remove failed: ' + err.message);
+    }
+}
+
+function saveAsTitle() {
+    if (UIState.currentCategory === 'global') return 'Save Global As';
+    if (UIState.currentCategory === 'quad') return 'Save Quad As';
+    return `Save ${UIState.currentCategory} As`;
+}
+
+function removeTitle() {
+    if (UIState.currentCategory === 'global') return 'Remove Global Preset';
+    if (UIState.currentCategory === 'quad') return 'Remove Quad Preset';
+    return `Remove ${UIState.currentCategory} Preset`;
+}
+
+function normalizePresetFilename(value) {
+    let name = String(value || '');
+    if (name.toLowerCase().endsWith('.json')) {
+        name = name.slice(0, -5);
+    }
+    return name;
+}
+
+function presetFilenameValidationError(value) {
+    const raw = String(value || '');
+    if (!raw) return 'Enter a preset name.';
+    if (raw.trim() !== raw) return 'Preset names cannot start or end with spaces.';
+
+    const name = normalizePresetFilename(raw);
+    if (!name) return 'Enter a preset name.';
+    if (name.length > 120) return 'Preset names must be 120 characters or fewer.';
+    if (name === '.' || name === '..') return 'Preset names cannot be "." or "..".';
+    if (/[\\/:*?"<>|\x00-\x1F\x7F]/.test(name)) {
+        return 'Preset names cannot contain path separators, reserved characters, or control characters.';
+    }
+    if (name.endsWith('.') || name.endsWith(' ')) {
+        return 'Preset names cannot end with a dot or space.';
+    }
+
+    const base = name.split('.')[0].toUpperCase();
+    if (['CON', 'PRN', 'AUX', 'NUL'].includes(base) || /^(COM[1-9]|LPT[1-9])$/.test(base)) {
+        return 'That preset name is reserved by Windows.';
+    }
+    return '';
+}
+
+async function saveCurrentParamsAs(filename) {
+    if (UIState.currentCategory === 'global') {
+        await API.saveGlobal(filename);
+    } else if (UIState.currentCategory === 'quad') {
+        await API.saveQuad('quad', filename);
+    } else {
+        const patchToSave = UIState.currentPatch === '*' ? 'A' : UIState.currentPatch;
+        await API.savePatch(patchToSave, UIState.currentCategory, filename);
+    }
+}
+
+async function removeCurrentPreset(filename) {
+    await API.removeSaved(UIState.currentCategory, filename);
+}
+
+let keyboardResolve = null;
+let keyboardReject = null;
+let keyboardCaps = true;
+
+function setupVirtualKeyboard() {
+    if (document.getElementById('save-keyboard-modal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'save-keyboard-modal';
+    modal.className = 'keyboard-modal hidden';
+    modal.innerHTML = `
+        <div class="keyboard-dialog" role="dialog" aria-modal="true" aria-labelledby="keyboard-title">
+            <div class="keyboard-title" id="keyboard-title">Save As</div>
+            <input id="keyboard-input" class="keyboard-input" type="text" autocomplete="off" spellcheck="false">
+            <details id="keyboard-preset-menu" class="keyboard-preset-menu hidden">
+                <summary id="keyboard-preset-summary" class="keyboard-preset-summary">Current names</summary>
+                <div id="keyboard-preset-options" class="keyboard-preset-options"></div>
+            </details>
+            <div class="keyboard-error" id="keyboard-error"></div>
+            <div class="keyboard-keys" id="keyboard-keys"></div>
+            <div class="keyboard-actions">
+                <button type="button" class="keyboard-action" data-keyboard-action="cancel">Cancel</button>
+                <button type="button" class="keyboard-action primary" data-keyboard-action="submit">Save</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const keys = [
+        ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+        ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '-', '_'],
+        ['Caps', 'Space', 'Backspace', 'Clear']
+    ];
+    const keyGrid = modal.querySelector('#keyboard-keys');
+    keyGrid.innerHTML = keys.map(row => {
+        const buttons = row.map(key => {
+            const wide = key === 'Space' || key === 'Backspace' || key === 'Clear' ? ' wide' : '';
+            return `<button type="button" class="keyboard-key${wide}" data-key="${key}">${key}</button>`;
+        }).join('');
+        return `<div class="keyboard-row">${buttons}</div>`;
+    }).join('');
+
+    modal.querySelectorAll('.keyboard-key').forEach(button => {
+        button.addEventListener('click', () => {
+            const input = modal.querySelector('#keyboard-input');
+            const key = button.dataset.key;
+            if (key === 'Backspace') {
+                input.value = input.value.slice(0, -1);
+            } else if (key === 'Clear') {
+                input.value = '';
+            } else if (key === 'Caps') {
+                keyboardCaps = !keyboardCaps;
+                updateKeyboardCaps();
+            } else if (key === 'Space') {
+                input.value += ' ';
+            } else if (/^[A-Z]$/.test(key)) {
+                input.value += keyboardCaps ? key : key.toLowerCase();
+            } else {
+                input.value += key;
+            }
+            showKeyboardError('');
+            input.focus();
+        });
+    });
+
+    modal.querySelector('[data-keyboard-action="cancel"]').addEventListener('click', closeVirtualKeyboard);
+    modal.querySelector('[data-keyboard-action="submit"]').addEventListener('click', submitVirtualKeyboard);
+    modal.querySelector('#keyboard-preset-options').addEventListener('click', event => {
+        const button = event.target.closest('.keyboard-preset-option');
+        if (!button) return;
+        const input = modal.querySelector('#keyboard-input');
+        input.value = button.dataset.value || '';
+        modal.querySelector('#keyboard-preset-menu').open = false;
+        showKeyboardError('');
+        input.focus();
+    });
+    modal.addEventListener('click', event => {
+        if (event.target === modal) closeVirtualKeyboard();
+    });
+    modal.querySelector('#keyboard-input').addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeVirtualKeyboard();
+        } else if (event.key === 'Enter') {
+            event.preventDefault();
+            submitVirtualKeyboard();
+        }
+    });
+    modal.querySelector('#keyboard-input').addEventListener('input', () => showKeyboardError(''));
+    updateKeyboardCaps();
+}
+
+function showVirtualKeyboard({ title, initialValue, actionLabel, choices, choiceLabel }) {
+    const modal = document.getElementById('save-keyboard-modal');
+    const input = modal.querySelector('#keyboard-input');
+    modal.querySelector('#keyboard-title').textContent = title;
+    modal.querySelector('[data-keyboard-action="submit"]').textContent = actionLabel || 'Save';
+    setKeyboardChoices(modal, choices || [], choiceLabel || 'Current names');
+    input.value = initialValue || '';
+    showKeyboardError('');
+    modal.classList.remove('hidden');
+    updateKeyboardCaps();
+    requestAnimationFrame(() => input.focus());
+
+    return new Promise((resolve, reject) => {
+        keyboardResolve = resolve;
+        keyboardReject = reject;
+    });
+}
+
+function setKeyboardChoices(modal, choices, label) {
+    const menu = modal.querySelector('#keyboard-preset-menu');
+    const summary = modal.querySelector('#keyboard-preset-summary');
+    const options = modal.querySelector('#keyboard-preset-options');
+    options.replaceChildren();
+    menu.open = false;
+    if (!choices.length) {
+        menu.classList.add('hidden');
+        return;
+    }
+
+    summary.textContent = label;
+    for (const choice of choices) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'keyboard-preset-option';
+        button.dataset.value = choice;
+        button.textContent = choice;
+        options.appendChild(button);
+    }
+    menu.classList.remove('hidden');
+}
+
+function submitVirtualKeyboard() {
+    const modal = document.getElementById('save-keyboard-modal');
+    const input = modal.querySelector('#keyboard-input');
+    const error = presetFilenameValidationError(input.value);
+    if (error) {
+        showKeyboardError(error);
+        input.focus();
+        return;
+    }
+    const cleanName = normalizePresetFilename(input.value);
+    modal.classList.add('hidden');
+    if (keyboardResolve) keyboardResolve(cleanName);
+    keyboardResolve = null;
+    keyboardReject = null;
+}
+
+function closeVirtualKeyboard() {
+    const modal = document.getElementById('save-keyboard-modal');
+    modal.classList.add('hidden');
+    if (keyboardReject) keyboardReject({ cancelled: true });
+    keyboardResolve = null;
+    keyboardReject = null;
+}
+
+function showKeyboardError(message) {
+    const error = document.getElementById('keyboard-error');
+    if (error) error.textContent = message || '';
+}
+
+function updateKeyboardCaps() {
+    const modal = document.getElementById('save-keyboard-modal');
+    if (!modal) return;
+    modal.querySelectorAll('.keyboard-key').forEach(button => {
+        const key = button.dataset.key;
+        if (/^[A-Z]$/.test(key)) {
+            button.textContent = keyboardCaps ? key : key.toLowerCase();
+        }
+        if (key === 'Caps') {
+            button.classList.toggle('active', keyboardCaps);
+            button.textContent = keyboardCaps ? 'CAPS' : 'caps';
+        }
+    });
 }
 
 async function loadPreset(name) {

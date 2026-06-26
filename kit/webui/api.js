@@ -34,10 +34,16 @@ export const API = {
     getParamInits(category) { return this.call('saved.paraminits', { category }); },
     getParamRands(category) { return this.call('saved.paramrands', { category }); },
     getParamEnums() { return this.call('saved.paramenums'); },
+    removeSaved(category, filename) { return this.call('saved.remove', { category, filename }); },
     loadGlobal(filename) { return this.call('global.load', { category: 'global', filename }); },
+    saveGlobal(filename) { return this.call('global.save', { filename }); },
     loadQuad(filename) { return this.call('quad.load', { category: 'quad', filename }); },
+    saveQuad(category, filename) { return this.call('quad.save', { category, filename }); },
     loadPatch(patch, category, filename) {
         return this.call('patch.load', { patch, category, filename });
+    },
+    savePatch(patch, category, filename) {
+        return this.call('patch.save', { patch, category, filename });
     },
     audioReset() { return this.call('global.audio_reset'); },
     completeReset() { return this.audioReset(); },

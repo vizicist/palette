@@ -503,6 +503,7 @@ func LoadParamEnums() error {
 
 	// Special case: populate "synth" enum from Synths.json
 	loadSynthEnums()
+	loadPitchSetEnums()
 
 	return nil
 }
@@ -532,6 +533,15 @@ func loadSynthEnums() {
 		synthNames = append(synthNames, s.Name)
 	}
 	ParamEnums["synth"] = synthNames
+}
+
+func loadPitchSetEnums() {
+	pitchSetNames, err := PitchSetNamesFromConfig()
+	if err != nil {
+		LogWarn("loadPitchSetEnums: unable to load PitchSets.json", "err", err)
+		return
+	}
+	ParamEnums["pitchset"] = pitchSetNames
 }
 
 // LoadParamDefs initializes the list of parameters
