@@ -7,9 +7,12 @@ import (
 
 type NoteOn struct {
 	// Channel  uint8
-	Synth    *Synth
-	Pitch    uint8
-	Velocity uint8
+	Synth         *Synth
+	Pitch         uint8
+	Velocity      uint8
+	PitchSet      string
+	PitchSetIndex int
+	PitchSetName  string
 }
 
 func (n *NoteOn) String() string {

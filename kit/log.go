@@ -203,13 +203,17 @@ func LogOfType(logtypes string, msg string, keysAndValues ...any) {
 	if (len(keysAndValues) % 2) != 0 {
 		LogWarn("LogOfType function given bad number of arguments")
 	}
-	for _, logtype := range strings.Split(logtypes, ",") {
+	for _, rawLogtype := range strings.Split(logtypes, ",") {
+		logtype := strings.TrimSpace(rawLogtype)
+		if logtype == "" {
+			continue
+		}
 		isEnabled := IsLogging(logtype)
-		keysAndValues = append(keysAndValues, "logtype")
-		keysAndValues = append(keysAndValues, logtype)
 		if isEnabled {
-			keysAndValues = appendExtraValues(keysAndValues)
-			theLog.Infow(msg, keysAndValues...)
+			values := append([]any(nil), keysAndValues...)
+			values = append(values, "logtype", logtype)
+			values = appendExtraValues(values)
+			theLog.Infow(msg, values...)
 		}
 	}
 }
@@ -267,6 +271,7 @@ var LogEnabled = map[string]bool{
 	"loop":           false,
 	"midi":           false,
 	"midicontroller": false,
+	"midinote":       false,
 	"midiports":      false,
 	"mmtt":           false,
 	"morph":          false,
@@ -278,6 +283,7 @@ var LogEnabled = map[string]bool{
 	"osc":            false,
 	"params":         false,
 	"phrase":         false,
+	"pitchset":       false,
 	"plugin":         false,
 	"quant":          false,
 	"saved":          false,

@@ -1,0 +1,64 @@
+{
+  "pitchsets": [
+    {
+      "name": "stylusrmx",
+      "pitches": [
+        { "pitch": 36 },
+        { "pitch": 37 },
+        { "pitch": 38 },
+        { "pitch": 39 },
+        { "pitch": 42 },
+        { "pitch": 43 },
+        { "pitch": 51 },
+        { "pitch": 49 }
+      ]
+    },
+    {
+      "name": "drumcraker",
+      "pitches": [
+        { "pitch": 0, "name": "kick_ludw" },
+        { "pitch": 2, "name": "kick_ludw_damp" },
+        { "pitch": 4, "name": "kick_ludw_jazz" },
+        { "pitch": 6, "name": "kick_prem_damp" },
+        { "pitch": 8, "name": "kick_prem_free" },
+        { "pitch": 10, "name": "kick_sono" },
+        { "pitch": 12, "name": "snare_supr64" },
+        { "pitch": 13, "name": "snare_supr64_edg" },
+        { "pitch": 14, "name": "snare_supr64_rim" },
+        { "pitch": 16, "name": "snare_pear" },
+        { "pitch": 17, "name": "snare_pear_damp" },
+        { "pitch": 18, "name": "snare_pear_edg" },
+        { "pitch": 19, "name": "snare_pear_rim" },
+        { "pitch": 21, "name": "snare_ss" },
+        { "pitch": 23, "name": "hihat_zild_clo" },
+        { "pitch": 24, "name": "hihat_zild_op1" },
+        { "pitch": 25, "name": "hihat_zild_op2" },
+        { "pitch": 26, "name": "hihat_zild_op3" },
+        { "pitch": 27, "name": "hihat_zild_clo_edg" },
+        { "pitch": 28, "name": "hihat_zild_op1_edg" },
+        { "pitch": 29, "name": "hihat_zild_op2_edg" },
+        { "pitch": 30, "name": "hihat_zild_op3_edg" },
+        { "pitch": 31, "name": "hihat_zild_ped" },
+        { "pitch": 32, "name": "hihat_zild_spl" },
+        { "pitch": 33, "name": "hihat_mute" },
+        { "pitch": 35, "name": "tom_12_prem" },
+        { "pitch": 36, "name": "tom_12_prem_edg" },
+        { "pitch": 38, "name": "tom_13_prem" },
+        { "pitch": 39, "name": "tom_13_prem_edg" },
+        { "pitch": 41, "name": "tom_16_prem" },
+        { "pitch": 42, "name": "tom_16_prem_edg" },
+        { "pitch": 44, "name": "crash_14_zild_bow" },
+        { "pitch": 45, "name": "crash_14_zild_edg" },
+        { "pitch": 47, "name": "crash_15_sabi_bow" },
+        { "pitch": 48, "name": "crash_15_sabi_edg" },
+        { "pitch": 50, "name": "cymb_18_zild_efx_bow" },
+        { "pitch": 51, "name": "cymb_18_zild_efx_edg" },
+        { "pitch": 53, "name": "crash_mute" },
+        { "pitch": 55, "name": "ride_20_pais_bel" },
+        { "pitch": 56, "name": "ride_20_pais_bow" },
+        { "pitch": 57, "name": "ride_20_pais_edg" },
+        { "pitch": 59, "name": "ride_mute" }
+      ]
+    }
+  ]
+}

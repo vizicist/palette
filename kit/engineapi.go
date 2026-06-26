@@ -688,6 +688,16 @@ func ExecuteSavedAPI(api string, apiargs map[string]string) (result string, err 
 	case "list":
 		category := optionalStringArg("category", apiargs, "*")
 		return SavedListAsString(category)
+	case "remove":
+		category, err := needStringArg("category", "saved.remove", apiargs)
+		if err != nil {
+			return "", err
+		}
+		filename, err := needStringArg("filename", "saved.remove", apiargs)
+		if err != nil {
+			return "", err
+		}
+		return "", RemoveSavedFile(category, filename)
 	case "paramdefs":
 		category := optionalStringArg("category", apiargs, "*")
 		return ParamDefsForCategory(category)

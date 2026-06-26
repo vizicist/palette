@@ -197,10 +197,7 @@ func (state *MidiPortChannelState) UpdateBankProgram(synth *Synth) {
 		status := byte(int64(ProgramStatus) | int64(state.channel-1))
 		data1 := byte(synth.program - 1)
 		LogInfo("SendBankProgram: MIDI", "status", hexString(status), "program", hexString(data1))
-		LogOfType("midi", "Raw MIDI Output, BankProgram",
-			"synth", synth.name,
-			"status", "0x"+hexString(status),
-			"data1", "0x"+hexString(data1))
+		synth.logReadableMIDIOutput("midi", []byte{status, data1})
 
 		LogIfError(state.output.Send([]byte{status, data1}))
 	}

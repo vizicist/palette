@@ -224,6 +224,7 @@ func (e *Engine) Start() {
 	LogInfo("Engine.Start")
 
 	InitMIDIIO()
+	InitPitchSets()
 	InitSynths()
 
 	theQuad.Start()

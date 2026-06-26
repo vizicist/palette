@@ -1134,6 +1134,199 @@ body.initial-pro #preset-grid.grid-mode {
     background: var(--highlight);
 }
 
+.param-header-btn.danger {
+    color: #ffb3b3;
+    border: 1px solid #663333;
+}
+
+.param-header-btn.danger:hover {
+    background: #5a2222;
+}
+
+.keyboard-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.78);
+}
+
+.keyboard-modal.hidden {
+    display: none;
+}
+
+.keyboard-dialog {
+    width: min(920px, 96vw);
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 22px;
+    background: #070707;
+    border: 1px solid #444;
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.65);
+}
+
+.keyboard-title {
+    color: var(--text);
+    font-size: 26px;
+    line-height: 1.1;
+}
+
+.keyboard-input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 58px;
+    padding: 8px 14px;
+    background: #111;
+    color: #fff;
+    border: 1px solid #666;
+    font-size: 30px;
+    font-family: inherit;
+}
+
+.keyboard-preset-menu {
+    width: 100%;
+    color: var(--text);
+    font-family: inherit;
+    margin-bottom: 8px;
+}
+
+.keyboard-preset-summary {
+    box-sizing: border-box;
+    min-height: 58px;
+    padding: 12px 16px;
+    background: #171717;
+    border: 1px solid #555;
+    font-size: 24px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.keyboard-preset-summary::-webkit-details-marker {
+    display: none;
+}
+
+.keyboard-preset-summary::after {
+    content: "v";
+    float: right;
+    font-size: 22px;
+}
+
+.keyboard-preset-menu[open] .keyboard-preset-summary {
+    border-color: #0aa;
+}
+
+.keyboard-preset-options {
+    max-height: min(320px, 32vh);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 14px;
+    border: 1px solid #555;
+    border-top: none;
+    background: #0d0d0d;
+}
+
+.keyboard-preset-options::-webkit-scrollbar {
+    width: 58px;
+}
+
+.keyboard-preset-options::-webkit-scrollbar-track {
+    background: #111;
+}
+
+.keyboard-preset-options::-webkit-scrollbar-thumb {
+    background: #555;
+    border: 6px solid #111;
+}
+
+.keyboard-preset-options::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+.keyboard-preset-option {
+    width: 100%;
+    min-height: 56px;
+    padding: 10px 18px;
+    background: #171717;
+    color: var(--text);
+    border: none;
+    border-bottom: 1px solid #333;
+    font-size: 23px;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.keyboard-preset-option:hover {
+    background: var(--highlight);
+}
+
+.keyboard-error {
+    min-height: 24px;
+    color: #ff6b6b;
+    font-size: 20px;
+}
+
+.keyboard-keys {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.keyboard-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.keyboard-key,
+.keyboard-action {
+    min-width: 58px;
+    height: 54px;
+    padding: 0 14px;
+    background: #202020;
+    color: var(--text);
+    border: 1px solid #555;
+    font-size: 22px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.keyboard-key.wide {
+    min-width: 128px;
+}
+
+.keyboard-key:hover,
+.keyboard-action:hover {
+    background: var(--highlight);
+}
+
+.keyboard-key.active {
+    color: #fff;
+    background: #067;
+    border-color: #0aa;
+}
+
+.keyboard-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.keyboard-action {
+    min-width: 130px;
+}
+
+.keyboard-action.primary {
+    color: #fff;
+    background: #067;
+    border-color: #0aa;
+}
+
 .param-list {
     display: flex;
     flex-direction: column;

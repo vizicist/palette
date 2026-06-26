@@ -3,7 +3,11 @@ package kit
 import (
 	"fmt"
 	"math"
+	"os"
+	"sort"
 	"sync"
+
+	json "github.com/goccy/go-json"
 )
 
 type PatchLogic struct {
@@ -37,11 +41,103 @@ func (logic *PatchLogic) cursorToNoteOn(ce CursorEvent) *NoteOn {
 		return nil
 	}
 	LogOfType("cursor", "cursorToNoteOn", "pitch", pitch, "velocity", velocity)
-	return NewNoteOn(synth, pitch, velocity)
+	noteOn := NewNoteOn(synth, pitch, velocity)
+	logic.addPitchSetInfo(noteOn, ce)
+	return noteOn
 }
 
-var PitchSets = map[string][]uint8{
-	"stylusrmx": {36, 37, 38, 39, 42, 43, 51, 49},
+var PitchSets = map[string][]uint8{}
+var PitchSetPitchNames = map[string][]string{}
+
+type pitchSetsConfig struct {
+	PitchSets []pitchSetConfig `json:"pitchsets"`
+}
+
+type pitchSetConfig struct {
+	Name    string        `json:"name"`
+	Pitches []pitchConfig `json:"pitches"`
+}
+
+type pitchConfig struct {
+	Pitch *int   `json:"pitch"`
+	Name  string `json:"name,omitempty"`
+}
+
+func InitPitchSets() {
+	pitchSets, pitchNames, err := LoadPitchSetsConfig()
+	if err != nil {
+		LogWarn("InitPitchSets: unable to load PitchSets.json", "err", err)
+		PitchSets = map[string][]uint8{}
+		PitchSetPitchNames = map[string][]string{}
+		return
+	}
+	PitchSets = pitchSets
+	PitchSetPitchNames = pitchNames
+	LogInfo("PitchSets loaded", "len", len(PitchSets))
+}
+
+func LoadPitchSetsConfig() (map[string][]uint8, map[string][]string, error) {
+	path := ConfigFilePath("PitchSets.json")
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to read %s: %w", path, err)
+	}
+
+	var config pitchSetsConfig
+	if err := json.Unmarshal(bytes, &config); err != nil {
+		return nil, nil, fmt.Errorf("unable to parse %s: %w", path, err)
+	}
+
+	pitchSets := make(map[string][]uint8, len(config.PitchSets))
+	pitchNames := make(map[string][]string, len(config.PitchSets))
+	for _, pitchSet := range config.PitchSets {
+		if pitchSet.Name == "" {
+			return nil, nil, fmt.Errorf("PitchSets.json contains a pitch set with an empty name")
+		}
+		if _, exists := pitchSets[pitchSet.Name]; exists {
+			return nil, nil, fmt.Errorf("PitchSets.json contains duplicate pitch set %q", pitchSet.Name)
+		}
+		if len(pitchSet.Pitches) == 0 {
+			return nil, nil, fmt.Errorf("PitchSets.json pitch set %q has no pitches", pitchSet.Name)
+		}
+		pitches := make([]uint8, 0, len(pitchSet.Pitches))
+		names := make([]string, 0, len(pitchSet.Pitches))
+		hasNames := false
+		for _, pitch := range pitchSet.Pitches {
+			if pitch.Pitch == nil {
+				return nil, nil, fmt.Errorf("PitchSets.json pitch set %q contains an entry without a pitch", pitchSet.Name)
+			}
+			pitchValue := *pitch.Pitch
+			if pitchValue < 0 || pitchValue > 127 {
+				return nil, nil, fmt.Errorf("PitchSets.json pitch set %q has out-of-range pitch %d", pitchSet.Name, pitchValue)
+			}
+			pitches = append(pitches, uint8(pitchValue))
+			name := pitch.Name
+			if name != "" {
+				hasNames = true
+			}
+			names = append(names, name)
+		}
+		pitchSets[pitchSet.Name] = pitches
+		if hasNames {
+			pitchNames[pitchSet.Name] = names
+		}
+	}
+	return pitchSets, pitchNames, nil
+}
+
+func PitchSetNamesFromConfig() ([]string, error) {
+	pitchSets, _, err := LoadPitchSetsConfig()
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(pitchSets)+1)
+	names = append(names, "")
+	for name := range pitchSets {
+		names = append(names, name)
+	}
+	sort.Strings(names[1:])
+	return names, nil
 }
 
 func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
@@ -54,8 +150,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			LogIfError(err)
 			return 0, err
 		}
-		// In the stylusrmx set, there are 8 pitches corresponding to the 8 parts in Stylus RMX
-		n := int(ce.Pos.X*8.0) % len(pitches)
+		n := pitchSetIndexForX(ce.Pos.X, len(pitches))
 		// Note: pitchsets don't get pitchoffset
 		return pitches[n], nil
 
@@ -109,6 +204,47 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 		}
 		return p, nil
 	}
+}
+
+func (logic *PatchLogic) addPitchSetInfo(noteOn *NoteOn, ce CursorEvent) {
+	pitchSet := logic.patch.Get("sound.pitchset")
+	if pitchSet == "" {
+		return
+	}
+	pitches, ok := PitchSets[pitchSet]
+	if !ok || len(pitches) == 0 {
+		return
+	}
+	index := pitchSetIndexForX(ce.Pos.X, len(pitches))
+	pitchNames := PitchSetPitchNames[pitchSet]
+	pitchName := ""
+	if index < len(pitchNames) {
+		pitchName = pitchNames[index]
+	}
+	noteOn.PitchSet = pitchSet
+	noteOn.PitchSetIndex = index
+	noteOn.PitchSetName = pitchName
+}
+
+func pitchSetIndexForX(x float64, pitchCount int) int {
+	if pitchCount <= 0 || math.IsNaN(x) {
+		return 0
+	}
+	if x <= 0.0 {
+		return 0
+	}
+	if x >= 1.0 {
+		return pitchCount - 1
+	}
+	return int(x * float64(pitchCount))
+}
+
+func uint8sToInts(values []uint8) []int {
+	ints := make([]int, 0, len(values))
+	for _, value := range values {
+		ints = append(ints, int(value))
+	}
+	return ints
 }
 
 func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
@@ -178,19 +314,44 @@ func (logic *PatchLogic) liveRouteIncludesSamples() bool {
 }
 
 func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atClick Clicks) {
+	scheduled := false
 	if logic.liveRouteIncludesBidule() {
 		ScheduleAt(atClick, ce.Tag, noteOn)
+		scheduled = true
 	}
 	if logic.liveRouteIncludesSamples() && theStepper != nil {
 		synth := theStepper.config.SamplesplitterSynthForPatch(logic.patch.Name())
 		if synth == nil {
+			if scheduled {
+				logic.logPitchSetUsed(noteOn)
+			}
 			return
 		}
 		velocity := samplePlaybackVelocityFromPressure(logic.patch, ce.Pos.Z)
 		ScheduleAt(atClick, ce.Tag, NewPitchBend(synth, theStepper.pitchBendValue(ce.Pos.Z)))
 		ScheduleAt(atClick, ce.Tag, NewNoteOn(synth, noteOn.Pitch, velocity))
 		ScheduleAt(atClick+1, ce.Tag, NewPitchBend(synth, MidiPitchBendCenter))
+		scheduled = true
 	}
+	if scheduled {
+		logic.logPitchSetUsed(noteOn)
+	}
+}
+
+func (logic *PatchLogic) logPitchSetUsed(noteOn *NoteOn) {
+	if noteOn == nil || noteOn.PitchSet == "" {
+		return
+	}
+	pitches := PitchSets[noteOn.PitchSet]
+	pitchNames := PitchSetPitchNames[noteOn.PitchSet]
+	LogOfType("pitchset", "PitchSet used",
+		"patch", logic.patch.Name(),
+		"pitchset", noteOn.PitchSet,
+		"index", noteOn.PitchSetIndex,
+		"pitch", noteOn.Pitch,
+		"pitchname", noteOn.PitchSetName,
+		"pitches", uint8sToInts(pitches),
+		"pitchnames", pitchNames)
 }
 
 func (logic *PatchLogic) scheduleLiveNoteOff(ce CursorEvent, noteOff *NoteOff, atClick Clicks) {

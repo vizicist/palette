@@ -44,6 +44,9 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("");
 	LayerParams_logTypes.push_back("cursor");
 	LayerParams_logTypes.push_back("midi");
+	LayerParams_logTypes.push_back("midinote");
+	LayerParams_logTypes.push_back("midicontroller");
+	LayerParams_logTypes.push_back("pitchset");
 	LayerParams_logTypes.push_back("cursor,midi");
 	LayerParams_logTypes.push_back("cursor,midi,osc");
 	LayerParams_logTypes.push_back("osc");
@@ -57,7 +60,6 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("gesture");
 
 	LayerParams_pitchsetTypes.push_back("");
-	LayerParams_pitchsetTypes.push_back("stylusrmx");
 
 	LayerParams_modeTypes.push_back("pro");
 	LayerParams_modeTypes.push_back("bss");
