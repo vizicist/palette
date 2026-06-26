@@ -44,6 +44,13 @@ jobs:
             else
               pre-commit run --all-files --show-diff-on-failure
             fi
+          elif ! git rev-parse --verify "${BASE_SHA}^{commit}" >/dev/null 2>&1; then
+            if git rev-parse --verify "${HEAD_SHA}^" >/dev/null 2>&1; then
+              BASE_SHA="$(git rev-parse "${HEAD_SHA}^")"
+              pre-commit run --from-ref "$BASE_SHA" --to-ref "$HEAD_SHA" --show-diff-on-failure
+            else
+              pre-commit run --all-files --show-diff-on-failure
+            fi
           else
             pre-commit run --from-ref "$BASE_SHA" --to-ref "$HEAD_SHA" --show-diff-on-failure
           fi
