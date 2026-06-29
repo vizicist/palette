@@ -272,6 +272,7 @@ var LogEnabled = map[string]bool{
 	"midi":           false,
 	"midicontroller": false,
 	"midinote":       false,
+	"midinoteon":     false,
 	"midiports":      false,
 	"mmtt":           false,
 	"morph":          false,
