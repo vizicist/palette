@@ -510,7 +510,7 @@ func (s *Stepper) stepLength() Clicks {
 }
 
 func (s *Stepper) pitchBendValue(pressure float64) int {
-	p := boundValueZeroToOne(pressure)
+	p := globalPressureShape(pressure, "sound").Scaled
 	return int(math.Round(p * 16383.0))
 }
 

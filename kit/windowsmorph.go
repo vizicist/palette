@@ -261,11 +261,48 @@ type oneMorph struct {
 	currentTag       string // "A", "B", "C", "D" - it can change dynamically
 	previousTag      string // "A", "B", "C", "D" - it can change dynamically
 	contactIDToGID   map[int]int
+	pressureStats    morphPressureStats
 }
 
 var morphMaxForce float64 = 1000.0
 
 var allMorphs []*oneMorph
+
+type morphPressureStats struct {
+	seen     bool
+	samples  int
+	forceMin float64
+	forceMax float64
+	zMin     float64
+	zMax     float64
+}
+
+func (m *oneMorph) updatePressureStats(force, z float64) morphPressureStats {
+	stats := m.pressureStats
+	if !stats.seen {
+		stats.seen = true
+		stats.forceMin = force
+		stats.forceMax = force
+		stats.zMin = z
+		stats.zMax = z
+	} else {
+		if force < stats.forceMin {
+			stats.forceMin = force
+		}
+		if force > stats.forceMax {
+			stats.forceMax = force
+		}
+		if z < stats.zMin {
+			stats.zMin = z
+		}
+		if z > stats.zMax {
+			stats.zMax = z
+		}
+	}
+	stats.samples++
+	m.pressureStats = stats
+	return stats
+}
 
 // StartMorph xxx
 func StartMorph(callback CursorCallbackFunc, forceFactor float64) {
@@ -336,9 +373,11 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) 
 			}
 			xNorm := float64(contact.x_pos) / m.width
 			yNorm := float64(contact.y_pos) / m.height
-			zNorm := float64(contact.total_force) / morphMaxForce
+			rawForce := float64(contact.total_force)
+			zNorm := rawForce / morphMaxForce
 			zNorm *= forceFactor
 			area := float64(contact.area)
+			pressureStats := m.updatePressureStats(rawForce, zNorm)
 			var ddu string
 			switch contact.state {
 			case CursorDown:
@@ -433,7 +472,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) 
 
 			m.previousTag = m.currentTag
 
-			LogOfType("morph", "Morph",
+			LogOfType("morph,pressure", "Morph",
 				"idx", m.idx,
 				"contactid", contactid,
 				"gid", gid,
@@ -441,7 +480,16 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) 
 				"contactstate", contact.state,
 				"xNorm", xNorm,
 				"yNorm", yNorm,
-				"zNorm", zNorm)
+				"zNorm", zNorm,
+				"totalForce", rawForce,
+				"area", area,
+				"morphMaxForce", morphMaxForce,
+				"forceFactor", forceFactor,
+				"forceMin", pressureStats.forceMin,
+				"forceMax", pressureStats.forceMax,
+				"zMin", pressureStats.zMin,
+				"zMax", pressureStats.zMax,
+				"pressureSamples", pressureStats.samples)
 
 			// make the coordinate space match OpenGL and Freeframe
 			yNorm = 1.0 - yNorm

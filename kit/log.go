@@ -286,6 +286,7 @@ var LogEnabled = map[string]bool{
 	"phrase":         false,
 	"pitchset":       false,
 	"plugin":         false,
+	"pressure":       false,
 	"quant":          false,
 	"saved":          false,
 	"realtime":       false,

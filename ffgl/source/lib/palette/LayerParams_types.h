@@ -47,6 +47,7 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("midinote");
 	LayerParams_logTypes.push_back("midicontroller");
 	LayerParams_logTypes.push_back("pitchset");
+	LayerParams_logTypes.push_back("pressure");
 	LayerParams_logTypes.push_back("cursor,midi");
 	LayerParams_logTypes.push_back("cursor,midi,osc");
 	LayerParams_logTypes.push_back("osc");
