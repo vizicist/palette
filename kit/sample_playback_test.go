@@ -1,6 +1,8 @@
 package kit
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	ss "github.com/vizicist/palette/pkg/samplesplitter"
@@ -63,6 +65,21 @@ func TestSamplePlaybackReverbLengthDefaultsWhenParamsUnavailable(t *testing.T) {
 	got := samplePlaybackReverbLength()
 	if got != ss.DefaultReverbLength {
 		t.Fatalf("reverb length = %v, want %v", got, ss.DefaultReverbLength)
+	}
+}
+
+func TestSamplesplitterMP3DirUsesConfigBSSDir(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "data_default", "config", "mp3", "bss")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PALETTE_DATAROOT", root)
+	t.Setenv("PALETTE_DATA", "default")
+
+	got := SamplesplitterMP3Dir("")
+	if got != dir {
+		t.Fatalf("SamplesplitterMP3Dir = %q, want %q", got, dir)
 	}
 }
 

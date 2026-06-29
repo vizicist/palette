@@ -198,6 +198,49 @@ func (s *Service) ReloadSigilSamples() error {
 	return nil
 }
 
+func (s *Service) LoadChannelSample(channel int, dir string) error {
+	if s == nil || s.state == nil {
+		return errors.New("samplesplitter service is not initialized")
+	}
+	s.state.SetBusy(true, "Loading samples")
+	defer s.state.SetBusy(false, "")
+	if s.audio != nil {
+		s.audio.StopNote(channel, -1)
+	}
+	if err := s.state.LoadChannelDefault(channel, dir, s.analyzer); err != nil {
+		return err
+	}
+	if s.audio != nil {
+		snapshot := s.state.Snapshot()
+		sample, ok := snapshot.ChannelSamples[channel]
+		if ok && sample.CurrentFile != "" {
+			path := filepath.Join(dir, sample.CurrentFile)
+			var err error
+			if snapshot.Compressed {
+				err = s.audio.PreloadCompressed([]string{path})
+			} else {
+				err = s.audio.Preload([]string{path})
+			}
+			if err != nil {
+				s.state.SetAudioStatus(false, err)
+				return err
+			}
+		}
+		s.state.SetAudioStatus(true, nil)
+	}
+	return nil
+}
+
+func (s *Service) ClearChannelSample(channel int) {
+	if s == nil || s.state == nil {
+		return
+	}
+	if s.audio != nil {
+		s.audio.StopNote(channel, -1)
+	}
+	s.state.ClearChannelSample(channel)
+}
+
 func preloadAudio(audio *AudioManager, state *State) error {
 	if audio == nil || state == nil {
 		return nil

@@ -25,6 +25,7 @@ type State struct {
 	CueData           *CueData
 	Waveform          []float64
 	SigilSamples      map[string]SampleState
+	ChannelSamples    map[int]SampleState
 	MIDIPort          string
 	MIDIError         string
 	MIDIActivityCount int64
@@ -63,6 +64,7 @@ type StateSnapshot struct {
 	CueData            *CueData               `json:"cue_data"`
 	Waveform           []float64              `json:"waveform"`
 	SigilSamples       map[string]SampleState `json:"sigil_samples"`
+	ChannelSamples     map[int]SampleState    `json:"channel_samples,omitempty"`
 	MIDIPort           string                 `json:"midi_port"`
 	MIDIError          string                 `json:"midi_error"`
 	MIDIActivityCount  int64                  `json:"midi_activity_count"`
@@ -92,6 +94,7 @@ func NewState(config Config) *State {
 	return &State{
 		Config:         config,
 		SigilSamples:   make(map[string]SampleState),
+		ChannelSamples: make(map[int]SampleState),
 		PitchBendSemis: make(map[int]float64),
 		AudioError:     "audio playback is not implemented in the Go port yet",
 	}
@@ -108,6 +111,13 @@ func (s *State) Snapshot() StateSnapshot {
 		}
 		sigilSamples[sigil] = sample
 	}
+	channelSamples := make(map[int]SampleState, len(s.ChannelSamples))
+	for channel, sample := range s.ChannelSamples {
+		if sample.CurrentFile != "" {
+			sample.CurrentFile = filepath.Base(sample.CurrentFile)
+		}
+		channelSamples[channel] = sample
+	}
 
 	current := ""
 	if s.CurrentFile != "" {
@@ -119,6 +129,7 @@ func (s *State) Snapshot() StateSnapshot {
 		CueData:            s.CueData,
 		Waveform:           s.Waveform,
 		SigilSamples:       sigilSamples,
+		ChannelSamples:     channelSamples,
 		MIDIPort:           s.MIDIPort,
 		MIDIError:          s.MIDIError,
 		MIDIActivityCount:  s.MIDIActivityCount,
@@ -156,6 +167,13 @@ func (s *State) SelectedSampleFiles() []SelectedSampleFile {
 	}
 	if s.CurrentFile != "" && !seen[s.CurrentFile] {
 		files = append(files, SelectedSampleFile{Sigil: "current", Path: s.CurrentFile})
+	}
+	for channel, sample := range s.ChannelSamples {
+		if sample.CurrentFile == "" || sample.CueData == nil || seen[sample.CurrentFile] {
+			continue
+		}
+		files = append(files, SelectedSampleFile{Sigil: fmt.Sprintf("channel-%d", channel), Path: sample.CurrentFile})
+		seen[sample.CurrentFile] = true
 	}
 	return files
 }
@@ -254,6 +272,9 @@ func (s *State) StartupSamplePaths() []string {
 		if sample, ok := s.SigilSamples[sigil]; ok {
 			add(sample.CurrentFile)
 		}
+	}
+	for _, sample := range s.ChannelSamples {
+		add(sample.CurrentFile)
 	}
 	add(s.CurrentFile)
 	return paths
@@ -401,6 +422,9 @@ func (s *State) PlanNoteOff(note, channel int) {
 }
 
 func (s *State) sampleForChannelLocked(channel int) SampleState {
+	if sample, ok := s.ChannelSamples[channel]; ok && sample.CurrentFile != "" && sample.CueData != nil {
+		return sample
+	}
 	if sigil, ok := SigilByMIDIChannel[channel]; ok {
 		if sample, ok := s.SigilSamples[sigil]; ok && sample.CurrentFile != "" && sample.CueData != nil {
 			return sample
@@ -419,6 +443,44 @@ func (s *State) SetCurrent(file string, cue CueData, waveform []float64) {
 	s.CurrentFile = file
 	s.CueData = &cue
 	s.Waveform = waveform
+}
+
+func (s *State) ClearChannelSample(channel int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.ChannelSamples, channel)
+}
+
+func (s *State) LoadChannelDefault(channel int, dir string, analyzer Analyzer) error {
+	files, err := ListMP3Files(dir)
+	if err != nil {
+		return err
+	}
+	if len(files) == 0 {
+		return fmt.Errorf("no usable MP3 files in %s", dir)
+	}
+	mp3 := files[0]
+	cue, waveform, err := analyzer.AnalyzeFile(mp3.Path, AnalyzeOptions{
+		Mode:             DefaultSplitMode,
+		Interval:         DefaultIntervalSeconds,
+		WordsPerSplit:    s.Config.DefaultWords,
+		SilenceThreshold: s.Config.SilenceThreshold,
+		SilenceMinimum:   s.Config.SilenceMinimum,
+	})
+	sample := SampleState{Sigil: fmt.Sprintf("channel-%d", channel), CurrentFile: mp3.Path}
+	if err != nil {
+		sample.Error = err.Error()
+	} else {
+		sample.CueData = &cue
+		sample.Waveform = waveform
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.ChannelSamples == nil {
+		s.ChannelSamples = make(map[int]SampleState)
+	}
+	s.ChannelSamples[channel] = sample
+	return err
 }
 
 func minFloat(a, b float64) float64 {

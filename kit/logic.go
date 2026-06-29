@@ -305,6 +305,10 @@ func (logic *PatchLogic) bssSampleMode() bool {
 	return NewSamplePlaybackDomain(logic.patch).Enabled()
 }
 
+func (logic *PatchLogic) proSampleMode() bool {
+	return proSamplePlaybackEnabled(logic.patch)
+}
+
 func (logic *PatchLogic) liveRouteIncludesBidule() bool {
 	return NewSamplePlaybackDomain(logic.patch).RouteIncludesBidule()
 }
@@ -314,6 +318,10 @@ func (logic *PatchLogic) liveRouteIncludesSamples() bool {
 }
 
 func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atClick Clicks) {
+	if logic.proSampleMode() {
+		logic.scheduleProSampleNoteOn(ce, noteOn, atClick)
+		return
+	}
 	scheduled := false
 	if logic.liveRouteIncludesBidule() {
 		ScheduleAt(atClick, ce.Tag, noteOn)
@@ -338,6 +346,26 @@ func (logic *PatchLogic) scheduleLiveNoteOn(ce CursorEvent, noteOn *NoteOn, atCl
 	}
 }
 
+func (logic *PatchLogic) scheduleProSampleNoteOn(ce CursorEvent, noteOn *NoteOn, atClick Clicks) {
+	if noteOn == nil {
+		return
+	}
+	if err := EnsureProSamplePlaybackService(); err != nil {
+		LogWarn("scheduleProSampleNoteOn: sample playback unavailable", "patch", logic.patch.Name(), "err", err)
+		return
+	}
+	channel := SamplePlaybackChannelForPatch(logic.patch.Name())
+	ScheduleAt(atClick, ce.Tag, &SamplePlaybackStart{
+		Patch:          logic.patch.Name(),
+		SigilChannel:   channel,
+		SampleSelector: int(noteOn.Pitch),
+		Velocity:       int(noteOn.Velocity),
+		PitchBend:      MidiPitchBendCenter,
+		VoiceKey:       samplePlaybackVoiceKey(ce),
+	})
+	logic.logPitchSetUsed(noteOn)
+}
+
 func (logic *PatchLogic) logPitchSetUsed(noteOn *NoteOn) {
 	if noteOn == nil || noteOn.PitchSet == "" {
 		return
@@ -355,6 +383,19 @@ func (logic *PatchLogic) logPitchSetUsed(noteOn *NoteOn) {
 }
 
 func (logic *PatchLogic) scheduleLiveNoteOff(ce CursorEvent, noteOff *NoteOff, atClick Clicks) {
+	if logic.proSampleMode() {
+		if noteOff == nil {
+			return
+		}
+		channel := SamplePlaybackChannelForPatch(logic.patch.Name())
+		ScheduleAt(atClick, ce.Tag, &SamplePlaybackStop{
+			Patch:          logic.patch.Name(),
+			SigilChannel:   channel,
+			SampleSelector: int(noteOff.Pitch),
+			VoiceKey:       samplePlaybackVoiceKey(ce),
+		})
+		return
+	}
 	if logic.liveRouteIncludesBidule() {
 		ScheduleAt(atClick, ce.Tag, noteOff)
 	}
@@ -504,7 +545,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		deltaytrig := patch.GetFloat("sound._deltaytrig")
 
 		// logic.generateController(ac)
-		if patch.Get("sound.controllerstyle") == "modulationonly" {
+		if !logic.proSampleMode() && patch.Get("sound.controllerstyle") == "modulationonly" {
 			if deltaz > deltaztrigcontroller {
 				patch.Synth().SendController(1, newvelocity)
 			}

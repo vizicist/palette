@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -505,6 +506,7 @@ func LoadParamEnums() error {
 	// Special case: populate "synth" enum from Synths.json
 	loadSynthEnums()
 	loadPitchSetEnums()
+	loadShapeEnums()
 
 	return nil
 }
@@ -543,6 +545,63 @@ func loadPitchSetEnums() {
 		return
 	}
 	ParamEnums["pitchset"] = pitchSetNames
+}
+
+func loadShapeEnums() {
+	shapeNames, err := shapeNamesFromDir(ParamEnums["shape"], filepath.Join(PaletteDataPath(), "shapes"))
+	if err != nil {
+		LogWarn("loadShapeEnums: unable to load shapes", "err", err)
+		return
+	}
+	ParamEnums["shape"] = shapeNames
+}
+
+func shapeNamesFromDir(base []string, shapesDir string) ([]string, error) {
+	names := make([]string, 0, len(base))
+	seen := make(map[string]bool, len(base))
+	for _, name := range base {
+		if name == "" {
+			continue
+		}
+		key := strings.ToLower(name)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		names = append(names, name)
+	}
+
+	entries, err := os.ReadDir(shapesDir)
+	if err != nil {
+		return names, err
+	}
+
+	var svgNames []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		filename := entry.Name()
+		if !strings.EqualFold(filepath.Ext(filename), ".svg") {
+			continue
+		}
+		name := strings.TrimSuffix(filename, filepath.Ext(filename))
+		if name == "" {
+			continue
+		}
+		svgNames = append(svgNames, name)
+	}
+	sort.Strings(svgNames)
+
+	for _, name := range svgNames {
+		key := strings.ToLower(name)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		names = append(names, name)
+	}
+	return names, nil
 }
 
 // LoadParamDefs initializes the list of parameters
@@ -838,6 +897,7 @@ func ParamRandomValuesForCategory(category string) (string, error) {
 
 // ParamEnumsAsJSON returns the ParamEnums map as a JSON string
 func ParamEnumsAsJSON() (string, error) {
+	loadShapeEnums()
 	jsonBytes, err := json.Marshal(ParamEnums)
 	if err != nil {
 		return "", fmt.Errorf("ParamEnumsAsJSON: %w", err)

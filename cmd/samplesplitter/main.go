@@ -22,6 +22,7 @@ func main() {
 	noOpen := flag.Bool("no-open", false, "Accepted for Python CLI compatibility; browser opening is not implemented yet")
 	flag.Parse()
 	_ = noOpen
+	config.MP3Dir = samplesplitter.DefaultMP3Dir()
 
 	if err := config.Normalize(); err != nil {
 		log.Fatal(err)
