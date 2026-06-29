@@ -345,7 +345,8 @@ func IsPatchCategory(category string) bool {
 		category == "misc")
 }
 
-func LoadParamValuesOfCategory(category string, filename string) (*ParamValues, error) {
+// LoadBootParamValues loads the global "_Boot" preset into a fresh ParamValues.
+func LoadBootParamValues() (*ParamValues, error) {
 	paramsMap, err := LoadParamsMapOfCategory("global", "_Boot")
 	if err != nil {
 		return nil, err

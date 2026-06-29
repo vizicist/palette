@@ -211,19 +211,6 @@ func LocalPaletteDir() string {
 
 func TwitchUser() (username string, authtoken string) {
 	LogWarn("TwitchUser needs to be updated to use an environment variable")
-	/*
-		local := LocalMap()
-		twitchuser, ok := local["twitchuser"]
-		if !ok {
-			twitchuser = "foo"
-		}
-		twitchtoken, ok := local["twitchtoken"]
-		if !ok {
-			twitchtoken = "foo"
-		}
-		LogInfo("TwitchUser", "user", twitchuser, "token", twitchtoken)
-		return twitchuser, twitchtoken
-	*/
 	return
 }
 

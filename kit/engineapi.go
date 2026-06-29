@@ -183,20 +183,26 @@ func globalLoad(api string, apiargs map[string]string) (string, error) {
 	return "", err
 }
 
+// globalParamGet reads name from params, returning all matching parameters when
+// the api name ends in "withprefix" and a single value otherwise.
+func globalParamGet(params *ParamValues, api string, name string) (string, error) {
+	if strings.HasSuffix(api, "withprefix") {
+		return params.GetWithPrefix(name)
+	}
+	return params.Get(name)
+}
+
 func globalGetBoot(api string, apiargs map[string]string) (string, error) {
 	name, err := needStringArg("name", api, apiargs)
 	if err != nil {
 		return "", err
 	}
 	name = canonicalGlobalParamName(name)
-	params, err := LoadParamValuesOfCategory("global", "_Boot")
+	params, err := LoadBootParamValues()
 	if err != nil {
 		return "", err
 	}
-	if api == "getbootwithprefix" {
-		return params.GetWithPrefix(name)
-	}
-	return params.Get(name)
+	return globalParamGet(params, api, name)
 }
 
 func globalSetBoot(api string, apiargs map[string]string) (string, error) {
@@ -205,7 +211,7 @@ func globalSetBoot(api string, apiargs map[string]string) (string, error) {
 		return "", err
 	}
 	name = canonicalGlobalParamName(name)
-	params, err := LoadParamValuesOfCategory("global", "_Boot")
+	params, err := LoadBootParamValues()
 	if err != nil {
 		return "", err
 	}
@@ -263,10 +269,7 @@ func globalGet(api string, apiargs map[string]string) (string, error) {
 		return "", err
 	}
 	name = canonicalGlobalParamName(name)
-	if api == "getwithprefix" {
-		return GlobalParams.GetWithPrefix(name)
-	}
-	return GlobalParams.Get(name)
+	return globalParamGet(GlobalParams, api, name)
 }
 
 func globalShowClip(api string, apiargs map[string]string) (string, error) {
@@ -441,19 +444,6 @@ func GetFloat(value string, f *float64) bool {
 	*f = v
 	return true
 }
-
-/*
-func GetFloat32(value string, f *float32) bool {
-	v, err := strconv.ParseFloat(value, 32)
-	if err != nil {
-		LogIfError(err)
-		return false
-	} else {
-		*f = float32(v)
-		return true
-	}
-}
-*/
 
 func GetInt(value string, i *int64) bool {
 	v, err := strconv.ParseInt(value, 10, 64)
@@ -675,11 +665,6 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	}
 	return nil
 }
-
-// func (e *Engine) SetParam(name string, value string) (err error) {
-// 	LogOfType("params", "Engine.SetParam", "name", name, "value", value)
-// 	return GlobalParams.SetParamWithString(name, value)
-// }
 
 func ExecuteSavedAPI(api string, apiargs map[string]string) (result string, err error) {
 

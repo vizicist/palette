@@ -309,6 +309,25 @@ func (e *Engine) StartOscListener(port int) {
 	}
 }
 
+// jsonAPIHandler wraps an API handler with the common JSON-response boilerplate:
+// it sets the content-type, runs handler, and writes the body with a 200 status
+// on success or a 400 status (with an error body) on failure.
+func jsonAPIHandler(handler func(req *http.Request) (string, error)) http.HandlerFunc {
+	return func(responseWriter http.ResponseWriter, req *http.Request) {
+		responseWriter.Header().Set("Content-Type", "application/json")
+		response, err := handler(req)
+		if err != nil {
+			responseWriter.WriteHeader(http.StatusBadRequest)
+			response = ErrorResponse(err)
+		} else {
+			responseWriter.WriteHeader(http.StatusOK)
+		}
+		if _, werr := responseWriter.Write([]byte(response)); werr != nil {
+			LogIfError(werr)
+		}
+	}
+}
+
 // StartHTTP xxx
 func (e *Engine) StartHTTP(port int) {
 
@@ -326,84 +345,43 @@ func (e *Engine) StartHTTP(port int) {
 	// Serve web UI at root
 	http.Handle("/", WebUIHandler())
 
-	http.HandleFunc("/api", func(responseWriter http.ResponseWriter, req *http.Request) {
-
-		responseWriter.Header().Set("Content-Type", "application/json")
-		responseWriter.WriteHeader(http.StatusOK)
-
-		response := ""
-		defer func() {
-			_, err := responseWriter.Write([]byte(response))
-			if err != nil {
-				LogIfError(err)
-			}
-		}()
-
-		switch req.Method {
-		case "POST":
-			body, err := io.ReadAll(req.Body)
-			if err != nil {
-				response = ErrorResponse(err)
-			} else {
-				bstr := string(body)
-				_ = bstr
-				resp, err := ExecuteAPIFromJSON(bstr)
-				if err != nil {
-					response = ErrorResponse(err)
-				} else {
-					response = ResultResponse(resp)
-				}
-			}
-		default:
-			response = ErrorResponse(fmt.Errorf("HTTP server unable to handle method=%s", req.Method))
-		}
-	})
-
-	http.HandleFunc("/nats/api", func(responseWriter http.ResponseWriter, req *http.Request) {
-
-		responseWriter.Header().Set("Content-Type", "application/json")
-		responseWriter.WriteHeader(http.StatusOK)
-
-		response := ""
-		defer func() {
-			_, err := responseWriter.Write([]byte(response))
-			if err != nil {
-				LogIfError(err)
-			}
-		}()
-
+	http.HandleFunc("/api", jsonAPIHandler(func(req *http.Request) (string, error) {
 		if req.Method != "POST" {
-			response = ErrorResponse(fmt.Errorf("NATS API proxy unable to handle method=%s", req.Method))
-			return
+			return "", fmt.Errorf("HTTP server unable to handle method=%s", req.Method)
 		}
-
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
-			response = ErrorResponse(err)
-			return
+			return "", err
 		}
+		resp, err := ExecuteAPIFromJSON(string(body))
+		if err != nil {
+			return "", err
+		}
+		return ResultResponse(resp), nil
+	}))
 
+	http.HandleFunc("/nats/api", jsonAPIHandler(func(req *http.Request) (string, error) {
+		if req.Method != "POST" {
+			return "", fmt.Errorf("NATS API proxy unable to handle method=%s", req.Method)
+		}
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			return "", err
+		}
 		args, err := StringMap(string(body))
 		if err != nil {
-			response = ErrorResponse(fmt.Errorf("NATS API proxy: bad JSON format"))
-			return
+			return "", fmt.Errorf("NATS API proxy: bad JSON format")
 		}
 		host := ExtractAndRemoveValueOf("host", args)
 		if host == "" {
 			host = Hostname()
 		}
-
 		bytes, err := json.Marshal(args)
 		if err != nil {
-			response = ErrorResponse(err)
-			return
+			return "", err
 		}
-
-		response, err = EngineNatsAPI(host, string(bytes), time.Second)
-		if err != nil {
-			response = ErrorResponse(err)
-		}
-	})
+		return EngineNatsAPI(host, string(bytes), time.Second)
+	}))
 
 	source := fmt.Sprintf("%s:%d", engineHTTPBindAddress, port)
 	err := http.ListenAndServe(source, nil)
