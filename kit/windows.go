@@ -111,12 +111,7 @@ func quoteArg(arg string) string {
 // StartExecutable executes something.  If background is true, it doesn't block
 func startExecutable(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) (*exec.Cmd, error) {
 
-	var cmd *exec.Cmd
-	if len(args) == 0 || args[0] == "" {
-		cmd = exec.Command(executable)
-	} else {
-		cmd = exec.Command(executable)
-	}
+	cmd := exec.Command(executable)
 
 	// This is done so that ctrl-C doesn't kill things
 	cmd.SysProcAttr = &syscall.SysProcAttr{

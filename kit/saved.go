@@ -9,31 +9,6 @@ import (
 	"unicode/utf8"
 )
 
-/*
-type OldSaved struct {
-	Category  string
-	filename  string
-	paramsmap map[string]any
-}
-
-var Saved = make(map[string]*OldSaved)
-
-func GetSaved(name string) *OldSaved {
-
-	p, ok := Saved[name]
-	if !ok {
-		category, filename := SavedNameSplit(name)
-		p = &OldSaved{
-			Category:  category,
-			filename:  filename,
-			paramsmap: make(map[string]any),
-		}
-		Saved[name] = p
-	}
-	return p
-}
-*/
-
 func SavedDir() string {
 	return "saved"
 }
