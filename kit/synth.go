@@ -418,8 +418,12 @@ func (synth *Synth) logReadableMIDIOutput(logtypes string, bytes []byte) bool {
 		if bytes[2] == 0 {
 			noteOnOff = "noteoff"
 		}
+		noteLogTypes := logtypes + ",midinote"
+		if noteOnOff == "noteon" {
+			noteLogTypes += ",midinoteon"
+		}
 
-		LogOfType(logtypes+",midinote", "MIDI Output",
+		LogOfType(noteLogTypes, "MIDI Output",
 			"synth", synth.name,
 			"noteonoff", noteOnOff,
 			"channel", int(bytes[0]&0x0f)+1,
