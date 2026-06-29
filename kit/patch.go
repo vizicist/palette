@@ -134,6 +134,12 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 		// LogInfo("Patch.noticeValueChange: changed synth", "patch", patch.name, "synth.name", synth.name)
 		patch.mutex.Unlock()
 	}
+
+	if paramName == "sound.samplesplitter" || paramName == "sound.samplesplitterdir" {
+		if err := SyncProSamplePlaybackServiceSamples(); err != nil {
+			LogWarn("Patch.noticeValueChange: pro samplesplitter sync failed", "patch", patch.Name(), "param", paramName, "err", err)
+		}
+	}
 }
 
 func (patch *Patch) effectiveVisualShape(paramValue string) string {

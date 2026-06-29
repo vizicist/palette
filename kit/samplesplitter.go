@@ -28,18 +28,28 @@ var samplePlaybackService struct {
 }
 
 func StartSamplePlaybackService() error {
-	if !IsBSSMode() {
+	if !samplePlaybackProcessAllowed() {
 		return fmt.Errorf("sample playback is disabled in %s mode", CurrentMode())
 	}
 	samplePlaybackService.mutex.Lock()
 	defer samplePlaybackService.mutex.Unlock()
 	if samplePlaybackService.service != nil && samplePlaybackService.service.Running() {
+		if !IsBSSMode() {
+			return syncProSamplePlaybackSamples(samplePlaybackService.service)
+		}
 		return nil
 	}
 	runtimeDir := SamplesplitterRuntimeDir(SamplesplitterExecutablePath())
 	config := ss.DefaultConfig()
 	config.Port = samplesplitterPort
 	config.MP3Dir = SamplesplitterMP3Dir(runtimeDir)
+	if !IsBSSMode() {
+		dir, err := firstProSamplePlaybackDir()
+		if err != nil {
+			return err
+		}
+		config.MP3Dir = dir
+	}
 	config.MIDIPortName = ""
 	config.FFmpegPath = ss.FindFFmpeg(runtimeDir)
 	config.Compressed = samplePlaybackCompressed()
@@ -57,6 +67,12 @@ func StartSamplePlaybackService() error {
 	})
 	if err != nil {
 		return err
+	}
+	if !IsBSSMode() {
+		if err := syncProSamplePlaybackSamples(service); err != nil {
+			_ = service.Close()
+			return err
+		}
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	if err := service.Start(ctx); err != nil {
@@ -180,7 +196,7 @@ func SetSamplePlaybackServiceReverbLength(length float64) bool {
 }
 
 func ReloadSamplePlaybackServiceSamples() error {
-	if !IsBSSMode() {
+	if !samplePlaybackProcessAllowed() {
 		return fmt.Errorf("sample playback is disabled in %s mode", CurrentMode())
 	}
 	if !SamplePlaybackServiceRunning() {
@@ -190,7 +206,11 @@ func ReloadSamplePlaybackServiceSamples() error {
 	}
 	var reloadErr error
 	if !withSamplePlaybackService(func(service *ss.Service) {
-		reloadErr = service.ReloadSigilSamples()
+		if IsBSSMode() {
+			reloadErr = service.ReloadSigilSamples()
+		} else {
+			reloadErr = syncProSamplePlaybackSamples(service)
+		}
 		if reloadErr == nil {
 			logSelectedSamplePlaybackFiles("ReloadSamplePlaybackServiceSamples", service)
 		}
@@ -210,7 +230,7 @@ func logSelectedSamplePlaybackFiles(context string, service *ss.Service) {
 }
 
 func withSamplePlaybackService(fn func(*ss.Service)) bool {
-	if !IsBSSMode() {
+	if !samplePlaybackProcessAllowed() {
 		return false
 	}
 	samplePlaybackService.mutex.Lock()
@@ -221,6 +241,138 @@ func withSamplePlaybackService(fn func(*ss.Service)) bool {
 	}
 	fn(service)
 	return true
+}
+
+func samplePlaybackProcessAllowed() bool {
+	return IsBSSMode() || anyProSamplePlaybackEnabled()
+}
+
+func anyProSamplePlaybackEnabled() bool {
+	if IsBSSMode() {
+		return false
+	}
+	for _, patchName := range patchNames {
+		if proSamplePlaybackEnabled(GetPatch(patchName)) {
+			return true
+		}
+	}
+	return false
+}
+
+func proSamplePlaybackEnabled(patch *Patch) bool {
+	return patch != nil && !IsBSSMode() && patch.GetBool("sound.samplesplitter")
+}
+
+func firstProSamplePlaybackDir() (string, error) {
+	for _, patchName := range patchNames {
+		patch := GetPatch(patchName)
+		if !proSamplePlaybackEnabled(patch) {
+			continue
+		}
+		return proSamplePlaybackDirForPatch(patch)
+	}
+	return "", fmt.Errorf("no pro SampleSplitter patch is enabled")
+}
+
+func proSamplePlaybackDirForPatch(patch *Patch) (string, error) {
+	if patch == nil {
+		return "", fmt.Errorf("no patch")
+	}
+	name := strings.TrimSpace(patch.Get("sound.samplesplitterdir"))
+	if name == "" {
+		return "", fmt.Errorf("sound.samplesplitterdir is empty for patch %s", patch.Name())
+	}
+	cleanName := filepath.Clean(name)
+	if filepath.IsAbs(cleanName) || cleanName == "." || cleanName == ".." || strings.HasPrefix(cleanName, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("sound.samplesplitterdir must be a directory name under config/mp3")
+	}
+	return samplePlaybackConfigMP3Dir(cleanName)
+}
+
+func samplePlaybackConfigMP3Dir(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", fmt.Errorf("sample playback mp3 directory name is empty")
+	}
+	cleanName := filepath.Clean(name)
+	if filepath.IsAbs(cleanName) || cleanName == "." || cleanName == ".." || strings.HasPrefix(cleanName, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("sample playback mp3 directory must be under config/mp3")
+	}
+	base, err := filepath.Abs(filepath.Join(ConfigDir(), "mp3"))
+	if err != nil {
+		return "", err
+	}
+	dir, err := filepath.Abs(filepath.Join(base, cleanName))
+	if err != nil {
+		return "", err
+	}
+	rel, err := filepath.Rel(base, dir)
+	if err != nil {
+		return "", err
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("sample playback mp3 directory must stay under config/mp3")
+	}
+	info, err := os.Stat(dir)
+	if err != nil || !info.IsDir() {
+		return "", fmt.Errorf("samplesplitter mp3 directory not found: %s", dir)
+	}
+	return dir, nil
+}
+
+func SyncProSamplePlaybackServiceSamples() error {
+	if IsBSSMode() {
+		return nil
+	}
+	if !anyProSamplePlaybackEnabled() {
+		StopSamplePlaybackService()
+		return nil
+	}
+	if !SamplePlaybackServiceRunning() {
+		return StartSamplePlaybackService()
+	}
+	var syncErr error
+	if !withSamplePlaybackService(func(service *ss.Service) {
+		syncErr = syncProSamplePlaybackSamples(service)
+	}) {
+		return fmt.Errorf("sample playback service is not running")
+	}
+	return syncErr
+}
+
+func EnsureProSamplePlaybackService() error {
+	if IsBSSMode() {
+		return nil
+	}
+	if !anyProSamplePlaybackEnabled() {
+		return fmt.Errorf("no pro SampleSplitter patch is enabled")
+	}
+	if !SamplePlaybackServiceRunning() {
+		return StartSamplePlaybackService()
+	}
+	return nil
+}
+
+func syncProSamplePlaybackSamples(service *ss.Service) error {
+	if service == nil {
+		return fmt.Errorf("sample playback service is not running")
+	}
+	for _, patchName := range patchNames {
+		channel := SamplePlaybackChannelForPatch(patchName)
+		patch := GetPatch(patchName)
+		if !proSamplePlaybackEnabled(patch) {
+			service.ClearChannelSample(channel)
+			continue
+		}
+		dir, err := proSamplePlaybackDirForPatch(patch)
+		if err != nil {
+			return err
+		}
+		if err := service.LoadChannelSample(channel, dir); err != nil {
+			return fmt.Errorf("load samplesplitter patch %s from %s: %w", patchName, dir, err)
+		}
+	}
+	return nil
 }
 
 func IsSamplesplitterSynth(synth *Synth) bool {
@@ -347,7 +499,12 @@ func SamplesplitterRuntimeDir(exe string) string {
 }
 
 func SamplesplitterMP3Dir(runtimeDir string) string {
-	return ss.DefaultMP3Dir()
+	dir, err := samplePlaybackConfigMP3Dir("bss")
+	if err != nil {
+		LogWarn("SamplesplitterMP3Dir: config/mp3/bss unavailable", "err", err)
+		return filepath.Join(ConfigDir(), "mp3", "bss")
+	}
+	return dir
 }
 
 func samplesplitterWebIsListening() bool {

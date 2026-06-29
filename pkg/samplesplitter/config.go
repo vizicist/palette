@@ -63,7 +63,9 @@ func DefaultConfig() Config {
 }
 
 func (c *Config) Normalize() error {
-	c.MP3Dir = DefaultMP3Dir()
+	if c.MP3Dir == "" {
+		c.MP3Dir = DefaultMP3Dir()
+	}
 	abs, err := filepath.Abs(c.MP3Dir)
 	if err != nil {
 		return err

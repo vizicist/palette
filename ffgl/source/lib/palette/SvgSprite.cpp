@@ -27,16 +27,29 @@ static const int BEZIER_STEPS = 16;
 namespace {
 
 bool extractAttribute( const std::string& tag, const std::string& name, std::string& out ) {
-	std::string key = name + "=\"";
-	size_t p      = tag.find( key );
-	if( p == std::string::npos )
-		return false;
-	p += key.size();
-	size_t q = tag.find( '"', p );
-	if( q == std::string::npos )
-		return false;
-	out = tag.substr( p, q - p );
-	return true;
+	size_t p = 0;
+	while( ( p = tag.find( name, p ) ) != std::string::npos ) {
+		bool attrStart = p == 0 || std::isspace( (unsigned char)tag[ p - 1 ] ) || tag[ p - 1 ] == '<' || tag[ p - 1 ] == '/';
+		size_t q       = p + name.size();
+		while( q < tag.size() && std::isspace( (unsigned char)tag[ q ] ) )
+			++q;
+		if( attrStart && q < tag.size() && tag[ q ] == '=' ) {
+			++q;
+			while( q < tag.size() && std::isspace( (unsigned char)tag[ q ] ) )
+				++q;
+			if( q >= tag.size() || ( tag[ q ] != '"' && tag[ q ] != '\'' ) )
+				return false;
+			char quote   = tag[ q++ ];
+			size_t value = q;
+			size_t end   = tag.find( quote, value );
+			if( end == std::string::npos )
+				return false;
+			out = tag.substr( value, end - value );
+			return true;
+		}
+		p += name.size();
+	}
+	return false;
 }
 
 bool findElement( const std::string& doc, const std::string& elemName, size_t fromPos, size_t& tagStart, size_t& tagEnd ) {

@@ -78,7 +78,7 @@ var ObsExe = executableName("obs64")
 var SamplesplitterExe = executableName("samplesplitter")
 
 func processAllowedByMode(process string) bool {
-	return process != "samplesplitter" || IsBSSMode()
+	return process != "samplesplitter" || samplePlaybackProcessAllowed()
 }
 
 func effectiveProcessRunit(process string, configured bool) bool {
