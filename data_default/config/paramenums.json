@@ -1,7 +1,7 @@
 {
   "resolumepath": ["C:/Program Files/Resolume Avenue/Avenue.exe", "C:/Program Files/Resolume Arena/Arena.exe", "/Applications/Resolume Avenue/Avenue.app/Contents/MacOS/Avenue", "/Applications/Resolume Arena/Arena.app/Contents/MacOS/Arena"],
   "plugins": [ "", "quad" ],
-  "log": ["","cursor","midi","midinote","midicontroller","pitchset","cursor,midi","cursor,midi,osc","osc","api","loop", "morph","mmtt", "quant", "transpose", "ffgl", "gesture"],
+  "log": ["","cursor","midi","midinote","midicontroller","pitchset","pressure","cursor,midi","cursor,midi,osc","osc","api","loop", "morph","mmtt", "quant", "transpose", "ffgl", "gesture"],
   "pitchset": [""],
   "mode": ["pro", "bss"],
   "guisize": ["small","medium","palette"],

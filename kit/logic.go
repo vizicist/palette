@@ -267,10 +267,11 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 		velocitymin = velocitymax
 		velocitymax = t
 	}
-	zmin := patch.GetFloat("sound._controllerzmin")
-	zmax := patch.GetFloat("sound._controllerzmax")
+	globalZ := globalPressureShape(ce.Pos.Z, "sound")
+	patchZMin := patch.GetFloat("sound._controllerzmin")
+	patchZMax := patch.GetFloat("sound._controllerzmax")
 
-	scaledZ := BoundAndScaleFloat(ce.Pos.Z, zmin, zmax, 0.0, 1.0)
+	scaledZ := scalePressureRange(globalZ.Scaled, patchZMin, patchZMax)
 	// LogInfo("CursorToVelocity","scaledZ",scaledZ,"ce.Z",ce.Z,"zmin",zmin,"zmax",zmax)
 
 	// Scale cursor Z to controller zmin and zmax
@@ -285,16 +286,53 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 	default:
 		LogWarn("Unrecognized vol value", "volstyle", volstyle)
 	}
-	dv := velocitymax - velocitymin + 1
-	p1 := int(v * float64(dv))
-	vel := uint8(velocitymin + p1%dv)
+	vel := pressureToVelocity(v, velocitymin, velocitymax)
+	LogOfType("pressure", "Cursor pressure to velocity",
+		"patch", patch.Name(),
+		"gid", ce.GID,
+		"ddu", ce.Ddu,
+		"rawZ", ce.Pos.Z,
+		"globalZMin", globalZ.ZMin,
+		"globalZMax", globalZ.ZMax,
+		"globalCurve", globalZ.Curve,
+		"globalScaledZ", globalZ.Scaled,
+		"patchZMin", patchZMin,
+		"patchZMax", patchZMax,
+		"scaledZ", scaledZ,
+		"volstyle", volstyle,
+		"velocitymin", velocitymin,
+		"velocitymax", velocitymax,
+		"velocity", vel)
 	return uint8(vel)
 }
 
 func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 	// send an OSC message to Resolume
-	msg := CursorToOscMsg(ce)
+	visualCE := logic.cursorToVisualPressure(ce)
+	msg := CursorToOscMsg(visualCE)
 	TheResolume().ToFreeFramePlugin(logic.patch.Name(), msg)
+}
+
+func (logic *PatchLogic) cursorToVisualPressure(ce CursorEvent) CursorEvent {
+	patch := logic.patch
+	globalZ := globalPressureShape(ce.Pos.Z, "visual")
+	patchZMin := patch.GetFloat("misc.visualpressurezmin")
+	patchZMax := patch.GetFloat("misc.visualpressurezmax")
+	scaledZ := scalePressureRange(globalZ.Scaled, patchZMin, patchZMax)
+	LogOfType("pressure", "Cursor pressure to visual",
+		"patch", patch.Name(),
+		"gid", ce.GID,
+		"ddu", ce.Ddu,
+		"rawZ", ce.Pos.Z,
+		"globalZMin", globalZ.ZMin,
+		"globalZMax", globalZ.ZMax,
+		"globalCurve", globalZ.Curve,
+		"globalScaledZ", globalZ.Scaled,
+		"patchZMin", patchZMin,
+		"patchZMax", patchZMax,
+		"scaledZ", scaledZ)
+	ce.Pos.Z = scaledZ
+	return ce
 }
 
 func (logic *PatchLogic) liveStepperRoute() string {
@@ -538,11 +576,11 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 
 		dz := float64(int(oldvelocity) - int(newvelocity))
 		deltaz := math.Abs(dz) / 128.0
-		deltaztrignote := patch.GetFloat("sound._deltaztrignote")
-		deltaztrigcontroller := patch.GetFloat("sound._deltaztrigcontroller")
+		deltaztrignote := getGlobalPressureFloat("global.deltaztrignote", 0.2)
+		deltaztrigcontroller := getGlobalPressureFloat("global.deltaztrigcontroller", 0.02)
 
 		deltay := math.Abs(float64(ac.Previous.Pos.Y - ce.Pos.Y))
-		deltaytrig := patch.GetFloat("sound._deltaytrig")
+		deltaytrig := getGlobalPressureFloat("global.deltaytrig", 0.08)
 
 		// logic.generateController(ac)
 		if !logic.proSampleMode() && patch.Get("sound.controllerstyle") == "modulationonly" {

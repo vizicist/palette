@@ -326,13 +326,14 @@ func samplePlaybackVoiceKey(ce CursorEvent) string {
 }
 
 func samplePlaybackVelocityFromPressure(patch *Patch, pressure float64) uint8 {
-	scaledPressure := boundValueZeroToOne(pressure)
+	globalPressure := globalPressureShape(pressure, "sound")
+	scaledPressure := globalPressure.Scaled
 	if patch != nil {
 		zmin := patch.GetFloat("sound._controllerzmin")
 		zmax := patch.GetFloat("sound._controllerzmax")
-		scaledPressure = BoundAndScaleFloat(pressure, zmin, zmax, 0.0, 1.0)
+		scaledPressure = scalePressureRange(scaledPressure, zmin, zmax)
 	}
-	velocity := minSamplePlaybackVelocity + int(math.Round(scaledPressure*float64(127-minSamplePlaybackVelocity)))
+	velocity := int(pressureToVelocity(scaledPressure, minSamplePlaybackVelocity, 127))
 	velocity = int(math.Round(float64(velocity) * samplePlaybackVolume()))
 	if velocity > 127 {
 		velocity = 127

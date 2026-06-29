@@ -921,13 +921,15 @@ function setupParamHeaderButtons() {
 
 async function handleSaveAs(button) {
     try {
-        const presetChoices = UIState.currentCategory === 'patch' ? await savedPresetNamesForCategory('patch') : [];
+        const presetChoices = ['patch', 'quad'].includes(UIState.currentCategory)
+            ? await savedPresetNamesForCategory(UIState.currentCategory)
+            : [];
         const filename = await showVirtualKeyboard({
             title: saveAsTitle(),
             initialValue: '',
             actionLabel: 'Save',
             choices: presetChoices,
-            choiceLabel: 'Current Patch names'
+            choiceLabel: `Current ${saveAsCategoryLabel()} names`
         });
         if (!filename) return;
 
@@ -992,6 +994,12 @@ function saveAsTitle() {
     if (UIState.currentCategory === 'global') return 'Save Global As';
     if (UIState.currentCategory === 'quad') return 'Save Quad As';
     return `Save ${UIState.currentCategory} As`;
+}
+
+function saveAsCategoryLabel() {
+    if (UIState.currentCategory === 'quad') return 'Quad';
+    if (UIState.currentCategory === 'patch') return 'Patch';
+    return UIState.currentCategory;
 }
 
 function removeTitle() {
