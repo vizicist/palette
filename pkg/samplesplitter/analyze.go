@@ -16,6 +16,8 @@ type Analyzer struct {
 	FFmpegPath string
 }
 
+const wordValleySplitRatio = 0.5
+
 func (a Analyzer) AnalyzeFile(mp3Path string, opts AnalyzeOptions) (CueData, []float64, error) {
 	if opts.Mode == "" {
 		opts.Mode = DefaultSplitMode
@@ -414,7 +416,7 @@ func detectSplitsWords(samples []float64, frameRate int, duration, silenceThresh
 			if localPeak == 0 {
 				localPeak = peak
 			}
-			if envelope[valley] < localPeak*0.75 {
+			if envelope[valley] < localPeak*wordValleySplitRatio {
 				splitBlocks = append(splitBlocks, valley)
 				segmentStart = valley
 			} else {
@@ -440,11 +442,7 @@ func detectSplitsWords(samples []float64, frameRate int, duration, silenceThresh
 		}
 	}
 
-	if splits[0] > 0.05 {
-		splits = append([]float64{0}, splits...)
-	} else {
-		splits[0] = 0
-	}
+	splits[0] = 0
 	return splits
 }
 

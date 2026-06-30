@@ -74,3 +74,25 @@ func TestDetectSplitsWordsStartsAtZero(t *testing.T) {
 		t.Fatalf("word splits should start at zero, got %v", got)
 	}
 }
+
+func TestDetectSplitsWordsDoesNotSplitModerateOneShotDip(t *testing.T) {
+	frameRate := 1000
+	samples := make([]float64, frameRate*2)
+	for i := 100; i < 450; i++ {
+		samples[i] = 0.7
+	}
+	for i := 450; i < 750; i++ {
+		samples[i] = 0.42
+	}
+	for i := 750; i < 1100; i++ {
+		samples[i] = 0.55
+	}
+	for i := 1100; i < 1360; i++ {
+		samples[i] = 0.3
+	}
+
+	got := detectSplitsWords(samples, frameRate, 2, 0.01, 0.12, 0.16, 0.65)
+	if len(got) != 1 || got[0] != 0 {
+		t.Fatalf("word splits = %v, want a single split at 0", got)
+	}
+}

@@ -434,10 +434,19 @@ func (logic *PatchLogic) scheduleProSampleNoteOn(ce CursorEvent, noteOn *NoteOn,
 		SigilChannel:   channel,
 		SampleSelector: int(noteOn.Pitch),
 		Velocity:       int(noteOn.Velocity),
-		PitchBend:      MidiPitchBendCenter,
+		PitchBend:      samplePlaybackPitchBendFromCursor(ce),
 		VoiceKey:       samplePlaybackVoiceKey(ce),
 	})
 	logic.logPitchSetUsed(noteOn)
+}
+
+func (logic *PatchLogic) scheduleProSamplePitch(ce CursorEvent, atClick Clicks) {
+	channel := SamplePlaybackChannelForPatch(logic.patch.Name())
+	ScheduleAt(atClick, ce.Tag, &SamplePlaybackPitch{
+		Patch:        logic.patch.Name(),
+		SigilChannel: channel,
+		Value:        samplePlaybackPitchBendFromCursor(ce),
+	})
 }
 
 func (logic *PatchLogic) logPitchSetUsed(noteOn *NoteOn) {
@@ -467,6 +476,11 @@ func (logic *PatchLogic) scheduleLiveNoteOff(ce CursorEvent, noteOff *NoteOff, a
 			SigilChannel:   channel,
 			SampleSelector: int(noteOff.Pitch),
 			VoiceKey:       samplePlaybackVoiceKey(ce),
+		})
+		ScheduleAt(atClick+1, ce.Tag, &SamplePlaybackPitch{
+			Patch:        logic.patch.Name(),
+			SigilChannel: channel,
+			Value:        MidiPitchBendCenter,
 		})
 		return
 	}
@@ -623,6 +637,9 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			if deltaz > deltaztrigcontroller {
 				patch.Synth().SendController(1, newvelocity)
 			}
+		}
+		if logic.proSampleMode() {
+			logic.scheduleProSamplePitch(ce, CurrentClick())
 		}
 
 		cc := CurrentClick()

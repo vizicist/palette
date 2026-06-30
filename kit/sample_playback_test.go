@@ -57,6 +57,29 @@ func TestSamplePlaybackVolumeDefaultsWhenParamsUnavailable(t *testing.T) {
 	}
 }
 
+func TestSamplePlaybackPitchBendUsesCursorY(t *testing.T) {
+	tests := []struct {
+		name string
+		y    float64
+		want int
+	}{
+		{name: "bottom", y: 0, want: 0},
+		{name: "middle", y: 0.5, want: MidiPitchBendCenter},
+		{name: "top", y: 1, want: 16383},
+		{name: "below clamps", y: -1, want: 0},
+		{name: "above clamps", y: 2, want: 16383},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := samplePlaybackPitchBendFromCursor(CursorEvent{Pos: CursorPos{Y: tt.y}})
+			if got != tt.want {
+				t.Fatalf("pitch bend for Y=%v = %d, want %d", tt.y, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSamplePlaybackReverbLengthDefaultsWhenParamsUnavailable(t *testing.T) {
 	oldGlobalParams := GlobalParams
 	defer func() { GlobalParams = oldGlobalParams }()

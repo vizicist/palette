@@ -65,7 +65,7 @@ func (s Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Server) handleFiles(w http.ResponseWriter, r *http.Request) {
-	files, err := ListMP3Files(s.State.Config.MP3Dir)
+	files, err := ListMP3FilesWithMinimumDuration(s.State.Config.MP3Dir, s.State.Config.MinimumMP3DurationSeconds)
 	if err != nil {
 		writeError(w, err, http.StatusInternalServerError)
 		return
@@ -78,7 +78,7 @@ func (s Server) handleFiles(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Server) handleMedia(w http.ResponseWriter, r *http.Request) {
-	path, err := ResolveMP3File(s.State.Config.MP3Dir, r.URL.Query().Get("file"))
+	path, err := ResolveMP3FileWithMinimumDuration(s.State.Config.MP3Dir, r.URL.Query().Get("file"), s.State.Config.MinimumMP3DurationSeconds)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -93,7 +93,7 @@ func (s Server) handleState(w http.ResponseWriter, r *http.Request) {
 
 func (s Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	path, err := ResolveMP3File(s.State.Config.MP3Dir, q.Get("file"))
+	path, err := ResolveMP3FileWithMinimumDuration(s.State.Config.MP3Dir, q.Get("file"), s.State.Config.MinimumMP3DurationSeconds)
 	if err != nil {
 		writeError(w, err, http.StatusNotFound)
 		return

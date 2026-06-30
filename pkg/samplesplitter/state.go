@@ -217,6 +217,15 @@ func (s *State) SetDefaultWords(words int) {
 	s.Config.DefaultWords = words
 }
 
+func (s *State) SetMinimumMP3Duration(seconds float64) {
+	if seconds < 0 {
+		seconds = DefaultMinimumMP3DurationSeconds
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Config.MinimumMP3DurationSeconds = seconds
+}
+
 func (s *State) SetBusy(busy bool, message string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -330,7 +339,10 @@ func (s *State) PlanNoteOn(note, velocity, channel int) (*PlaybackRequest, error
 		splitIndex = int((float64(note) / math.Max(1, float64(s.Config.BaseNote))) * float64(len(splits)))
 		splitIndex = min(len(splits)-1, max(0, splitIndex))
 	}
-	if splitIndex < 0 || splitIndex >= len(splits) {
+	if splitIndex >= len(splits) {
+		splitIndex = len(splits) - 1
+	}
+	if splitIndex < 0 {
 		return nil, fmt.Errorf("split index %d out of range for %d splits", splitIndex, len(splits))
 	}
 
@@ -452,7 +464,7 @@ func (s *State) ClearChannelSample(channel int) {
 }
 
 func (s *State) LoadChannelDefault(channel int, dir string, analyzer Analyzer) error {
-	files, err := ListMP3Files(dir)
+	files, err := ListMP3FilesWithMinimumDuration(dir, s.Config.MinimumMP3DurationSeconds)
 	if err != nil {
 		return err
 	}
@@ -506,7 +518,7 @@ func (s *State) LoadSigilDefaults(analyzer Analyzer, rng *rand.Rand) {
 	var first *SampleState
 
 	for _, sigil := range Sigils {
-		mp3, err := ChooseRandomPrefixedMP3Excluding(s.Config.MP3Dir, sigil, previous[sigil], rng)
+		mp3, err := ChooseRandomPrefixedMP3ExcludingWithMinimumDuration(s.Config.MP3Dir, sigil, previous[sigil], s.Config.MinimumMP3DurationSeconds, rng)
 		if err != nil {
 			loaded[sigil] = SampleState{Sigil: sigil, Error: "No MP3 files start with '" + sigil + "'"}
 			continue
@@ -563,7 +575,7 @@ func (s *State) LoadFirstIfEmpty(analyzer Analyzer) {
 		return
 	}
 
-	files, err := ListMP3Files(s.Config.MP3Dir)
+	files, err := ListMP3FilesWithMinimumDuration(s.Config.MP3Dir, s.Config.MinimumMP3DurationSeconds)
 	if err != nil || len(files) == 0 {
 		return
 	}
