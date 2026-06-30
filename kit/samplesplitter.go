@@ -3,19 +3,16 @@ package kit
 import (
 	"context"
 	"fmt"
-	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
 	ss "github.com/vizicist/palette/pkg/samplesplitter"
 )
 
 const samplesplitterPort = 9876
 const samplesplitterMidiPort = "16. Internal MIDI"
-const samplesplitterStatusTimeout = 500 * time.Millisecond
 const (
 	defaultSamplePlaybackReverbWet    = 0.0
 	defaultSamplePlaybackReverbLength = ss.DefaultReverbLength
@@ -39,7 +36,7 @@ func StartSamplePlaybackService() error {
 		}
 		return nil
 	}
-	runtimeDir := SamplesplitterRuntimeDir(SamplesplitterExecutablePath())
+	runtimeDir := SamplesplitterRuntimeDir()
 	config := ss.DefaultConfig()
 	config.Port = samplesplitterPort
 	config.MP3Dir = SamplesplitterMP3Dir(runtimeDir)
@@ -426,67 +423,27 @@ func SendSamplesplitterPitchBend(synth *Synth, value int) bool {
 }
 
 func SamplesplitterProcessInfo() *ProcessInfo {
-	exe := SamplesplitterExecutablePath()
-	if exe == "" {
-		return NewProcessInfo(SamplesplitterExe, "in-engine", "", nil)
-	}
-
-	dir := SamplesplitterRuntimeDir(exe)
-	mp3Dir := SamplesplitterMP3Dir(dir)
-	arg := fmt.Sprintf("--dir %q --port %d --midi-port %q --no-open", mp3Dir, samplesplitterPort, samplesplitterMidiPort)
-	pi := NewProcessInfo(filepath.Base(exe), exe, arg, nil)
-	pi.DirPath = dir
-	return pi
+	return NewProcessInfo(SamplesplitterExe, "in-engine", "", nil)
 }
 
-func SamplesplitterExecutablePath() string {
+func SamplesplitterRuntimeDir() string {
+	exeDir := ""
 	candidates := []string{}
 	if currentExe, err := os.Executable(); err == nil {
-		exeDir := filepath.Dir(currentExe)
+		exeDir = filepath.Dir(currentExe)
 		candidates = append(candidates,
-			filepath.Join(exeDir, SamplesplitterExe),
-			filepath.Clean(filepath.Join(exeDir, "..", "bin", SamplesplitterExe)),
+			filepath.Clean(filepath.Join(exeDir, "..", "samplesplitter")),
+			filepath.Clean(filepath.Join(exeDir, "samplesplitter")),
+			filepath.Clean(filepath.Join(exeDir, "..", "..", "pkg", "samplesplitter", "assets")),
+			exeDir,
 		)
-	}
-	if paletteDir := PaletteDir(); paletteDir != "" {
-		candidates = append(candidates, filepath.Join(paletteDir, "bin", SamplesplitterExe))
-	}
-	if paletteDir := os.Getenv("PALETTE"); paletteDir != "" {
-		candidates = append(candidates, filepath.Join(paletteDir, "bin", SamplesplitterExe))
 	}
 	if cwd, err := os.Getwd(); err == nil {
 		candidates = append(candidates,
-			filepath.Join(cwd, "cmd", "samplesplitter", SamplesplitterExe),
-			filepath.Join(cwd, SamplesplitterExe),
-			filepath.Clean(filepath.Join(cwd, "..", "samplesplitter", SamplesplitterExe)),
-			filepath.Clean(filepath.Join(cwd, "..", SamplesplitterExe)),
-			filepath.Clean(filepath.Join(cwd, "..", "..", "samplesplitter", SamplesplitterExe)),
-			filepath.Clean(filepath.Join(cwd, "..", "..", SamplesplitterExe)),
-		)
-	}
-	for _, candidate := range candidates {
-		if FileExists(candidate) {
-			return candidate
-		}
-	}
-	return ""
-}
-
-func SamplesplitterRuntimeDir(exe string) string {
-	exeDir := filepath.Dir(exe)
-	if exe == "" {
-		if currentExe, err := os.Executable(); err == nil {
-			exeDir = filepath.Dir(currentExe)
-		}
-	}
-	candidates := []string{
-		filepath.Clean(filepath.Join(exeDir, "..", "samplesplitter")),
-		filepath.Clean(filepath.Join(exeDir, "..", "cmd", "samplesplitter")),
-		exeDir,
-	}
-	if cwd, err := os.Getwd(); err == nil {
-		candidates = append(candidates,
-			filepath.Join(cwd, "cmd", "samplesplitter"),
+			filepath.Join(cwd, "assets"),
+			filepath.Join(cwd, "pkg", "samplesplitter", "assets"),
+			filepath.Clean(filepath.Join(cwd, "..", "pkg", "samplesplitter", "assets")),
+			filepath.Clean(filepath.Join(cwd, "..", "..", "pkg", "samplesplitter", "assets")),
 			filepath.Join(cwd, "samplesplitter"),
 		)
 	}
@@ -505,13 +462,4 @@ func SamplesplitterMP3Dir(runtimeDir string) string {
 		return filepath.Join(ConfigDir(), "mp3", "bss")
 	}
 	return dir
-}
-
-func samplesplitterWebIsListening() bool {
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", samplesplitterPort), samplesplitterStatusTimeout)
-	if err != nil {
-		return false
-	}
-	_ = conn.Close()
-	return true
 }

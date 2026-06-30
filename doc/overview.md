@@ -72,18 +72,9 @@ for installations that should keep running unattended.
 
 ## SampleSplitter
 
-SampleSplitter is now primarily a Go implementation.
-
-There are two supported Go paths:
-
-- The in-engine service from `pkg/samplesplitter`, used by Palette SamplePlayback
-  playback.
-- The standalone executable in `cmd/samplesplitter`, useful for direct browser
-  and MIDI-driven sample playback outside the full Palette runtime.
-
-The legacy Python SampleSplitter has moved to the standalone
-`vizicist/samplesplitter` repository for comparison and manual standalone
-testing. New Palette behavior should use the Go implementation.
+SampleSplitter is an in-engine Go service from `pkg/samplesplitter`, used by
+Palette SamplePlayback. Its browser UI and ffmpeg runtime assets live under
+`pkg/samplesplitter/assets`.
 
 SampleSplitter loads MP3 files, splits them into playable chunks, optionally
 compresses/normalizes them, supports peak-position playback, exposes a browser

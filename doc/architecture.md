@@ -1,6 +1,6 @@
 # Palette Architecture
 
-This document summarizes the current Palette system architecture as of May 2026.
+This document summarizes the current Palette system architecture as of June 2026.
 It is intended to be a practical map of the moving parts: what runs, what owns
 state, how input becomes sound and visuals, and where the main extension points
 live.
@@ -11,8 +11,8 @@ Palette is the runtime system for Space Palette Pro and related installations.
 It turns multitouch pad gestures into synchronized sound, visuals, loops,
 sample playback, preset changes, and process control. The main runtime is a Go
 engine that serves a browser UI, receives input from Sensel Morph pads and MIDI,
-drives Bidule/Omnisphere by MIDI, drives Resolume/FFGL visuals by OSC, and now
-also hosts the Go SampleSplitter service for in-engine SamplePlayback.
+drives Bidule/Omnisphere by MIDI, drives Resolume/FFGL visuals by OSC, and hosts
+the Go SampleSplitter service for in-engine SamplePlayback.
 
 ## High-Level Diagram
 
@@ -58,8 +58,8 @@ flowchart TB
     subgraph "Data and Build"
         Data["Runtime data\nparams, presets, logs, MP3s"]
         DefaultData["data_default\nfactory presets and assets"]
-        Build["build/windows\ninstaller and scripts"]
-        FFmpeg["ffmpeg.exe\nbundled via Git LFS"]
+        Build["build/{windows,linux,macos}\ninstallers and scripts"]
+        SSAssets["pkg/samplesplitter/assets\nUI and ffmpeg.exe"]
     end
 
     WebUI --> API
@@ -87,6 +87,7 @@ flowchart TB
     Scheduler --> Resolume
     Scheduler --> FFGL
     Scheduler --> SSplitter
+    SSAssets --> SSplitter
     SSplitter --> Audio
     ProcMgr --> Bidule
     ProcMgr --> Resolume
@@ -123,15 +124,11 @@ monitors them when enabled, sends Bidule MIDI events, and sends Resolume OSC
 messages. Resolume hosts `Palette.dll`, the FFGL visual plugin built from the
 `ffgl` tree.
 
-SampleSplitter now has two relevant forms:
-
-- The in-engine Go service from `pkg/samplesplitter`, started through
-  `global.process.samplesplitter`. This is the path used by Palette
-  SamplePlayback.
-- The standalone Go executable in `cmd/samplesplitter`, with the same browser
-  UI and MIDI-facing behavior for standalone use. The legacy Python
-  implementation has moved to the standalone `vizicist/samplesplitter`
-  repository and should not be the Palette runtime path.
+SampleSplitter is an in-engine Go service from `pkg/samplesplitter`, started
+through `global.process.samplesplitter`. This is the path used by Palette
+SamplePlayback. Its browser UI and ffmpeg runtime assets live under
+`pkg/samplesplitter/assets` and are packaged into the installed
+`samplesplitter` asset directory.
 
 ## Engine Startup
 
@@ -287,13 +284,12 @@ SampleSplitter itself lives in `pkg/samplesplitter`. It is responsible for:
 - Splitting audio into chunks by words or other supported split modes.
 - Using the peak position of the first word when peak playback is enabled.
 - Optional compression and normalization.
-- Mapping chunks to MIDI notes for standalone use.
+- Mapping chunks to playable note indexes.
 - Exposing a browser UI/API on port 9876.
 - Playing audio directly through the selected output device.
 
 Palette uses the in-engine service directly for SamplePlayback, with MIDI
-disabled for that path. The standalone Go SampleSplitter still supports MIDI
-triggering for independent testing and non-Palette use.
+disabled for that path.
 
 ## Web UI Architecture
 
@@ -331,16 +327,17 @@ mode toggles, SamplePlayback controls, and Oscillation/Photonic preset controls.
 global parameters such as `global.process.resolume`.
 
 Most managed processes are external executables. `samplesplitter` is a special
-case: the preferred Palette runtime starts the in-engine Go SampleSplitter
-service rather than launching a separate Python or Go executable. Process status
-therefore checks whether the SampleSplitter web/API service is listening.
+case: the Palette runtime starts the in-engine Go SampleSplitter service rather
+than launching a separate executable. Its process status is the embedded service
+running state.
 
 ## Build, Install, and Test
 
-Windows build scripts live under `build/windows`. The normal full workflow
-builds the Go executables, copies runtime assets, packages installers, and
-stages the per-user install layout. `doit.bat` is the local build/install/run
-convenience entry point and should be run from `build/windows`.
+Platform build scripts live under `build/windows`, `build/linux`, and
+`build/macos`. The normal full workflow builds the Go executables, copies
+runtime assets, packages installers, and stages the install layout. On Windows,
+`doit.bat` is the local build/install/run convenience entry point and should be
+run from `build/windows`.
 
 `testit.bat` runs the current minimal test suite for the build, including Go
 tests and the web UI smoke test. The smoke test is implemented in
@@ -349,11 +346,12 @@ Manual diagnostic commands such as `cmd/miditest` are intentionally kept out of
 the regression test path because they depend on local MIDI hardware and driver
 state.
 
-The build includes only `ffmpeg.exe` from the SampleSplitter ffmpeg directory.
-That executable is tracked with Git LFS so fresh clones can obtain it without
-checking a large binary directly into normal Git object storage. Build scripts
-check that the LFS-backed file is actually present and not just an unresolved
-pointer.
+SampleSplitter runtime assets live in `pkg/samplesplitter/assets` in the source
+tree and are packaged into the installed `samplesplitter` asset directory. The
+build includes only `ffmpeg.exe` from the bundled ffmpeg distribution. That
+executable is tracked with Git LFS so fresh clones can obtain it without checking
+a large binary directly into normal Git object storage. Build scripts check that
+the LFS-backed file is actually present and not just an unresolved pointer.
 
 ## Logging and Diagnostics
 
@@ -376,8 +374,7 @@ Useful diagnostic surfaces include:
 
 The engine owns performance timing, parameters, routing, and the canonical
 Palette behavior. External applications are treated as controllable endpoints:
-Bidule for synth sound, Resolume/FFGL for visuals, OBS for optional capture, and
-standalone SampleSplitter only when running outside the integrated path.
+Bidule for synth sound, Resolume/FFGL for visuals, and OBS for optional capture.
 
 The web UI should stay a client of the API rather than owning performance
 logic. Sample splitting and audio playback should stay inside
@@ -385,6 +382,6 @@ logic. Sample splitting and audio playback should stay inside
 quantization, cursor mapping, and loop integration should stay in the `kit`
 domain layer.
 
-This separation is what allows the same SampleSplitter implementation to serve
-both standalone MIDI use and in-engine SamplePlayback without forcing Palette to
-route its own sample gestures through MIDI.
+This separation keeps sample analysis/playback reusable while keeping Palette's
+gesture semantics in the Palette domain rather than forcing sample gestures
+through MIDI.

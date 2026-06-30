@@ -26,7 +26,7 @@ The web UI files are in `kit/webui/` and are embedded into the engine binary usi
 - `cmd/palette/` - CLI tool
 - `cmd/palette_engine/` - Engine binary
 - `cmd/palette_hub/` - Hub service
-- `python/` - Python GUI and utilities (being replaced by web UI)
+- `python/` - Python API/OSC helpers and FFGL parameter generation utility
 
 ## Web UI Architecture
 

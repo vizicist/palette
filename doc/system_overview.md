@@ -35,9 +35,7 @@ processes the visual layers.
 
 SamplePlayback is the Palette-facing sample domain. In the normal Palette
 runtime it is backed by an in-engine Go service from the SampleSplitter package,
-driven directly by cursor events rather than MIDI. SampleSplitter also has a
-standalone Go executable with its own browser UI on port 9876 for independent
-use and MIDI testing.
+driven directly by cursor events rather than MIDI.
 
 `palette` is the command-line tool. It controls the engine through the same API
 used by the browser UI, so most UI actions can also be scripted.

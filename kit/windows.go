@@ -28,37 +28,11 @@ func KillExecutable(executable string) {
 }
 
 func IsSamplesplitterRunning() (bool, error) {
-	if SamplePlaybackServiceRunning() {
-		return true, nil
-	}
-	processRunning, err := IsSamplesplitterProcessRunning()
-	if err != nil || !processRunning {
-		return processRunning, err
-	}
-	return samplesplitterWebIsListening(), nil
-}
-
-func IsSamplesplitterProcessRunning() (bool, error) {
-	if SamplePlaybackServiceRunning() {
-		return true, nil
-	}
-	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
-		`$p = Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq 'samplesplitter.exe' -or ($_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py') }; if ($p) { exit 0 } else { exit 1 }`)
-	err := cmd.Run()
-	if err == nil {
-		return true, nil
-	}
-	if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
-		return false, nil
-	}
-	return false, err
+	return SamplePlaybackServiceRunning(), nil
 }
 
 func KillSamplesplitter() {
 	StopSamplePlaybackService()
-	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
-		`Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq 'samplesplitter.exe' -or ($_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`)
-	_ = cmd.Run()
 }
 
 // KillByPid kills a process by its PID, including child processes

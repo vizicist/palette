@@ -35,7 +35,7 @@ set PALETTE_VERSION=%version%
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
-pip install --use-pep517 pip python-osc requests pip pyinstaller get-mac mido pyperclip chardet obs-cli | grep -v "already satisfied"
+pip install --use-pep517 pip python-osc requests mido | grep -v "already satisfied"
 
 rem echo ================ Compiling depthlib
 rem pushd ..\..\depthlib
@@ -82,12 +82,6 @@ go build palette_hub.go >> %buildcmdsout% 2>&1
 move palette_hub.exe %bin%\palette_hub.exe > nul
 popd
 
-echo ================ Compiling samplesplitter
-pushd %PALETTE_SOURCE%\cmd\samplesplitter
-go build . >> %buildcmdsout% 2>&1
-move samplesplitter.exe %bin%\samplesplitter.exe > nul
-popd
-
 rem print any error messages from compiling cmds
 type %buildcmdsout%
 
@@ -124,26 +118,26 @@ copy %PALETTE_SOURCE%\binaries\nircmdc.exe %bin% >nul
 copy %PALETTE_SOURCE%\binaries\nats\nats.exe %bin% >nul
 
 echo ================ Copying samplesplitter
-if not exist "%PALETTE_SOURCE%\cmd\samplesplitter\static\index.html" (
+if not exist "%PALETTE_SOURCE%\pkg\samplesplitter\assets\static\index.html" (
 	echo The samplesplitter static UI is missing under:
-	echo     %PALETTE_SOURCE%\cmd\samplesplitter\static
+	echo     %PALETTE_SOURCE%\pkg\samplesplitter\assets\static
 	goto getout
 )
-if not exist "%PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe" (
+if not exist "%PALETTE_SOURCE%\pkg\samplesplitter\assets\ffmpeg\bin\ffmpeg.exe" (
 	echo The bundled ffmpeg.exe is missing under:
-	echo     %PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe
+	echo     %PALETTE_SOURCE%\pkg\samplesplitter\assets\ffmpeg\bin\ffmpeg.exe
 	echo This file is tracked with Git LFS. Install Git LFS and run "git lfs pull".
 	goto getout
 )
-call :check_lfs_file "%PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe"
+call :check_lfs_file "%PALETTE_SOURCE%\pkg\samplesplitter\assets\ffmpeg\bin\ffmpeg.exe"
 if errorlevel 1 goto getout
-robocopy "%PALETTE_SOURCE%\cmd\samplesplitter" "%ship%\samplesplitter" /E /XD .git __pycache__ /XF *.pyc *.exe >nul
+robocopy "%PALETTE_SOURCE%\pkg\samplesplitter\assets" "%ship%\samplesplitter" /E /XD .git __pycache__ /XF *.pyc *.exe >nul
 if errorlevel 8 (
 	echo Failed to copy samplesplitter.
 	goto getout
 )
 mkdir "%ship%\samplesplitter\ffmpeg\bin" >nul 2>&1
-copy "%PALETTE_SOURCE%\cmd\samplesplitter\ffmpeg\bin\ffmpeg.exe" "%ship%\samplesplitter\ffmpeg\bin\ffmpeg.exe" >nul
+copy "%PALETTE_SOURCE%\pkg\samplesplitter\assets\ffmpeg\bin\ffmpeg.exe" "%ship%\samplesplitter\ffmpeg\bin\ffmpeg.exe" >nul
 if errorlevel 1 (
 	echo Failed to copy bundled ffmpeg.exe.
 	goto getout

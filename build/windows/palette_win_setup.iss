@@ -53,6 +53,10 @@ Source: "ship\samplesplitter\*"; DestDir: "{app}\samplesplitter"; Flags: ignorev
 ; Source: "ship\keykit\*"; DestDir: "{app}\keykit"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [InstallDelete]
+Type: files; Name: "{app}\bin\samplesplitter.exe"
+Type: files; Name: "{app}\samplesplitter\main.go"
+Type: files; Name: "{app}\samplesplitter\README.md"
+Type: files; Name: "{app}\samplesplitter\CONTRACT.md"
 Type: files; Name: "{app}\samplesplitter\ffmpeg\bin\ffplay.exe"
 Type: files; Name: "{app}\samplesplitter\ffmpeg\bin\ffprobe.exe"
 
@@ -63,7 +67,6 @@ Source: "vc15\bin\VC_redist.x64.exe"; DestDir: {app}\bin
 [Run]
 Filename: cmd.exe; Parameters: "/C taskkill /F /IM palette_engine.exe >NUL 2>NUL || exit /B 0"; StatusMsg: "Making sure palette_engine is not running..."; Flags: waituntilterminated runhidden
 Filename: cmd.exe; Parameters: "/C taskkill /F /IM palette_monitor.exe >NUL 2>NUL || exit /B 0"; StatusMsg: "Making sure palette_monitor is not running..."; Flags: waituntilterminated runhidden
-Filename: powershell.exe; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""Get-CimInstance Win32_Process | Where-Object {{ $_.Name -ieq 'samplesplitter.exe' -or ($_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py') }} | ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }}"""; StatusMsg: "Making sure Sample Splitter is not running..."; Flags: waituntilterminated runhidden
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
@@ -123,8 +126,6 @@ begin
   Exec('>', 'cmd.exe /C taskkill /IM palette_engine.exe /T /F >NUL 2>NUL', '', SW_HIDE,
      ewWaitUntilTerminated, ResultCode);
   Exec('>', 'cmd.exe /C taskkill /IM palette_monitor.exe /T /F >NUL 2>NUL', '', SW_HIDE,
-     ewWaitUntilTerminated, ResultCode);
-  Exec('>', 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq ''samplesplitter.exe'' -or ($_.CommandLine -and $_.CommandLine -match ''samplesplitter\.py'') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"', '', SW_HIDE,
      ewWaitUntilTerminated, ResultCode);
 
   // Proceed Setup
