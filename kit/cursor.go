@@ -264,33 +264,52 @@ func lineLength(pos0 CursorPos, pos1 CursorPos) float64 {
 	return math.Sqrt(math.Pow(pos1.X-pos0.X, 2) + math.Pow(pos1.Y-pos0.Y, 2))
 }
 
-func (cm *CursorManager) zRand(zmin float64, zmax float64) float64 {
-	z := 0.0
-	for z == 0.0 {
-		z = zmin + cm.cursorRand.Float64()*(zmax-zmin)
-		if z < zmin || z > zmax {
-			z = 0.0
-		}
+func normalizeAttractRange(vmin float64, vmax float64) (float64, float64) {
+	vmin = boundValueZeroToOne(vmin)
+	vmax = boundValueZeroToOne(vmax)
+	if vmax < vmin {
+		vmin, vmax = vmax, vmin
 	}
-	return z
+	return vmin, vmax
+}
+
+func (cm *CursorManager) zRand(zmin float64, zmax float64) float64 {
+	zmin, zmax = normalizeAttractRange(zmin, zmax)
+	if zmax == zmin {
+		return zmin
+	}
+	return zmin + cm.cursorRand.Float64()*(zmax-zmin)
 }
 
 func (cm *CursorManager) GenerateRandomGesture(tag string, numsteps int, dur time.Duration) {
 
 	cm.cursorRandMutex.Lock()
+	pos0, pos1 := cm.randomAttractGestureEndpoints()
+	cm.cursorRandMutex.Unlock()
 
+	cm.GenerateGesture(tag, numsteps, dur, pos0, pos1)
+}
+
+func (cm *CursorManager) randomAttractGestureEndpoints() (CursorPos, CursorPos) {
 	pos0 := CursorPos{
 		X: cm.cursorRand.Float64(),
 		Y: cm.cursorRand.Float64(),
 	}
 	pos1 := CursorPos{}
 	am := theAttractManager
+	minLength, maxLength := normalizeAttractRange(am.GestureMinLength, am.GestureMaxLength)
+	if minLength == maxLength {
+		minLength = 0.0
+		if maxLength == 0.0 {
+			maxLength = 1.0
+		}
+	}
 	for pos1.X == 0.0 {
 		pos1.X = cm.cursorRand.Float64()
 		pos1.Y = cm.cursorRand.Float64()
 		// Keep going until desired length is achieved
 		leng := lineLength(pos0, pos1)
-		if leng < am.GestureMinLength || leng > am.GestureMaxLength {
+		if leng < minLength || leng > maxLength {
 			pos1.X = 0.0 // try again
 		}
 	}
@@ -302,9 +321,7 @@ func (cm *CursorManager) GenerateRandomGesture(tag string, numsteps int, dur tim
 		pos1.Y = pos0.Y
 	}
 
-	cm.cursorRandMutex.Unlock()
-
-	cm.GenerateGesture(tag, numsteps, dur, pos0, pos1)
+	return pos0, pos1
 }
 
 func (cm *CursorManager) GenerateGesture(tag string, numsteps int, dur time.Duration, pos0 CursorPos, pos1 CursorPos) {

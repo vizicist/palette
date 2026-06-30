@@ -477,11 +477,68 @@ func SetAndApplyGlobalParam(name string, value string) (err error) {
 	return err
 }
 
+var legacyGlobalParamAliases = map[string]string{
+	"global.initialpage": "global.mode",
+}
+
 func canonicalGlobalParamName(name string) string {
-	if name == "global.initialpage" {
-		return "global.mode"
+	if canonical, ok := legacyGlobalParamAliases[name]; ok {
+		return canonical
 	}
 	return name
+}
+
+var attractFloatParamSetters = map[string]func(*AttractManager, float64){
+	"global.attractgestureinterval":      func(am *AttractManager, f float64) { am.GestureInterval = f },
+	"global.attractpresetchangeinterval": func(am *AttractManager, f float64) { am.PresetChangeInterval = f },
+	"global.attractgestureduration":      func(am *AttractManager, f float64) { am.GestureDuration = f },
+	"global.attractgestureminlength":     func(am *AttractManager, f float64) { am.GestureMinLength = f },
+	"global.attractgesturemaxlength":     func(am *AttractManager, f float64) { am.GestureMaxLength = f },
+	"global.attractgesturezmin":          func(am *AttractManager, f float64) { am.GestureZMin = f },
+	"global.attractgesturezmax":          func(am *AttractManager, f float64) { am.GestureZMax = f },
+}
+
+func applyAttractGlobalParam(name string, value string) bool {
+	if theAttractManager == nil {
+		return false
+	}
+	switch name {
+	case "global.attract":
+		theAttractManager.SetAttractMode(IsTrueValue(value))
+		return true
+	case "global.attractenabled":
+		theAttractManager.SetAttractEnabled(IsTrueValue(value))
+		return true
+	case "global.attractidlesecs":
+		var i int64
+		if GetInt(value, &i) {
+			if i < 15 {
+				LogWarn("global.attractidlesecs is too low, forcing to 15")
+				i = 15
+			}
+			theAttractManager.IdleSecs = float64(i)
+		}
+		return true
+	case "global.attractgesturenumsteps":
+		var i int64
+		if GetInt(value, &i) {
+			if i < 1 {
+				i = 1
+			}
+			theAttractManager.GestureNumSteps = int(i)
+		}
+		return true
+	}
+
+	setter, ok := attractFloatParamSetters[name]
+	if !ok {
+		return false
+	}
+	var f float64
+	if GetFloat(value, &f) {
+		setter(theAttractManager, f)
+	}
+	return true
 }
 
 func ApplyGlobalParam(name string, value string) (err error) {
@@ -515,55 +572,11 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	if name == "global.resolumepath" && theProcessManager != nil {
 		theProcessManager.AddProcessBuiltIn("resolume")
 	}
+	if applyAttractGlobalParam(name, value) {
+		return nil
+	}
 
 	switch name {
-
-	case "global.attract":
-		theAttractManager.SetAttractMode(IsTrueValue(value))
-
-	case "global.attractenabled":
-		theAttractManager.SetAttractEnabled(IsTrueValue(value))
-
-	case "global.attractidlesecs":
-		if GetInt(value, &i) {
-			if i < 15 {
-				LogWarn("global.attractidlesecs is too low, forcing to 15")
-				i = 15
-			}
-			theAttractManager.IdleSecs = float64(i)
-		}
-	case "global.attractgestureinterval":
-		if GetFloat(value, &f) {
-			theAttractManager.GestureInterval = f
-		}
-	case "global.attractpresetchangeinterval":
-		if GetFloat(value, &f) {
-			theAttractManager.PresetChangeInterval = f
-		}
-	case "global.attractgesturenumsteps":
-		if GetFloat(value, &f) {
-			theAttractManager.GestureNumSteps = f
-		}
-	case "global.attractgestureduration":
-		if GetFloat(value, &f) {
-			theAttractManager.GestureDuration = f
-		}
-	case "global.attractgestureminlength":
-		if GetFloat(value, &f) {
-			theAttractManager.GestureMinLength = f
-		}
-	case "global.attractgesturemaxlength":
-		if GetFloat(value, &f) {
-			theAttractManager.GestureMaxLength = f
-		}
-	case "global.attractgestureminz":
-		if GetFloat(value, &f) {
-			theAttractManager.GestureZMin = f
-		}
-	case "global.attractgesturemaxz":
-		if GetFloat(value, &f) {
-			theAttractManager.GestureZMax = f
-		}
 	case "global.erae":
 		b, _ := GetParamBool("global.erae")
 		if b {
@@ -574,13 +587,6 @@ func ApplyGlobalParam(name string, value string) (err error) {
 	case "global.looping_fadethreshold":
 		if GetFloat(value, &f) {
 			theCursorManager.LoopThreshold = f
-		}
-
-	case "global.looping_override", "global.looping_fade", "global.looping_beats":
-		err := GlobalParams.SetParamWithString(name, value)
-		if err != nil {
-			LogError(err)
-			return err
 		}
 
 	case "global.mode":
