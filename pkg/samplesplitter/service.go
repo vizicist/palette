@@ -404,7 +404,10 @@ func FindFFmpeg(baseDir string) string {
 	if cwd, err := os.Getwd(); err == nil {
 		candidates = append(candidates,
 			filepath.Join(cwd, "ffmpeg", "bin", name),
-			filepath.Join(cwd, "cmd", "samplesplitter", "ffmpeg", "bin", name),
+			filepath.Join(cwd, "assets", "ffmpeg", "bin", name),
+			filepath.Join(cwd, "pkg", "samplesplitter", "assets", "ffmpeg", "bin", name),
+			filepath.Clean(filepath.Join(cwd, "..", "pkg", "samplesplitter", "assets", "ffmpeg", "bin", name)),
+			filepath.Clean(filepath.Join(cwd, "..", "..", "pkg", "samplesplitter", "assets", "ffmpeg", "bin", name)),
 			filepath.Clean(filepath.Join(cwd, "..", "samplesplitter", "ffmpeg", "bin", name)),
 		)
 	}
@@ -424,7 +427,10 @@ func ResolveStaticDir(baseDir string) string {
 	if cwd, err := os.Getwd(); err == nil {
 		candidates = append(candidates,
 			filepath.Join(cwd, "static"),
-			filepath.Join(cwd, "cmd", "samplesplitter", "static"),
+			filepath.Join(cwd, "assets", "static"),
+			filepath.Join(cwd, "pkg", "samplesplitter", "assets", "static"),
+			filepath.Clean(filepath.Join(cwd, "..", "pkg", "samplesplitter", "assets", "static")),
+			filepath.Clean(filepath.Join(cwd, "..", "..", "pkg", "samplesplitter", "assets", "static")),
 			filepath.Clean(filepath.Join(cwd, "..", "samplesplitter", "static")),
 		)
 	}

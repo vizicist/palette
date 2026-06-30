@@ -21,15 +21,15 @@ mkdir -p "$BIN"
 # Copy VERSION file
 cp "$PALETTE_SOURCE/VERSION" "$SHIP/"
 
-if [ -f "$PALETTE_SOURCE/cmd/samplesplitter/static/index.html" ]; then
+if [ -f "$PALETTE_SOURCE/pkg/samplesplitter/assets/static/index.html" ]; then
     echo "================ Copying samplesplitter"
-    cp -R "$PALETTE_SOURCE/cmd/samplesplitter" "$SHIP/samplesplitter"
+    cp -R "$PALETTE_SOURCE/pkg/samplesplitter/assets" "$SHIP/samplesplitter"
     rm -rf "$SHIP/samplesplitter/.git" "$SHIP/samplesplitter/__pycache__"
     if [ -d "$PALETTE_SOURCE/data_default/samplesplitter" ]; then
         cp -R "$PALETTE_SOURCE/data_default/samplesplitter/." "$SHIP/samplesplitter/"
     fi
 else
-    echo "Error: samplesplitter static UI is missing under cmd/samplesplitter/static" >&2
+    echo "Error: samplesplitter static UI is missing under pkg/samplesplitter/assets/static" >&2
     exit 1
 fi
 
@@ -46,11 +46,6 @@ popd > /dev/null
 echo "================ Building palette_engine"
 pushd "$PALETTE_SOURCE/cmd/palette_engine" > /dev/null
 go build -o "$BIN/palette_engine" .
-popd > /dev/null
-
-echo "================ Building samplesplitter"
-pushd "$PALETTE_SOURCE/cmd/samplesplitter" > /dev/null
-go build -o "$BIN/samplesplitter" .
 popd > /dev/null
 
 # Create release directory if it doesn't exist

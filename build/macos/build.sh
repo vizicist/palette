@@ -51,7 +51,6 @@ build_cmd palette_chat
 build_cmd palette_hub
 build_cmd palette_remote -ldflags "-extldflags=-Wl,-no_warn_duplicate_libraries"
 build_cmd palette_natsmon
-build_cmd samplesplitter
 
 copy_data_dir() {
     local name="$1"
@@ -68,15 +67,15 @@ copy_data_dir() {
 
 copy_data_dir data_default
 
-if [ -f "$PALETTE_SOURCE/cmd/samplesplitter/static/index.html" ]; then
+if [ -f "$PALETTE_SOURCE/pkg/samplesplitter/assets/static/index.html" ]; then
     echo "================ Copying samplesplitter"
-    /usr/bin/ditto "$PALETTE_SOURCE/cmd/samplesplitter" "$SHIP/samplesplitter"
+    /usr/bin/ditto "$PALETTE_SOURCE/pkg/samplesplitter/assets" "$SHIP/samplesplitter"
     rm -rf "$SHIP/samplesplitter/.git" "$SHIP/samplesplitter/__pycache__"
     if [ -d "$PALETTE_SOURCE/data_default/samplesplitter" ]; then
         /usr/bin/ditto "$PALETTE_SOURCE/data_default/samplesplitter" "$SHIP/samplesplitter"
     fi
 else
-    echo "Error: samplesplitter static UI is missing under cmd/samplesplitter/static" >&2
+    echo "Error: samplesplitter static UI is missing under pkg/samplesplitter/assets/static" >&2
     exit 1
 fi
 

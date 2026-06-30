@@ -33,7 +33,6 @@ echo.
 echo Stopping Palette processes...
 taskkill /F /T /IM palette_engine.exe >nul 2>nul
 taskkill /F /T /IM palette_monitor.exe >nul 2>nul
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine -match 'samplesplitter\.py' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>nul
 
 set "PROGRAM_INSTALL=%ProgramFiles%\Palette"
 set "SYSTEM_DATA=%ProgramFiles%\Common"
