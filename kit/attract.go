@@ -25,7 +25,7 @@ type AttractManager struct {
 	GestureMaxLength     float64
 	GestureZMin          float64
 	GestureZMax          float64
-	GestureNumSteps      float64
+	GestureNumSteps      int
 	GestureDuration      float64
 	GestureInterval      float64
 	PresetChangeInterval float64
@@ -63,8 +63,6 @@ func NewAttractManager() *AttractManager {
 
 	am.GestureInterval, err = GetParamFloat("global.attractgestureinterval")
 	LogIfError(err)
-	am.GestureInterval, err = GetParamFloat("global.attractgestureinterval")
-	LogIfError(err)
 	am.GestureMinLength, err = GetParamFloat("global.attractgestureminlength")
 	LogIfError(err)
 	am.GestureMaxLength, err = GetParamFloat("global.attractgesturemaxlength")
@@ -73,13 +71,11 @@ func NewAttractManager() *AttractManager {
 	LogIfError(err)
 	am.GestureZMax, err = GetParamFloat("global.attractgesturezmax")
 	LogIfError(err)
-	am.GestureNumSteps, err = GetParamFloat("global.attractgesturenumsteps")
+	am.GestureNumSteps, err = GetParamInt("global.attractgesturenumsteps")
 	LogIfError(err)
 	am.GestureDuration, err = GetParamFloat("global.attractgestureduration")
 	LogIfError(err)
-	am.GestureInterval, err = GetParamFloat("global.attractgestureinterval")
-	LogIfError(err)
-	am.PresetChangeInterval, err = GetParamFloat("global.attractpresetchangeinterval")	
+	am.PresetChangeInterval, err = GetParamFloat("global.attractpresetchangeinterval")
 	LogIfError(err)
 	am.IdleSecs, err = GetParamFloat("global.attractidlesecs")
 	LogIfError(err)
@@ -191,10 +187,9 @@ func (am *AttractManager) doAttractAction() {
 		tag := patch + ",attract"
 		am.lastAttractGestureTime = now
 
-		numsteps := int(am.GestureNumSteps)
 		dur := time.Duration(am.GestureDuration * float64(time.Second))
 
-		go theCursorManager.GenerateRandomGesture(tag, numsteps, dur)
+		go theCursorManager.GenerateRandomGesture(tag, am.GestureNumSteps, dur)
 	}
 
 	dp := now.Sub(am.lastAttractPresetChange).Seconds()

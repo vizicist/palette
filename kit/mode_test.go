@@ -74,8 +74,16 @@ func TestModeControlsPageSelection(t *testing.T) {
 }
 
 func TestLegacyInitialPageMigratesToMode(t *testing.T) {
-	if got := canonicalGlobalParamName("global.initialpage"); got != "global.mode" {
-		t.Fatalf("canonicalGlobalParamName = %q, want global.mode", got)
+	tests := map[string]string{
+		"global.initialpage": "global.mode",
+		"global.mode":        "global.mode",
+		"global.log":         "global.log",
+	}
+
+	for name, want := range tests {
+		if got := canonicalGlobalParamName(name); got != want {
+			t.Fatalf("canonicalGlobalParamName(%q) = %q, want %q", name, got, want)
+		}
 	}
 }
 
