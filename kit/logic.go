@@ -48,6 +48,7 @@ func (logic *PatchLogic) cursorToNoteOn(ce CursorEvent) *NoteOn {
 
 var PitchSets = map[string][]uint8{}
 var PitchSetPitchNames = map[string][]string{}
+var PitchSetPitchPreferences = map[string][]float64{}
 
 type pitchSetsConfig struct {
 	PitchSets []pitchSetConfig `json:"pitchsets"`
@@ -59,59 +60,72 @@ type pitchSetConfig struct {
 }
 
 type pitchConfig struct {
-	Pitch *int   `json:"pitch"`
-	Name  string `json:"name,omitempty"`
+	Pitch      *int     `json:"pitch"`
+	Name       string   `json:"name,omitempty"`
+	Preference *float64 `json:"preference,omitempty"`
 }
 
 func InitPitchSets() {
-	pitchSets, pitchNames, err := LoadPitchSetsConfig()
+	pitchSets, pitchNames, pitchPreferences, err := LoadPitchSetsConfig()
 	if err != nil {
 		LogWarn("InitPitchSets: unable to load PitchSets.json", "err", err)
 		PitchSets = map[string][]uint8{}
 		PitchSetPitchNames = map[string][]string{}
+		PitchSetPitchPreferences = map[string][]float64{}
 		return
 	}
 	PitchSets = pitchSets
 	PitchSetPitchNames = pitchNames
+	PitchSetPitchPreferences = pitchPreferences
 	LogInfo("PitchSets loaded", "len", len(PitchSets))
 }
 
-func LoadPitchSetsConfig() (map[string][]uint8, map[string][]string, error) {
+func LoadPitchSetsConfig() (map[string][]uint8, map[string][]string, map[string][]float64, error) {
 	path := ConfigFilePath("PitchSets.json")
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read %s: %w", path, err)
+		return nil, nil, nil, fmt.Errorf("unable to read %s: %w", path, err)
 	}
 
 	var config pitchSetsConfig
 	if err := json.Unmarshal(bytes, &config); err != nil {
-		return nil, nil, fmt.Errorf("unable to parse %s: %w", path, err)
+		return nil, nil, nil, fmt.Errorf("unable to parse %s: %w", path, err)
 	}
 
 	pitchSets := make(map[string][]uint8, len(config.PitchSets))
 	pitchNames := make(map[string][]string, len(config.PitchSets))
+	pitchPreferences := make(map[string][]float64, len(config.PitchSets))
 	for _, pitchSet := range config.PitchSets {
 		if pitchSet.Name == "" {
-			return nil, nil, fmt.Errorf("PitchSets.json contains a pitch set with an empty name")
+			return nil, nil, nil, fmt.Errorf("PitchSets.json contains a pitch set with an empty name")
 		}
 		if _, exists := pitchSets[pitchSet.Name]; exists {
-			return nil, nil, fmt.Errorf("PitchSets.json contains duplicate pitch set %q", pitchSet.Name)
+			return nil, nil, nil, fmt.Errorf("PitchSets.json contains duplicate pitch set %q", pitchSet.Name)
 		}
 		if len(pitchSet.Pitches) == 0 {
-			return nil, nil, fmt.Errorf("PitchSets.json pitch set %q has no pitches", pitchSet.Name)
+			return nil, nil, nil, fmt.Errorf("PitchSets.json pitch set %q has no pitches", pitchSet.Name)
 		}
 		pitches := make([]uint8, 0, len(pitchSet.Pitches))
 		names := make([]string, 0, len(pitchSet.Pitches))
+		preferences := make([]float64, 0, len(pitchSet.Pitches))
 		hasNames := false
 		for _, pitch := range pitchSet.Pitches {
 			if pitch.Pitch == nil {
-				return nil, nil, fmt.Errorf("PitchSets.json pitch set %q contains an entry without a pitch", pitchSet.Name)
+				return nil, nil, nil, fmt.Errorf("PitchSets.json pitch set %q contains an entry without a pitch", pitchSet.Name)
 			}
 			pitchValue := *pitch.Pitch
 			if pitchValue < 0 || pitchValue > 127 {
-				return nil, nil, fmt.Errorf("PitchSets.json pitch set %q has out-of-range pitch %d", pitchSet.Name, pitchValue)
+				return nil, nil, nil, fmt.Errorf("PitchSets.json pitch set %q has out-of-range pitch %d", pitchSet.Name, pitchValue)
+			}
+			preference := 1.0
+			if pitch.Preference != nil {
+				preference = *pitch.Preference
+			}
+			if preference <= 0 || math.IsNaN(preference) || math.IsInf(preference, 0) {
+				return nil, nil, nil, fmt.Errorf("PitchSets.json pitch set %q pitch %d has invalid preference %v", pitchSet.Name, pitchValue, preference)
 			}
 			pitches = append(pitches, uint8(pitchValue))
+			preferences = append(preferences, preference)
 			name := pitch.Name
 			if name != "" {
 				hasNames = true
@@ -119,15 +133,16 @@ func LoadPitchSetsConfig() (map[string][]uint8, map[string][]string, error) {
 			names = append(names, name)
 		}
 		pitchSets[pitchSet.Name] = pitches
+		pitchPreferences[pitchSet.Name] = preferences
 		if hasNames {
 			pitchNames[pitchSet.Name] = names
 		}
 	}
-	return pitchSets, pitchNames, nil
+	return pitchSets, pitchNames, pitchPreferences, nil
 }
 
 func PitchSetNamesFromConfig() ([]string, error) {
-	pitchSets, _, err := LoadPitchSetsConfig()
+	pitchSets, _, _, err := LoadPitchSetsConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +165,7 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			LogIfError(err)
 			return 0, err
 		}
-		n := pitchSetIndexForX(ce.Pos.X, len(pitches))
+		n := pitchSetIndexForX(ce.Pos.X, len(pitches), PitchSetPitchPreferences[pitchset])
 		// Note: pitchsets don't get pitchoffset
 		return pitches[n], nil
 
@@ -215,7 +230,7 @@ func (logic *PatchLogic) addPitchSetInfo(noteOn *NoteOn, ce CursorEvent) {
 	if !ok || len(pitches) == 0 {
 		return
 	}
-	index := pitchSetIndexForX(ce.Pos.X, len(pitches))
+	index := pitchSetIndexForX(ce.Pos.X, len(pitches), PitchSetPitchPreferences[pitchSet])
 	pitchNames := PitchSetPitchNames[pitchSet]
 	pitchName := ""
 	if index < len(pitchNames) {
@@ -226,7 +241,7 @@ func (logic *PatchLogic) addPitchSetInfo(noteOn *NoteOn, ce CursorEvent) {
 	noteOn.PitchSetName = pitchName
 }
 
-func pitchSetIndexForX(x float64, pitchCount int) int {
+func pitchSetIndexForX(x float64, pitchCount int, preferences ...[]float64) int {
 	if pitchCount <= 0 || math.IsNaN(x) {
 		return 0
 	}
@@ -236,7 +251,33 @@ func pitchSetIndexForX(x float64, pitchCount int) int {
 	if x >= 1.0 {
 		return pitchCount - 1
 	}
+	if len(preferences) > 0 && len(preferences[0]) == pitchCount {
+		return weightedPitchSetIndexForX(x, preferences[0])
+	}
 	return int(x * float64(pitchCount))
+}
+
+func weightedPitchSetIndexForX(x float64, preferences []float64) int {
+	total := 0.0
+	for _, preference := range preferences {
+		if preference <= 0 || math.IsNaN(preference) || math.IsInf(preference, 0) {
+			return int(x * float64(len(preferences)))
+		}
+		total += preference
+	}
+	if total <= 0 {
+		return int(x * float64(len(preferences)))
+	}
+
+	threshold := x * total
+	cumulative := 0.0
+	for index, preference := range preferences {
+		cumulative += preference
+		if threshold < cumulative {
+			return index
+		}
+	}
+	return len(preferences) - 1
 }
 
 func uint8sToInts(values []uint8) []int {
