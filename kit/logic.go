@@ -268,13 +268,10 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 		velocitymax = t
 	}
 	globalZ := globalPressureShape(ce.Pos.Z, "sound")
-	patchZMin := patch.GetFloat("sound._controllerzmin")
-	patchZMax := patch.GetFloat("sound._controllerzmax")
 
-	scaledZ := scalePressureRange(globalZ.Scaled, patchZMin, patchZMax)
+	scaledZ := globalZ.Scaled
 	// LogInfo("CursorToVelocity","scaledZ",scaledZ,"ce.Z",ce.Z,"zmin",zmin,"zmax",zmax)
 
-	// Scale cursor Z to controller zmin and zmax
 	v := 0.8 // default and fixed value
 	switch volstyle {
 	case "frets":
@@ -296,8 +293,6 @@ func (logic *PatchLogic) cursorToVelocity(ce CursorEvent) uint8 {
 		"globalZMax", globalZ.ZMax,
 		"globalCurve", globalZ.Curve,
 		"globalScaledZ", globalZ.Scaled,
-		"patchZMin", patchZMin,
-		"patchZMax", patchZMax,
 		"scaledZ", scaledZ,
 		"volstyle", volstyle,
 		"velocitymin", velocitymin,
@@ -316,8 +311,8 @@ func (logic *PatchLogic) generateVisualsFromCursor(ce CursorEvent) {
 func (logic *PatchLogic) cursorToVisualPressure(ce CursorEvent) CursorEvent {
 	patch := logic.patch
 	globalZ := globalPressureShape(ce.Pos.Z, "visual")
-	patchZMin := patch.GetFloat("misc.visualpressurezmin")
-	patchZMax := patch.GetFloat("misc.visualpressurezmax")
+	patchZMin := patch.GetFloat("misc.pressurevisualzmin")
+	patchZMax := patch.GetFloat("misc.pressurevisualzmax")
 	scaledZ := scalePressureRange(globalZ.Scaled, patchZMin, patchZMax)
 	LogOfType("pressure", "Cursor pressure to visual",
 		"patch", patch.Name(),
@@ -639,29 +634,6 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		}
 	}
 }
-
-/*
-func (logic *PatchLogic) generateController(ActiveCursor *ActiveCursor) {
-
-	patch := logic.patch
-	if patch.Get("sound.controllerstyle") == "modulationonly" {
-		zmin := patch.GetFloat("sound._controllerzmin")
-		zmax := patch.GetFloat("sound._controllerzmax")
-		cmin := patch.GetInt("sound._controllermin")
-		cmax := patch.GetInt("sound._controllermax")
-		oldz := ActiveCursor.Previous.Z
-		newz := ActiveCursor.Current.Z
-		// XXX - should put the old controller value in ActiveNote so
-		// it doesn't need to be computed every time
-		oldzc := BoundAndScaleController(oldz, zmin, zmax, cmin, cmax)
-		newzc := BoundAndScaleController(newz, zmin, zmax, cmin, cmax)
-
-		if newzc != 0 && newzc != oldzc {
-			patch.Synth().SendController(1, newzc)
-		}
-	}
-}
-*/
 
 func (logic *PatchLogic) nextQuant(t Clicks, q Clicks) Clicks {
 	return nextQuant(t, q)

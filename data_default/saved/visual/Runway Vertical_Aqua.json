@@ -38,7 +38,6 @@
         "visual.speed":"0.000000",
         "visual.spritesource":"cursor",
         "visual.spritestyle":"hue",
-        "visual.thickness":"10.000000",
-        "visual.zmin":"0.100000"
+        "visual.thickness":"10.000000"
     }
 }

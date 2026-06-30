@@ -35,6 +35,5 @@ IS_SPRITE_PARAM(sizeinitial);
 IS_SPRITE_PARAM(sizetime);
 IS_SPRITE_PARAM(speed);
 IS_SPRITE_PARAM(thickness);
-IS_SPRITE_PARAM(zmin);
 IS_SPRITE_PARAM(nsprites);
 IS_SPRITE_PARAM(smoothxyz);

@@ -35,6 +35,5 @@
 "sizetime",
 "speed",
 "thickness",
-"zmin",
 "nsprites",
 "smoothxyz",

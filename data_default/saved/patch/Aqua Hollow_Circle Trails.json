@@ -109,7 +109,6 @@
         "visual.justification":"center",
         "visual.lifetime":"10.000",
         "visual.luminance":"0.500",
-        "sound.midifile":"jsbach",
         "visual.mirrortype":"none",
         "visual.movedir":"cursor",
         "visual.noisevertexx":"0.000",
@@ -133,10 +132,6 @@
         "sound.synth":"P_07_C_01",
         "visual.thickness":"4.900",
         "sound.velocitymax":"127",
-        "sound.velocitymin":"1",
-        "sound.xcontroller":"3",
-        "sound.ycontroller":"2",
-        "sound.zcontroller":"1",
-        "visual.zmin":"0.004"
+        "sound.velocitymin":"1"
     }
 }

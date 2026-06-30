@@ -88,10 +88,6 @@
         "sound.synth":"P_04_C_03",
         "visual.thickness":"1.903",
         "sound.velocitymax":"127",
-        "sound.velocitymin":"13",
-        "sound.xcontroller":"1",
-        "sound.ycontroller":"1",
-        "sound.zcontroller":"1",
-        "visual.zmin":"0.100"
+        "sound.velocitymin":"13"
     }
 }

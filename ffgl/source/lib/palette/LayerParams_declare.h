@@ -35,6 +35,5 @@ float sizeinitial;
 float sizetime;
 float speed;
 float thickness;
-float zmin;
 int nsprites;
 int smoothxyz;
