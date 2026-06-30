@@ -35,6 +35,5 @@ INIT_PARAM ( sizeinitial , 1.0f );
 INIT_PARAM ( sizetime , 2.0f );
 INIT_PARAM ( speed , 0.1f );
 INIT_PARAM ( thickness , 3.0f );
-INIT_PARAM ( zmin , 0.004f );
 INIT_PARAM ( nsprites , 100 );
 INIT_PARAM ( smoothxyz , 5 );

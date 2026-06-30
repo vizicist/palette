@@ -79,9 +79,6 @@ void Sprite::draw(PaletteDrawer* drawer) {
 		return;
 	}
 
-	if (state.depth < params.zmin ) {
-		state.depth = params.zmin;
-	}
 	float scaled_depth = drawer->scale_z(state.depth);
 	
 	// XXX - this should move into PaletteDrawer, I suspect

@@ -35,6 +35,5 @@ GET_DBL_PARAM(sizeinitial);
 GET_DBL_PARAM(sizetime);
 GET_DBL_PARAM(speed);
 GET_DBL_PARAM(thickness);
-GET_DBL_PARAM(zmin);
 GET_INT_PARAM(nsprites);
 GET_INT_PARAM(smoothxyz);

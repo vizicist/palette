@@ -35,6 +35,5 @@ SET_DBL_PARAM(sizeinitial);
 SET_DBL_PARAM(sizetime);
 SET_DBL_PARAM(speed);
 SET_DBL_PARAM(thickness);
-SET_DBL_PARAM(zmin);
 SET_INT_PARAM(nsprites);
 SET_INT_PARAM(smoothxyz);

@@ -5,9 +5,6 @@
         "sound.pitchmin":"33",
         "sound.synth":"P_03_C_06",
         "sound.velocitymax":"126",
-        "sound.velocitymin":"48",
-        "sound.xcontroller":"3",
-        "sound.ycontroller":"2",
-        "sound.zcontroller":"1"
+        "sound.velocitymin":"48"
     }
 }

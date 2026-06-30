@@ -106,17 +106,12 @@
         "effect.2-twisted":"false",
         "effect.2-twisted:radius":"0.310000",
         "effect.2-twisted:twirl":"0.500000",
-        "sound.chromatic":"false",
         "sound.controllerstyle":"modulationonly",
-        "sound.midifile":"jsbach",
         "sound.pitchmax":"72",
         "sound.pitchmin":"25",
         "sound.synth":"P_09_C_01",
         "sound.velocitymax":"127",
         "sound.velocitymin":"37",
-        "sound.xcontroller":"1",
-        "sound.ycontroller":"1",
-        "sound.zcontroller":"1",
         "visual.alphafinal":"0.001000",
         "visual.alphainitial":"1.000000",
         "visual.alphatime":"5.286000",
@@ -153,7 +148,6 @@
         "visual.smoothxyz":"3",
         "visual.speed":"0.100000",
         "visual.spritesource":"cursor",
-        "visual.thickness":"3.901000",
-        "visual.zmin":"0.004000"
+        "visual.thickness":"3.901000"
     }
 }

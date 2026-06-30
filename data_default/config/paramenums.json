@@ -5,10 +5,8 @@
   "pitchset": [""],
   "mode": ["pro", "bss"],
   "guisize": ["small","medium","palette"],
-  "mmtt": ["kinect", "depthai", ""],
+	"mmtt": ["kinect", "depthai", ""],
 	"destination": [ ".", "A", "B", "C", "D" ],
-	"logic_sound": [ "default", "midigrid" ],
-	"logic_visual": [ "default", "maze", "maze4", "maze33" ],
 	"quantstyle": [ "none", "frets", "fixed", "pressure" ],
 	"volstyle": [ "fixed", "pressure" ],
   "shape": [ "line", "triangle", "square", "circle" ],
@@ -24,11 +22,6 @@
   "placement": [ "random", "linear", "cursor", "top", "bottom", "left", "right" ],
   "spritesource": [ "cursor", "midi", "none" ],
   "spritestyle": [ "hue", "texture" ],
-  "midibehaviour": [
-    "scalecapture",
-    "none",
-    "sprite"
-  ],
   "patch": [
     "A",
     "B",
@@ -71,9 +64,6 @@
     "harminor",
     "melminor",
     "chromatic"
-  ],
-  "inputport": [
-    ""
   ],
   "synth": [
     ""

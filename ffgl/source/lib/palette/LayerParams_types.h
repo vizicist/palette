@@ -6,8 +6,6 @@ DEFINE_TYPES(mode);
 DEFINE_TYPES(guisize);
 DEFINE_TYPES(mmtt);
 DEFINE_TYPES(destination);
-DEFINE_TYPES(logic_sound);
-DEFINE_TYPES(logic_visual);
 DEFINE_TYPES(quantstyle);
 DEFINE_TYPES(volstyle);
 DEFINE_TYPES(shape);
@@ -23,11 +21,9 @@ DEFINE_TYPES(cursorstyle);
 DEFINE_TYPES(placement);
 DEFINE_TYPES(spritesource);
 DEFINE_TYPES(spritestyle);
-DEFINE_TYPES(midibehaviour);
 DEFINE_TYPES(patch);
 DEFINE_TYPES(scale);
 DEFINE_TYPES(enginescale);
-DEFINE_TYPES(inputport);
 DEFINE_TYPES(synth);
 
 void
@@ -78,14 +74,6 @@ LayerParams_InitializeTypes() {
 	LayerParams_destinationTypes.push_back("B");
 	LayerParams_destinationTypes.push_back("C");
 	LayerParams_destinationTypes.push_back("D");
-
-	LayerParams_logic_soundTypes.push_back("default");
-	LayerParams_logic_soundTypes.push_back("midigrid");
-
-	LayerParams_logic_visualTypes.push_back("default");
-	LayerParams_logic_visualTypes.push_back("maze");
-	LayerParams_logic_visualTypes.push_back("maze4");
-	LayerParams_logic_visualTypes.push_back("maze33");
 
 	LayerParams_quantstyleTypes.push_back("none");
 	LayerParams_quantstyleTypes.push_back("frets");
@@ -168,10 +156,6 @@ LayerParams_InitializeTypes() {
 	LayerParams_spritestyleTypes.push_back("hue");
 	LayerParams_spritestyleTypes.push_back("texture");
 
-	LayerParams_midibehaviourTypes.push_back("scalecapture");
-	LayerParams_midibehaviourTypes.push_back("none");
-	LayerParams_midibehaviourTypes.push_back("sprite");
-
 	LayerParams_patchTypes.push_back("A");
 	LayerParams_patchTypes.push_back("B");
 	LayerParams_patchTypes.push_back("C");
@@ -211,8 +195,6 @@ LayerParams_InitializeTypes() {
 	LayerParams_enginescaleTypes.push_back("harminor");
 	LayerParams_enginescaleTypes.push_back("melminor");
 	LayerParams_enginescaleTypes.push_back("chromatic");
-
-	LayerParams_inputportTypes.push_back("");
 
 	LayerParams_synthTypes.push_back("");
 };

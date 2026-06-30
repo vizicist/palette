@@ -109,7 +109,6 @@
         "visual.justification":"center",
         "visual.lifetime":"4.751",
         "visual.luminance":"0.500",
-        "sound.midifile":"microKEY2 Air",
         "visual.mirrortype":"horizontal",
         "visual.movedir":"right",
         "visual.noisevertexx":"0.000",
@@ -133,10 +132,6 @@
         "sound.synth":"P_08_C_03",
         "visual.thickness":"2.836",
         "sound.velocitymax":"111",
-        "sound.velocitymin":"22",
-        "sound.xcontroller":"1",
-        "sound.ycontroller":"1",
-        "sound.zcontroller":"1",
-        "visual.zmin":"0.004"
+        "sound.velocitymin":"22"
     }
 }

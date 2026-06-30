@@ -34,7 +34,6 @@
         "visual.smoothxyz":"3",
         "visual.speed":"0.100",
         "visual.spritesource":"cursor",
-        "visual.thickness":"3.000",
-        "visual.zmin":"0.004"
+        "visual.thickness":"3.000"
     }
 }
