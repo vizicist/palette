@@ -10,14 +10,16 @@ import (
 	"strings"
 )
 
-const minimumMP3DurationSeconds = 10.0
-
 type MP3File struct {
 	Name string `json:"name"`
 	Path string `json:"path"`
 }
 
 func ListMP3Files(dir string) ([]MP3File, error) {
+	return ListMP3FilesWithMinimumDuration(dir, DefaultMinimumMP3DurationSeconds)
+}
+
+func ListMP3FilesWithMinimumDuration(dir string, minimumDurationSeconds float64) ([]MP3File, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -30,7 +32,7 @@ func ListMP3Files(dir string) ([]MP3File, error) {
 		}
 		path := filepath.Join(dir, entry.Name())
 		duration, err := MP3DurationSeconds(path)
-		if err != nil || duration < minimumMP3DurationSeconds {
+		if err != nil || duration < minimumDurationSeconds {
 			continue
 		}
 		files = append(files, MP3File{
@@ -49,7 +51,11 @@ func ChooseRandomPrefixedMP3(dir, prefix string, rng *rand.Rand) (MP3File, error
 }
 
 func ChooseRandomPrefixedMP3Excluding(dir, prefix, excludePath string, rng *rand.Rand) (MP3File, error) {
-	files, err := ListMP3Files(dir)
+	return ChooseRandomPrefixedMP3ExcludingWithMinimumDuration(dir, prefix, excludePath, DefaultMinimumMP3DurationSeconds, rng)
+}
+
+func ChooseRandomPrefixedMP3ExcludingWithMinimumDuration(dir, prefix, excludePath string, minimumDurationSeconds float64, rng *rand.Rand) (MP3File, error) {
+	files, err := ListMP3FilesWithMinimumDuration(dir, minimumDurationSeconds)
 	if err != nil {
 		return MP3File{}, err
 	}
@@ -88,6 +94,10 @@ func normalizePathForCompare(path string) string {
 }
 
 func ResolveMP3File(dir, filename string) (string, error) {
+	return ResolveMP3FileWithMinimumDuration(dir, filename, DefaultMinimumMP3DurationSeconds)
+}
+
+func ResolveMP3FileWithMinimumDuration(dir, filename string, minimumDurationSeconds float64) (string, error) {
 	if filename == "" {
 		return "", errors.New("missing file")
 	}
@@ -110,8 +120,8 @@ func ResolveMP3File(dir, filename string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if duration < minimumMP3DurationSeconds {
-		return "", errors.New("MP3 must be at least 10 seconds long")
+	if duration < minimumDurationSeconds {
+		return "", errors.New("MP3 is shorter than the configured minimum duration")
 	}
 	return candidate, nil
 }

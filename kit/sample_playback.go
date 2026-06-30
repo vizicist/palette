@@ -199,6 +199,10 @@ func (d SamplePlaybackDomain) quant() Clicks {
 }
 
 func (d SamplePlaybackDomain) pitchBendValue(ce CursorEvent) int {
+	return samplePlaybackPitchBendFromCursor(ce)
+}
+
+func samplePlaybackPitchBendFromCursor(ce CursorEvent) int {
 	p := boundValueZeroToOne(ce.Pos.Y)
 	return int(math.Round(p * 16383.0))
 }

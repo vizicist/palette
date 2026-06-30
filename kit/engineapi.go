@@ -623,6 +623,15 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			}
 		}
 
+	case "global.sampleplaybackminmp3seconds":
+		seconds := defaultSamplePlaybackMinimumMP3DurationSecs
+		if GetFloat(value, &seconds) {
+			SetSamplePlaybackServiceMinimumMP3Duration(clampSamplePlaybackMinimumMP3Duration(seconds))
+			if err := ReloadSamplePlaybackServiceSamples(); err != nil {
+				LogWarn("global.sampleplaybackminmp3seconds reload failed", "err", err)
+			}
+		}
+
 	case "global.midithru":
 		theRouter.midithru = IsTrueValue(value)
 

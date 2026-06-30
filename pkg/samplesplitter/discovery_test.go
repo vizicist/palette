@@ -127,6 +127,25 @@ func TestResolveMP3FileRejectsShortMP3(t *testing.T) {
 	}
 }
 
+func TestMinimumMP3DurationCanBeLowered(t *testing.T) {
+	dir := t.TempDir()
+	if err := writeTestMP3(filepath.Join(dir, "short.mp3"), 2); err != nil {
+		t.Fatal(err)
+	}
+
+	files, err := ListMP3FilesWithMinimumDuration(dir, 1.0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := len(files), 1; got != want {
+		t.Fatalf("len(files) = %d, want %d", got, want)
+	}
+
+	if _, err := ResolveMP3FileWithMinimumDuration(dir, "short.mp3", 1.0); err != nil {
+		t.Fatalf("ResolveMP3FileWithMinimumDuration err = %v", err)
+	}
+}
+
 func writeTestMP3(path string, seconds int) error {
 	header := []byte{0xff, 0xfb, 0x90, 0x64}
 	frameLen := 417

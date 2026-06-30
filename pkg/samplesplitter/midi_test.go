@@ -53,6 +53,23 @@ func TestPlanNoteOnMapsLowNotesAcrossSplits(t *testing.T) {
 	}
 }
 
+func TestPlanNoteOnClampsHighNotesToLastSplit(t *testing.T) {
+	state := NewState(DefaultConfig())
+	state.CurrentFile = filepath.Join("mp3s", "one-shot.mp3")
+	state.CueData = &CueData{
+		Duration: 1.5,
+		Splits:   []float64{0},
+	}
+
+	req, err := state.PlanNoteOn(60, 100, 9)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.SplitIndex != 0 {
+		t.Fatalf("SplitIndex = %d, want 0", req.SplitIndex)
+	}
+}
+
 func TestPreviewPitchBendAffectsPlaybackRequest(t *testing.T) {
 	state := NewState(DefaultConfig())
 	state.SetCurrent(filepath.Join("mp3s", "voice.mp3"), CueData{

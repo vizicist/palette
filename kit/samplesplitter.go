@@ -14,8 +14,9 @@ import (
 const samplesplitterPort = 9876
 const samplesplitterMidiPort = "16. Internal MIDI"
 const (
-	defaultSamplePlaybackReverbWet    = 0.0
-	defaultSamplePlaybackReverbLength = ss.DefaultReverbLength
+	defaultSamplePlaybackReverbWet              = 0.0
+	defaultSamplePlaybackReverbLength           = ss.DefaultReverbLength
+	defaultSamplePlaybackMinimumMP3DurationSecs = ss.DefaultMinimumMP3DurationSeconds
 )
 
 var samplePlaybackService struct {
@@ -52,6 +53,7 @@ func StartSamplePlaybackService() error {
 	config.Compressed = samplePlaybackCompressed()
 	config.ReverbWet = samplePlaybackReverbWet()
 	config.ReverbLength = samplePlaybackReverbLength()
+	config.MinimumMP3DurationSeconds = samplePlaybackMinimumMP3Duration()
 	if words, err := samplePlaybackWords(); err == nil {
 		config.DefaultWords = words
 	}
@@ -137,6 +139,21 @@ func clampSamplePlaybackReverbLength(length float64) float64 {
 	return length
 }
 
+func samplePlaybackMinimumMP3Duration() float64 {
+	seconds, err := getSamplePlaybackFloatParam("global.sampleplaybackminmp3seconds", defaultSamplePlaybackMinimumMP3DurationSecs)
+	if err != nil {
+		LogIfError(err)
+	}
+	return clampSamplePlaybackMinimumMP3Duration(seconds)
+}
+
+func clampSamplePlaybackMinimumMP3Duration(seconds float64) float64 {
+	if seconds < 0 {
+		return defaultSamplePlaybackMinimumMP3DurationSecs
+	}
+	return seconds
+}
+
 func clampSamplePlaybackWords(words int) int {
 	if words < 1 {
 		return 1
@@ -177,6 +194,12 @@ func SetSamplePlaybackServiceCompressed(enabled bool) bool {
 func SetSamplePlaybackServiceWords(words int) bool {
 	return withSamplePlaybackService(func(service *ss.Service) {
 		service.SetDefaultWords(words)
+	})
+}
+
+func SetSamplePlaybackServiceMinimumMP3Duration(seconds float64) bool {
+	return withSamplePlaybackService(func(service *ss.Service) {
+		service.SetMinimumMP3Duration(seconds)
 	})
 }
 
