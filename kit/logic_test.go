@@ -3,6 +3,7 @@ package kit
 import (
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 )
 
@@ -88,4 +89,192 @@ func TestLoadPitchSetsConfigDefaultsPreference(t *testing.T) {
 	if len(got) != 2 || got[0] != 1.0 || got[1] != 2.5 {
 		t.Fatalf("preferences[weighted] = %v, want [1 2.5]", got)
 	}
+}
+
+func setupRetriggerLogicTest(t *testing.T) (*PatchLogic, *ActiveCursor, func()) {
+	t.Helper()
+
+	oldParamDefs := ParamDefs
+	oldGlobalParams := GlobalParams
+	oldPatchs := Patchs
+	oldSynths := Synths
+	oldCursorManager := theCursorManager
+	oldScheduler := theScheduler
+	oldEngine := theEngine
+	oldRouter := theRouter
+	oldStepper := theStepper
+	oldLog := theLog
+	oldTempoFactor := TempoFactor
+
+	cleanup := func() {
+		ParamDefs = oldParamDefs
+		GlobalParams = oldGlobalParams
+		Patchs = oldPatchs
+		Synths = oldSynths
+		theCursorManager = oldCursorManager
+		theScheduler = oldScheduler
+		theEngine = oldEngine
+		theRouter = oldRouter
+		theStepper = oldStepper
+		theLog = oldLog
+		TempoFactor = oldTempoFactor
+	}
+
+	InitLog("")
+	InitializeClicks()
+	SetCurrentClick(100)
+	TempoFactor = 1.0
+
+	ParamDefs = map[string]ParamDef{
+		"global.mode": {
+			Category:      "global",
+			Init:          "pro",
+			TypedParamDef: ParamDefString{},
+		},
+		"global.scale": {
+			Category:      "global",
+			Init:          "",
+			TypedParamDef: ParamDefString{},
+		},
+		"global.deltaztrignote": {
+			Category:      "global",
+			Init:          "0.2",
+			TypedParamDef: ParamDefFloat{min: 0, max: 1},
+		},
+		"global.deltaztrigcontroller": {
+			Category:      "global",
+			Init:          "0.02",
+			TypedParamDef: ParamDefFloat{min: 0, max: 1},
+		},
+		"global.deltaytrig": {
+			Category:      "global",
+			Init:          "0.08",
+			TypedParamDef: ParamDefFloat{min: 0, max: 1},
+		},
+		"misc.quantstyle": {
+			Category:      "misc",
+			Init:          "none",
+			TypedParamDef: ParamDefString{},
+		},
+		"misc.scale": {
+			Category:      "misc",
+			Init:          "chromatic",
+			TypedParamDef: ParamDefString{},
+		},
+		"misc.volstyle": {
+			Category:      "misc",
+			Init:          "pressure",
+			TypedParamDef: ParamDefString{},
+		},
+		"sound.pitchset": {
+			Category:      "sound",
+			Init:          "",
+			TypedParamDef: ParamDefString{},
+		},
+		"sound.pitchmin": {
+			Category:      "sound",
+			Init:          "60",
+			TypedParamDef: ParamDefInt{min: 0, max: 127},
+		},
+		"sound.pitchmax": {
+			Category:      "sound",
+			Init:          "60",
+			TypedParamDef: ParamDefInt{min: 0, max: 127},
+		},
+		"sound.velocitymin": {
+			Category:      "sound",
+			Init:          "100",
+			TypedParamDef: ParamDefInt{min: 0, max: 127},
+		},
+		"sound.velocitymax": {
+			Category:      "sound",
+			Init:          "100",
+			TypedParamDef: ParamDefInt{min: 0, max: 127},
+		},
+		"sound.controllerstyle": {
+			Category:      "sound",
+			Init:          "",
+			TypedParamDef: ParamDefString{},
+		},
+		"sound.samplesplitter": {
+			Category:      "sound",
+			Init:          "false",
+			TypedParamDef: ParamDefBool{},
+		},
+		"stepper.route": {
+			Category:      "stepper",
+			Init:          "bidule",
+			TypedParamDef: ParamDefString{},
+		},
+	}
+
+	GlobalParams = NewParamValues()
+	for name, def := range ParamDefs {
+		if def.Category == "global" {
+			if err := GlobalParams.SetParamWithString(name, def.Init); err != nil {
+				cleanup()
+				t.Fatalf("set global param %s: %v", name, err)
+			}
+		}
+	}
+
+	Patchs = map[string]*Patch{}
+	Synths = map[string]*Synth{"": {name: ""}}
+	theCursorManager = NewCursorManager()
+	theScheduler = NewScheduler()
+	theEngine = &Engine{currentPitchOffset: &atomic.Int32{}}
+	theRouter = NewRouter()
+	theStepper = nil
+
+	patch := NewPatch("A")
+	logic := NewPatchLogic(patch)
+	ce := NewCursorEvent(7, "A", "down", CursorPos{X: 0.5, Y: 0.20, Z: 0.5})
+	ac := &ActiveCursor{Current: ce, Previous: ce, Patch: patch}
+	theCursorManager.activeCursors[ce.GID] = ac
+
+	return logic, ac, cleanup
+}
+
+func TestRetriggerUsesAccumulatedYSinceLastNoteOn(t *testing.T) {
+	logic, ac, cleanup := setupRetriggerLogicTest(t)
+	defer cleanup()
+
+	logic.generateSoundFromCursorRetrigger(ac.Current)
+	if got := pendingCountOf[*NoteOn](theScheduler); got != 1 {
+		t.Fatalf("pending NoteOn after down = %d, want 1", got)
+	}
+
+	firstDrag := NewCursorEvent(ac.Current.GID, "A", "drag", CursorPos{X: 0.5, Y: 0.24, Z: 0.5})
+	ac.Previous = ac.Current
+	ac.Current = firstDrag
+	logic.generateSoundFromCursorRetrigger(firstDrag)
+	if got := pendingCountOf[*NoteOn](theScheduler); got != 1 {
+		t.Fatalf("pending NoteOn after small drag = %d, want 1", got)
+	}
+
+	secondDrag := NewCursorEvent(ac.Current.GID, "A", "drag", CursorPos{X: 0.5, Y: 0.29, Z: 0.5})
+	ac.Previous = ac.Current
+	ac.Current = secondDrag
+	logic.generateSoundFromCursorRetrigger(secondDrag)
+	if got := pendingCountOf[*NoteOn](theScheduler); got != 2 {
+		t.Fatalf("pending NoteOn after accumulated Y drag = %d, want 2", got)
+	}
+	if got := pendingCountOf[*NoteOff](theScheduler); got != 1 {
+		t.Fatalf("pending NoteOff after accumulated Y drag = %d, want 1", got)
+	}
+	if ac.NoteOnPos != secondDrag.Pos {
+		t.Fatalf("NoteOnPos = %+v, want %+v", ac.NoteOnPos, secondDrag.Pos)
+	}
+}
+
+func pendingCountOf[T any](sched *Scheduler) int {
+	count := 0
+	sched.pendingMutex.RLock()
+	defer sched.pendingMutex.RUnlock()
+	for _, se := range sched.pendingScheduled {
+		if _, ok := se.Value.(T); ok {
+			count++
+		}
+	}
+	return count
 }
