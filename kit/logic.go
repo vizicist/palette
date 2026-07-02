@@ -601,6 +601,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		}
 		ac.NoteOn = noteOn
 		ac.NoteOnClick = atClick
+		ac.NoteOnPos = ce.Pos
 	case "drag":
 		oldNoteOn := ac.NoteOn
 		if oldNoteOn == nil {
@@ -629,7 +630,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 		deltaztrignote := getGlobalPressureFloat("global.deltaztrignote", 0.2)
 		deltaztrigcontroller := getGlobalPressureFloat("global.deltaztrigcontroller", 0.02)
 
-		deltay := math.Abs(float64(ac.Previous.Pos.Y - ce.Pos.Y))
+		deltay := math.Abs(ac.NoteOnPos.Y - ce.Pos.Y)
 		deltaytrig := getGlobalPressureFloat("global.deltaytrig", 0.08)
 
 		// logic.generateController(ac)
@@ -673,6 +674,7 @@ func (logic *PatchLogic) generateSoundFromCursorRetrigger(ce CursorEvent) {
 			}
 			ac.NoteOn = newNoteOn
 			ac.NoteOnClick = thisClick
+			ac.NoteOnPos = ce.Pos
 		}
 
 	case "up":

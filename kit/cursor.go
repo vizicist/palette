@@ -33,6 +33,7 @@ type ActiveCursor struct {
 	Previous             CursorEvent
 	NoteOn               *NoteOn
 	NoteOnClick          Clicks
+	NoteOnPos            CursorPos
 	Patch                *Patch
 	ActiveSamplePlayback *ActiveSamplePlayback
 	Button               string
@@ -718,6 +719,7 @@ func (cm *CursorManager) StopActiveSoundForTag(tag string, reason string) {
 			noteOffs = append(noteOffs, NewNoteOffFromNoteOn(ac.NoteOn))
 			ac.NoteOn = nil
 			ac.NoteOnClick = 0
+			ac.NoteOnPos = CursorPos{}
 		}
 		if ac.ActiveSamplePlayback != nil {
 			sampleStops = append(sampleStops, struct {
