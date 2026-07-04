@@ -151,16 +151,18 @@ func LogFilePath(nm string) string {
 
 func IsLogging(logtype string) bool {
 
+	// NOTE: any Log* call re-enters this function (appendExtraValues checks
+	// IsLogging("goroutine")), so logging must happen only after the mutex
+	// is released — logging while holding it deadlocks.
 	logMutex.Lock()
-	defer logMutex.Unlock()
-
 	b, ok := LogEnabled[logtype]
+	logMutex.Unlock()
+
 	if !ok {
 		LogIfError(fmt.Errorf("IsLogging: logtype not recognized"), "logtype", logtype)
 		return false
 	}
 	return b
-
 }
 
 func LogIfError(err error, keysAndValues ...any) {
@@ -334,14 +336,17 @@ func SetLogTypes(logtypes string) {
 			if d != "" {
 				d := strings.ToLower(d)
 				LogInfo("Turning logging ON for", "logtype", d)
+				// Update under the lock, but log any error only after
+				// releasing it — Log* re-enters logMutex via IsLogging.
 				logMutex.Lock()
 				_, ok := LogEnabled[d]
-				if !ok {
-					LogIfError(fmt.Errorf("ResetLogTypes: logtype not recognized"), "logtype", d)
-				} else {
+				if ok {
 					LogEnabled[d] = true
 				}
 				logMutex.Unlock()
+				if !ok {
+					LogIfError(fmt.Errorf("SetLogTypes: logtype not recognized"), "logtype", d)
+				}
 			}
 		}
 	}

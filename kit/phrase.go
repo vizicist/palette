@@ -69,9 +69,9 @@ func (pe *PhraseElement) Format(f fmt.State, c rune) {
 	default:
 		valstr = "UNKNOWNTYPE"
 	}
-	final := fmt.Sprintf("(PhraseElement AtClick=%d Value=%s)", pe.AtClick, valstr)
-	// XXX - is there any way that this can fail?
-	_,_ = f.Write([]byte(final))
+	// Write errors to a fmt.State are handled inside the fmt package;
+	// there's nothing useful a Formatter can do with them.
+	fmt.Fprintf(f, "(PhraseElement AtClick=%d Value=%s)", pe.AtClick, valstr)
 }
 
 /*

@@ -1,16 +1,22 @@
+// Per-call API logging is noisy; enable it with ?apidebug=1 in the URL.
+const API_DEBUG = new URLSearchParams(window.location.search).has('apidebug');
+function apiLog(...args) {
+    if (API_DEBUG) console.debug(...args);
+}
+
 export const API = {
     async call(api, params = {}) {
         const body = JSON.stringify({ api, ...params });
-        console.log('API call:', api, body);
+        apiLog('API call:', api, body);
         try {
             const resp = await fetch('/api', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body
             });
-            console.log('API response status:', resp.status);
+            apiLog('API response status:', resp.status);
             const data = await resp.json();
-            console.log('API response data:', data);
+            apiLog('API response data:', data);
             if (data.error) throw new Error(data.error);
             // Result may be a JSON string that needs parsing
             let result = data.result;

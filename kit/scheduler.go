@@ -546,8 +546,9 @@ func (sched *Scheduler) PendingToString() string {
 }
 
 func (sched *Scheduler) Format(f fmt.State, c rune) {
-	s := sched.ToString()
-	_, _ = f.Write([]byte(s)) // XXX - can this ever fail?
+	// Write errors to a fmt.State are handled inside the fmt package;
+	// there's nothing useful a Formatter can do with them.
+	fmt.Fprint(f, sched.ToString())
 }
 
 func (sched *Scheduler) insertScheduleElement(se *SchedElement) {

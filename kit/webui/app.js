@@ -723,7 +723,7 @@ function setupParamControls() {
 
             // Ensure value is a string
             const valueStr = String(newValue);
-            console.log('Setting param:', paramName, '=', valueStr, 'patch:', UIState.currentPatch);
+
 
             try {
                 await setCurrentParam(paramName, valueStr);

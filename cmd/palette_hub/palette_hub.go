@@ -75,7 +75,7 @@ func HubCommand(args []string) (map[string]string, error) {
 		hostname := args[1]
 		result, err := importEngineLog(hostname)
 		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
+			return nil, err
 		}
 		return map[string]string{"result": result}, nil
 	}
@@ -88,7 +88,7 @@ func HubCommand(args []string) (map[string]string, error) {
 		password := args[2]
 		result, err := addPalette(name, password)
 		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
+			return nil, err
 		}
 		return map[string]string{"result": result}, nil
 	}
@@ -97,7 +97,7 @@ func HubCommand(args []string) (map[string]string, error) {
 	// or the Palette env file.
 	err := kit.NatsConnectLocal()
 	if err != nil {
-		return map[string]string{"error": err.Error()}, nil
+		return nil, err
 	}
 
 	switch cmd {
@@ -105,7 +105,7 @@ func HubCommand(args []string) (map[string]string, error) {
 	case "status":
 		streams, err := kit.NatsStreams()
 		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
+			return nil, err
 		}
 		s := fmt.Sprintf("NATS server: connected\nStreams: %d\n", len(streams))
 		for _, stream := range streams {
@@ -116,7 +116,7 @@ func HubCommand(args []string) (map[string]string, error) {
 	case "streams":
 		streams, err := kit.NatsStreams()
 		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
+			return nil, err
 		}
 		s := ""
 		for _, stream := range streams {
@@ -153,7 +153,7 @@ func HubCommand(args []string) (map[string]string, error) {
 			fmt.Println(string(jsonData))
 		})
 		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
+			return nil, err
 		}
 
 		// Wait for Ctrl+C
@@ -208,12 +208,12 @@ func HubCommand(args []string) (map[string]string, error) {
 
 			requestJSON, err := json.Marshal(apiRequest)
 			if err != nil {
-				return map[string]string{"error": err.Error()}, nil
+				return nil, err
 			}
 
 			response, err := kit.EngineNatsAPI(hostname, string(requestJSON), timeout)
 			if err != nil {
-				return map[string]string{"error": fmt.Sprintf("NATS request failed: %v", err)}, nil
+				return nil, fmt.Errorf("NATS request failed: %w", err)
 			}
 
 			// Parse the response to check for errors
@@ -226,7 +226,7 @@ func HubCommand(args []string) (map[string]string, error) {
 
 			// Check if response has an error
 			if errMsg, ok := responseData["error"].(string); ok {
-				return map[string]string{"error": errMsg}, nil
+				return nil, fmt.Errorf("%s", errMsg)
 			}
 
 			// Check if response has a result field with the log entries
@@ -294,7 +294,7 @@ func HubCommand(args []string) (map[string]string, error) {
 			fmt.Println(string(jsonData))
 		})
 		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
+			return nil, err
 		}
 		return map[string]string{"result": ""}, nil
 
@@ -376,7 +376,7 @@ func HubCommand(args []string) (map[string]string, error) {
 
 		})
 		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
+			return nil, err
 		}
 		return map[string]string{"result": ""}, nil
 
@@ -421,7 +421,7 @@ func HubCommand(args []string) (map[string]string, error) {
 			fmt.Println(string(jsonData))
 		})
 		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
+			return nil, err
 		}
 		return map[string]string{"result": ""}, nil
 
@@ -433,7 +433,7 @@ func HubCommand(args []string) (map[string]string, error) {
 
 		err := dumpDays(streamName)
 		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
+			return nil, err
 		}
 		return map[string]string{"result": "Daily dumps completed\n"}, nil
 

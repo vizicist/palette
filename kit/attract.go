@@ -59,28 +59,27 @@ func NewAttractManager() *AttractManager {
 		IdleSecs:             0,
 	}
 
-	var err error
+	// paramFloat/paramInt log (with the param name) and return 0 on error.
+	paramFloat := func(name string) float64 {
+		v, err := GetParamFloat(name)
+		LogIfError(err, "param", name)
+		return v
+	}
+	paramInt := func(name string) int {
+		v, err := GetParamInt(name)
+		LogIfError(err, "param", name)
+		return v
+	}
 
-	am.GestureInterval, err = GetParamFloat("global.attractgestureinterval")
-	LogIfError(err)
-	am.GestureMinLength, err = GetParamFloat("global.attractgestureminlength")
-	LogIfError(err)
-	am.GestureMaxLength, err = GetParamFloat("global.attractgesturemaxlength")
-	LogIfError(err)
-	am.GestureZMin, err = GetParamFloat("global.attractgesturezmin")
-	LogIfError(err)
-	am.GestureZMax, err = GetParamFloat("global.attractgesturezmax")
-	LogIfError(err)
-	am.GestureNumSteps, err = GetParamInt("global.attractgesturenumsteps")
-	LogIfError(err)
-	am.GestureDuration, err = GetParamFloat("global.attractgestureduration")
-	LogIfError(err)
-	am.PresetChangeInterval, err = GetParamFloat("global.attractpresetchangeinterval")
-	LogIfError(err)
-	am.IdleSecs, err = GetParamFloat("global.attractidlesecs")
-	LogIfError(err)
-
-	// am.attractModeIsOn.Store(false) // probably not needed?
+	am.GestureInterval = paramFloat("global.attractgestureinterval")
+	am.GestureMinLength = paramFloat("global.attractgestureminlength")
+	am.GestureMaxLength = paramFloat("global.attractgesturemaxlength")
+	am.GestureZMin = paramFloat("global.attractgesturezmin")
+	am.GestureZMax = paramFloat("global.attractgesturezmax")
+	am.GestureNumSteps = paramInt("global.attractgesturenumsteps")
+	am.GestureDuration = paramFloat("global.attractgestureduration")
+	am.PresetChangeInterval = paramFloat("global.attractpresetchangeinterval")
+	am.IdleSecs = paramFloat("global.attractidlesecs")
 
 	return am
 }
