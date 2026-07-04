@@ -29,14 +29,7 @@ func main() {
 
 	kit.LogInfo("Palette_Hub starting", "args", args)
 
-	apiout, err := HubCommand(args)
-	if err != nil {
-		os.Stdout.WriteString("Error: " + err.Error() + "\n")
-		kit.LogError(err)
-		os.Exit(1)
-	} else {
-		os.Stdout.WriteString(kit.HumanReadableAPIOutput(apiout))
-	}
+	kit.RunCLICommand(args, HubCommand)
 }
 
 func usage() string {

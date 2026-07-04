@@ -155,7 +155,7 @@ func (quad *Quad) Start() {
 	quad.started = true
 
 	buttonPath := ConfigFilePath("buttons.json")
-	if fileExists(buttonPath) {
+	if PathExists(buttonPath) {
 		bytes, err := os.ReadFile(buttonPath)
 		if err != nil {
 			LogError(fmt.Errorf("unable to read buttons.json"), "err", err)

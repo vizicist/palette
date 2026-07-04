@@ -90,9 +90,7 @@ func (am *AttractManager) SetAttractEnabled(b bool) {
 }
 
 func (am *AttractManager) AttractModeIsOn() bool {
-	// am.attractMutex.Lock()
 	isOn := am.attractModeIsOn.Load()
-	// am.attractMutex.Unlock()
 	return isOn && am.attractEnabled
 }
 
@@ -114,8 +112,6 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 
 	LogInfo("setAttractMode", "onoff", onoff)
 
-	//// am.attractMutex.Lock()
-	// am.attractMutex.Lock()
 	am.attractModeIsOn.Store(onoff)
 
 	if theQuad != nil {
@@ -132,7 +128,6 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 
 	go TheBidule().Reset()
 
-	// am.attractMutex.Unlock()
 	am.lastAttractModeChange = time.Now()
 }
 
@@ -141,7 +136,6 @@ func (am *AttractManager) checkAttract() {
 	if !am.attractEnabled {
 		return
 	}
-	//// am.attractMutex.Lock()
 
 	// Every so often we check to see if attract mode should be turned on
 	now := time.Now()
@@ -168,10 +162,7 @@ func (am *AttractManager) checkAttract() {
 
 func (am *AttractManager) doAttractAction() {
 
-	//// am.attractMutex.Lock()
-
 	if !am.attractEnabled || !am.AttractModeIsOn() {
-		//// am.attractMutex.Unlock()
 		return
 	}
 	now := time.Now()
@@ -203,5 +194,4 @@ func (am *AttractManager) doAttractAction() {
 		am.lastAttractPresetChange = now
 	}
 
-	//// am.attractMutex.Unlock()
 }

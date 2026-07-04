@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"unsafe"
 )
@@ -357,15 +358,38 @@ func CloseWindowByTitle(title string) bool {
 	return foundAndClosed
 }
 
+// Window-enumeration state. The EnumWindows callbacks read/write these
+// package-level variables instead of receiving a Go pointer through lParam:
+// passing pointers through uintptr is flagged by go vet, and
+// syscall.NewCallback must only be called a bounded number of times per
+// process (callbacks are never freed), so each callback is created exactly
+// once here. windowEnumMutex serializes the searches that share this state.
+var (
+	windowEnumMutex          sync.Mutex
+	activeWindowSearch       *windowSearchData
+	activeWindowEnum         *windowEnumData
+	searchWindowCallbackOnce sync.Once
+	searchWindowCallbackPtr  uintptr
+	enumWindowsCallbackOnce  sync.Once
+	enumWindowsCallbackPtr   uintptr
+)
+
 // FindWindowByTitleContains returns true if any visible window's title contains the given substring.
 func FindWindowByTitleContains(substring string) bool {
-	data := &windowSearchData{
+	windowEnumMutex.Lock()
+	defer windowEnumMutex.Unlock()
+
+	activeWindowSearch = &windowSearchData{
 		substring: strings.ToLower(substring),
 		found:     false,
 	}
-	callback := syscall.NewCallback(searchWindowCallback)
-	enumWindows.Call(callback, uintptr(unsafe.Pointer(data)))
-	return data.found
+	searchWindowCallbackOnce.Do(func() {
+		searchWindowCallbackPtr = syscall.NewCallback(searchWindowCallback)
+	})
+	enumWindows.Call(searchWindowCallbackPtr, 0)
+	found := activeWindowSearch.found
+	activeWindowSearch = nil
+	return found
 }
 
 type windowSearchData struct {
@@ -374,7 +398,10 @@ type windowSearchData struct {
 }
 
 func searchWindowCallback(hwnd uintptr, lParam uintptr) uintptr {
-	data := (*windowSearchData)(unsafe.Pointer(lParam))
+	data := activeWindowSearch
+	if data == nil {
+		return 0 // shouldn't happen; stop enumeration
+	}
 
 	visible, _, _ := isWindowVisible.Call(hwnd)
 	if visible == 0 {
@@ -401,22 +428,32 @@ type windowEnumData struct {
 
 // getMainWindowForProcess finds the main window for a process with matching title
 func getMainWindowForProcess(pid uint32, expectedTitle string) uintptr {
-	data := &windowEnumData{
+	windowEnumMutex.Lock()
+	defer windowEnumMutex.Unlock()
+
+	activeWindowEnum = &windowEnumData{
 		targetPID:     pid,
 		expectedTitle: expectedTitle,
 		foundHwnd:     0,
 	}
 
 	// EnumWindows enumerates all top-level windows
-	callback := syscall.NewCallback(enumWindowsCallback)
-	enumWindows.Call(callback, uintptr(unsafe.Pointer(data)))
+	enumWindowsCallbackOnce.Do(func() {
+		enumWindowsCallbackPtr = syscall.NewCallback(enumWindowsCallback)
+	})
+	enumWindows.Call(enumWindowsCallbackPtr, 0)
 
-	return data.foundHwnd
+	foundHwnd := activeWindowEnum.foundHwnd
+	activeWindowEnum = nil
+	return foundHwnd
 }
 
 // enumWindowsCallback is called for each window by EnumWindows
 func enumWindowsCallback(hwnd uintptr, lParam uintptr) uintptr {
-	data := (*windowEnumData)(unsafe.Pointer(lParam))
+	data := activeWindowEnum
+	if data == nil {
+		return 0 // shouldn't happen; stop enumeration
+	}
 
 	// Check if window is visible
 	visible, _, _ := isWindowVisible.Call(hwnd)

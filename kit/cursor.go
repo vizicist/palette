@@ -202,34 +202,38 @@ func (cm *CursorManager) clearActiveCursors(tag string, checkDelay Clicks) {
 	gidsToDelete := []int{}
 	cursorUpEvents := []CursorEvent{}
 
-	cm.activeMutex.Lock()
+	// Collect under the lock (via a closure so a panic can't wedge the mutex),
+	// then execute the up-events after unlocking, since ExecuteCursorEvent
+	// re-enters locking code.
+	func() {
+		cm.activeMutex.Lock()
+		defer cm.activeMutex.Unlock()
 
-	for gid, ac := range cm.activeCursors {
+		for gid, ac := range cm.activeCursors {
 
-		if tag != "*" && ac.Current.Tag != tag {
-			continue
+			if tag != "*" && ac.Current.Tag != tag {
+				continue
+			}
+
+			theCursorManager.ClickMutex.Lock()
+			acCurrentCe := ac.Current
+			theCursorManager.ClickMutex.Unlock()
+
+			elapsed := currentClick - acCurrentCe.GetClick()
+			if elapsed < checkDelay {
+				continue
+			}
+
+			ceUp := ac.Current
+			ceUp.SetClick(currentClick)
+			ceUp.Ddu = "up"
+
+			LogOfType("cursor", "Clearing Activecursor", "gid", gid)
+
+			cursorUpEvents = append(cursorUpEvents, ceUp)
+			gidsToDelete = append(gidsToDelete, gid)
 		}
-
-		theCursorManager.ClickMutex.Lock()
-		acCurrentCe := ac.Current
-		theCursorManager.ClickMutex.Unlock()
-
-		elapsed := currentClick - acCurrentCe.GetClick()
-		if elapsed < checkDelay {
-			continue
-		}
-
-		ceUp := ac.Current
-		ceUp.SetClick(currentClick)
-		ceUp.Ddu = "up"
-
-		LogOfType("cursor", "Clearing Activecursor", "gid", gid)
-
-		cursorUpEvents = append(cursorUpEvents, ceUp)
-		gidsToDelete = append(gidsToDelete, gid)
-	}
-
-	cm.activeMutex.Unlock()
+	}()
 
 	for _, ce := range cursorUpEvents {
 		cm.ExecuteCursorEvent(ce)
@@ -597,15 +601,13 @@ func (cm *CursorManager) LoopCursorEvent(ac *ActiveCursor) *SchedElement {
 
 func (cm *CursorManager) DeleteActiveCursor(gid int) {
 	cm.activeMutex.Lock()
-	// LogInfo("NEW DELETEACTIVECURSOR gid","gid",gid)
 	ac, ok := cm.activeCursors[gid]
-	if !ok {
-		// LogWarn("DeleteActiveCursor: gid not found in ActiveCursor", "gid", gid)
-	} else {
+	if ok {
 		delete(cm.activeCursors, gid)
 	}
 	cm.activeMutex.Unlock()
 
+	// cleanup happens after unlocking; it re-enters locking code
 	if ok {
 		cleanupDeletedActiveCursor(ac, "DeleteActiveCursor")
 	}
@@ -616,30 +618,35 @@ func (cm *CursorManager) DeleteActiveCursorIfZLessThan(gid int, threshold float6
 
 	// LogInfo("BEGIN DeleteActiveCursorIfZ 1", "gid", gid,"sched", theScheduler.ToString())
 
-	cm.activeMutex.Lock()
-	ac, ok := cm.activeCursors[gid]
+	var ac *ActiveCursor
 	var loopAc *ActiveCursor
 	loopGID := 0
-	if !ok {
-		// LogWarn("DeleteActiveCursor: gid not found in ActiveCursor", "gid", gid)
-	} else {
-		// LogInfo("DeleteActiveCursorIfZLessThan", "gid", gid, "threshold", threshold, "ac.maxZ", ac.maxZ)
-		LogOfType("cursor", "DeleteActiveCursorIfZLessThan", "maxZ", ac.maxZ, "threshold", threshold, "gid", ac.Current.GID)
-		if ac.maxZ < threshold {
-			// we want to remove things that this ActiveCursor has created for looping.
-			loopGID = cm.LoopedGIDFor(ac.Current, false /*don't warn*/)
-			if loopGID == 0 {
-				LogWarn("HEY!!! in DeleteActiveCursorIfZLessThan LoopedGidFor returns 0?")
-			} else {
-				LogOfType("cursor", "DeleteActiveCursorIfZLessThan deleting!!", "loopGid", loopGID)
-				loopAc = cm.activeCursors[loopGID]
-				delete(cm.activeCursors, gid)
-				delete(cm.activeCursors, loopGID)
-				// LogInfo("DeleteActiveCursorIfZLessThan REMOVING", "loopGid", loopGid, "gid", gid, "ac.maxZ", ac.maxZ, "gid", gid)
-			}
+	// Collect/delete under the lock (closure so a panic can't wedge the
+	// mutex); the noteoff handling below runs after unlocking.
+	func() {
+		cm.activeMutex.Lock()
+		defer cm.activeMutex.Unlock()
+
+		var ok bool
+		ac, ok = cm.activeCursors[gid]
+		if !ok {
+			return
 		}
-	}
-	cm.activeMutex.Unlock()
+		LogOfType("cursor", "DeleteActiveCursorIfZLessThan", "maxZ", ac.maxZ, "threshold", threshold, "gid", ac.Current.GID)
+		if ac.maxZ >= threshold {
+			return
+		}
+		// we want to remove things that this ActiveCursor has created for looping.
+		loopGID = cm.LoopedGIDFor(ac.Current, false /*don't warn*/)
+		if loopGID == 0 {
+			LogWarn("HEY!!! in DeleteActiveCursorIfZLessThan LoopedGidFor returns 0?")
+		} else {
+			LogOfType("cursor", "DeleteActiveCursorIfZLessThan deleting!!", "loopGid", loopGID)
+			loopAc = cm.activeCursors[loopGID]
+			delete(cm.activeCursors, gid)
+			delete(cm.activeCursors, loopGID)
+		}
+	}()
 
 	if loopGID == 0 {
 		return

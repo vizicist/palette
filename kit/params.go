@@ -919,7 +919,7 @@ func OverrideMap() ParamsMap {
 	if overrideMap == nil {
 		// If there's a _override.json file, use it
 		overridepath := ConfigFilePath("paramoverrides.json")
-		if fileExists(overridepath) {
+		if PathExists(overridepath) {
 			LogOfType("params", "Reading Overridemap", "overridepath", overridepath)
 			m, err := LoadParamsMapFromPath(overridepath)
 			if err != nil {

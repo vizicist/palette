@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 
 	twitch "github.com/gempir/go-twitch-irc/v3"
@@ -25,11 +24,11 @@ func main() {
 
 func StartTwitch() error {
 
-	clientUserName := os.Getenv("TWITCH_USER")
+	clientUserName := kit.EnvLookup("TWITCH_USER")
 	if clientUserName == "" {
 		return fmt.Errorf("StartTwitch: TWITCH_USER not set")
 	}
-	clientAuthenticationToken := os.Getenv("TWITCH_TOKEN")
+	clientAuthenticationToken := kit.EnvLookup("TWITCH_TOKEN")
 	if clientAuthenticationToken == "" {
 		return fmt.Errorf("StartTwitch: TWITCH_TOKEN not set")
 	}

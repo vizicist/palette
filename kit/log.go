@@ -309,22 +309,6 @@ func LogTypeNames() []string {
 	return names
 }
 
-/*
-func SetLogTypeEnabled(dtype string, b bool) {
-
-	LogMutex.Lock()
-	defer LogMutex.Unlock()
-
-	d := strings.ToLower(dtype)
-	_, ok := LogEnabled[d]
-	if !ok {
-		LogIfError(fmt.Errorf("SetLogTypeEnabled: logtype not recognized"), "logtype", d)
-		return
-	}
-	LogEnabled[d] = b
-}
-*/
-
 func InitLogTypes() {
 	logtypes := os.Getenv("PALETTE_LOGTYPES")
 	if logtypes == "" {

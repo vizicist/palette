@@ -64,15 +64,15 @@ func InitKit() {
 	theRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-// fileExists checks if a file exists
-func fileExists(filename string) bool {
-	_, err := os.Stat(filename)
+// PathExists returns true if path exists, whether it's a file or a directory.
+// Compare FileExists, which is true only for regular files.
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return false
+		if !os.IsNotExist(err) {
+			// complain but still act as if it doesn't exist
+			LogIfError(err)
 		}
-		// complain but still act as if it doesn't exist
-		LogIfError(err)
 		return false
 	}
 	return true
@@ -150,7 +150,7 @@ func findPaletteRoot(start string) string {
 
 func isPaletteRoot(dir string) bool {
 	return FileExists(filepath.Join(dir, "VERSION")) &&
-		(fileExists(filepath.Join(dir, "data_default")) || fileExists(filepath.Join(dir, "bin")))
+		(PathExists(filepath.Join(dir, "data_default")) || PathExists(filepath.Join(dir, "bin")))
 }
 
 func GetPaletteVersion() string {
@@ -251,12 +251,18 @@ func EnvLookup(key string) string {
 	return os.Getenv(key)
 }
 
-func FileExists(filepath string) bool {
-	fileinfo, err := os.Stat(filepath)
-	if os.IsNotExist(err) {
+// FileExists returns true if path exists and is a regular file (not a
+// directory). Any stat error — not just not-exist — is treated as "doesn't
+// exist" rather than dereferencing a nil FileInfo.
+func FileExists(path string) bool {
+	fileinfo, err := os.Stat(path)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			// complain but still act as if it doesn't exist
+			LogIfError(err)
+		}
 		return false
 	}
-	// Return false if the fileinfo says the file path is a directory.
 	return !fileinfo.IsDir()
 }
 

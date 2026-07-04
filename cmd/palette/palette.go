@@ -52,13 +52,7 @@ func main() {
 
 	kit.LogInfo("Palette InitLog", "args", args, "natsTarget", natsTarget)
 
-	apiout, err := CliCommand(args)
-	if err != nil {
-		os.Stdout.WriteString("Error: " + err.Error() + "\n")
-		kit.LogError(err)
-	} else {
-		os.Stdout.WriteString(kit.HumanReadableAPIOutput(apiout))
-	}
+	kit.RunCLICommand(args, CliCommand)
 }
 
 func usage() string {
@@ -127,6 +121,44 @@ func NatsEngineAPI(api string, args ...string) (map[string]string, error) {
 	return output, nil
 }
 
+// cliHandler is one top-level CLI command. args includes the command name
+// itself (args[0]). Handlers return (nil, err) on failure — never a
+// map with an "error" key — so main() can exit non-zero consistently.
+type cliHandler func(args []string) (map[string]string, error)
+
+// cliHandlers dispatches the first CLI argument to its handler.
+// Anything not in this table falls through to the {plugin}.{api} engine form.
+// Populated in init() rather than a var initializer because cmdRestart
+// re-enters CliCommand, which would otherwise be an initialization cycle.
+var cliHandlers map[string]cliHandler
+
+func init() {
+	cliHandlers = map[string]cliHandler{
+		"status":             cmdStatus,
+		"restart":            cmdRestart,
+		"osc":                cmdOsc,
+		"get":                cmdGetBoot,
+		"getboot":            cmdGetBoot,
+		"patchget":           cmdPatchGet,
+		"patchset":           cmdPatchSet,
+		"record":             cmdRecord,
+		"set":                cmdSetBoot,
+		"setboot":            cmdSetBoot,
+		"setbootfromcurrent": cmdSetBootFromCurrent, // secret?
+		"env":                cmdEnv,
+		"start":              cmdStart,
+		"stop":               cmdStop,
+		"activate":           cmdActivate,
+		"version":            cmdVersion,
+		"mmtt":               cmdMmtt,
+		"log":                cmdLog,
+		"logs":               cmdLog,
+		"test":               cmdTest,
+		"obs":                cmdObs,
+		"hub":                cmdHub,
+	}
+}
+
 func CliCommand(args []string) (map[string]string, error) {
 
 	if len(args) == 0 {
@@ -134,345 +166,357 @@ func CliCommand(args []string) (map[string]string, error) {
 	}
 
 	api := args[0]
-	var arg1 string
-	if len(args) > 1 {
-		arg1 = args[1]
+	if handler, ok := cliHandlers[api]; ok {
+		return handler(args)
 	}
 
+	// Not a built-in command: treat it as a {plugin}.{api} engine call.
 	words := strings.Split(api, ".")
+	if len(words) < 2 {
+		return nil, fmt.Errorf("unrecognized command (%s), expected usage:\n%s", api, usage())
+	} else if len(words) > 2 {
+		return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}\n%s", usage())
+	}
+	return EngineAPI(api, args[1:]...)
+}
 
-	switch api {
+// cliArg1 returns args[1] or "" — the optional subcommand argument.
+func cliArg1(args []string) string {
+	if len(args) > 1 {
+		return args[1]
+	}
+	return ""
+}
 
-	case "status":
-		s, nrunning := StatusOutput()
-		if nrunning == 0 {
-			s = "No palette processes are running."
-		}
-		out := map[string]string{"result": s}
-		return out, nil
+func cmdStatus(args []string) (map[string]string, error) {
+	s, nrunning := StatusOutput()
+	if nrunning == 0 {
+		s = "No palette processes are running."
+	}
+	return map[string]string{"result": s}, nil
+}
 
-	case "restart":
-		_, err := CliCommand([]string{"stop"})
-		if err != nil {
-			return nil, err
-		}
-		_, err = CliCommand([]string{"start"})
-		if err != nil {
-			return nil, err
-		}
-		out := map[string]string{"result": "RESTARTED"}
-		return out, nil
+func cmdRestart(args []string) (map[string]string, error) {
+	_, err := CliCommand([]string{"stop"})
+	if err != nil {
+		return nil, err
+	}
+	_, err = CliCommand([]string{"start"})
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{"result": "RESTARTED"}, nil
+}
 
-	// case "api":
-	// 	return kit.EngineAPI(arg1, args[2:])
+func cmdOsc(args []string) (map[string]string, error) {
+	arg1 := cliArg1(args)
+	switch arg1 {
 
-	case "osc":
-
-		switch arg1 {
-
-		case "listen":
-			if len(args) < 3 {
-				return nil, fmt.Errorf("bad osc command (%s), expected usage:\n%s", arg1, usage())
-			}
-			port, host, err := getPortHost(args[2])
-			if err != nil {
-				return nil, err
-			}
-			fmt.Printf("Listening on %d@%s ...\n", port, host)
-			ListenAndPrint(host, port)
-			return nil, nil
-
-		case "send":
-			if len(args) < 3 {
-				return nil, fmt.Errorf("bad osc command (%s), expected usage:\n%s", arg1, usage())
-			}
-			port, host, err := getPortHost(args[2])
-			if err != nil {
-				return nil, err
-			}
-			fmt.Printf("porthost = %d@%s\n", port, host)
-			client := osc.NewClient(host, port)
-			msg := osc.NewMessage(args[3]) // addr
-			for _, val := range args[4:] { // remaining values
-				s := fmt.Sprintf("%v", val)
-				msg.Append(s) // always append as a string
-			}
-			err = client.Send(msg)
-			if err != nil {
-				return nil, fmt.Errorf("client.Send, err=%s", err.Error())
-			}
-			return nil, nil
-
-		default:
+	case "listen":
+		if len(args) < 3 {
 			return nil, fmt.Errorf("bad osc command (%s), expected usage:\n%s", arg1, usage())
 		}
-
-	case "get", "getboot":
-		if len(args) > 2 {
-			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
-		}
-		name := ""
-		if len(args) == 2 {
-			name = args[1]
-		}
-		// Use the ...withprefix apis to get all matching parameters
-		return EngineAPI("global."+api+"withprefix", "name", name)
-
-	case "patchget":
-		if len(args) < 2 || len(args) > 3 {
-			return nil, fmt.Errorf("bad patchget command, expected usage:\n%s", usage())
-		}
-		category := ""
-		if len(args) == 3 {
-			category = args[2]
-		}
-		if args[1] == "*" {
-			result := strings.Builder{}
-			for _, patchName := range []string{"A", "B", "C", "D"} {
-				if result.Len() > 0 {
-					result.WriteString("\n")
-				}
-				patchResult, err := patchGetOutput(patchName, category)
-				if err != nil {
-					return nil, err
-				}
-				result.WriteString(patchResult)
-			}
-			return map[string]string{"result": strings.TrimSuffix(result.String(), "\n")}, nil
-		}
-		result, err := patchGetOutput(args[1], category)
+		port, host, err := getPortHost(args[2])
 		if err != nil {
 			return nil, err
 		}
-		return map[string]string{"result": result}, nil
-
-	case "patchset":
-		if len(args) != 4 {
-			return nil, fmt.Errorf("bad patchset command, expected usage:\n%s", usage())
-		}
-		if args[1] == "*" {
-			for _, patchName := range []string{"A", "B", "C", "D"} {
-				_, err := EngineAPI("patch.set", "patch", patchName, "name", args[2], "value", args[3])
-				if err != nil {
-					return nil, err
-				}
-			}
-			return map[string]string{"result": ""}, nil
-		}
-		return EngineAPI("patch.set", "patch", args[1], "name", args[2], "value", args[3])
-
-	case "record":
-		if len(args) < 2 {
-			return nil, fmt.Errorf("bad record command, expected start|stop|list\n%s", usage())
-		}
-		switch args[1] {
-		case "start":
-			res, err := EngineAPI("global.obsrecord")
-			if err != nil {
-				return nil, err
-			}
-			return map[string]string{"result": formatRecordStatus(res["result"], "started")}, nil
-		case "stop":
-			res, err := EngineAPI("global.obsrecordstop")
-			if err != nil {
-				return nil, err
-			}
-			return map[string]string{"result": formatRecordStatus(res["result"], "stopped")}, nil
-		case "list":
-			res, err := EngineAPI("global.obsrecordlist")
-			if err != nil {
-				return nil, err
-			}
-			return map[string]string{"result": formatRecordList(res["result"])}, nil
-		default:
-			return nil, fmt.Errorf("bad record command (%s), expected start|stop|list\n%s", args[1], usage())
-		}
-
-	case "set", "setboot":
-		if len(args) != 3 {
-			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
-		}
-		return EngineAPI("global."+api, "name", args[1], "value", args[2])
-
-	case "setbootfromcurrent": // secret?
-		return EngineAPI("global." + api)
-
-	case "env":
-		path := kit.EnvFilePath()
-		myenv, err := godotenv.Read(path)
-		if err != nil {
-			myenv = make(map[string]string)
-		}
-		if arg1 == "" {
-			s := ""
-			for k, v := range myenv {
-				s = s + k + "=" + v + "\n"
-			}
-			return map[string]string{"result": s}, nil
-		}
-		switch args[1] {
-		case "set":
-			if len(args) < 4 {
-				return nil, fmt.Errorf("not enough arguments to env command")
-			}
-			myenv[args[2]] = args[3]
-			err = godotenv.Write(myenv, path)
-			if err != nil {
-				kit.LogError(err)
-				return map[string]string{"error": err.Error()}, nil
-			} else {
-				s := args[2] + "=" + args[3] + "\n"
-				return map[string]string{"result": s}, nil
-			}
-		case "get":
-			if len(args) < 3 {
-				return nil, fmt.Errorf("not enough arguments to env command")
-			}
-			// Show the effective value: the env file (.palette/.env) if set,
-			// otherwise the OS environment variable of the same name.
-			gotten := kit.EnvLookup(args[2])
-			if gotten == "" {
-				return map[string]string{"error": "No value"}, nil
-			}
-			return map[string]string{"result": gotten}, nil
-		default:
-			return nil, fmt.Errorf("unknown env subcommand - %s", arg1)
-		}
-
-	case "start":
-
-		switch arg1 {
-
-		case "", "monitor":
-			return nil, doStartMonitor()
-
-		case "engine":
-			return nil, doStartEngine("")
-
-		case "engineonly":
-			return nil, doStartEngine("engineonly")
-
-		default:
-			// Only the monitor and engine are started directly by palette.
-			// The monitor will restart the engine if it dies, and
-			// the engine will restart any processes specified in global.process.*.
-			for _, process := range kit.ProcessList() {
-				if arg1 == process {
-					param := "global.process." + arg1
-					return EngineAPI("global.set", "name", param, "value", "true")
-				}
-			}
-			return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
-		}
-
-	case "stop":
-
-		switch arg1 {
-
-		case "", "all":
-			kit.LogInfo("Palette kill is killing everything including monitor.")
-			kit.KillExecutable(kit.MonitorExe)
-			kit.KillAllExceptMonitor()
-			return nil, nil
-
-		case "monitor":
-			kit.KillExecutable(kit.MonitorExe)
-			return nil, nil
-
-		case "engine":
-			// Don't use kit.exit API, just kill it
-			kit.KillExecutable(kit.EngineExe)
-			return nil, nil
-
-		default:
-			// Individual processes are stopped by setting global.process.* to false.
-			// If the engine isn't running, this will fail.  Use stop all as last resort.
-			param := "global.process." + arg1
-			return EngineAPI("global.set", "name", param, "value", "false")
-		}
-
-	case "activate":
-		if len(args) > 2 {
-			return nil, fmt.Errorf("bad activate command, expected usage:\n%s", usage())
-		}
-		process := arg1
-		if process == "" {
-			process = "resolume"
-		}
-		return EngineAPI("global.activate", "process", process)
-
-	case "version":
-		s := kit.GetPaletteVersion()
-		return map[string]string{"result": s}, nil
-
-	case "mmtt":
-		switch arg1 {
-		case "align":
-			return kit.MmttAPI("align_start")
-		default:
-			return nil, fmt.Errorf("unknown mmtt command - %s", arg1)
-		}
-
-	case "log", "logs":
-		switch arg1 {
-		case "archive":
-			// Make sure nothing is running.
-			statusOut, nrunning := StatusOutput()
-			if nrunning > 0 {
-				return nil, fmt.Errorf("cannot archive logs while these processes are running:\n%s", statusOut)
-			}
-			return nil, kit.ArchiveLogs()
-		case "clear":
-			return nil, kit.ClearLogs()
-			// case "tail":
-			// 	return nil, kit.TailLogs()
-		case "types":
-			return map[string]string{"result": strings.Join(kit.LogTypeNames(), "\n")}, nil
-		}
-		return nil, fmt.Errorf("invalid log command: %s", arg1)
-
-	case "test":
-		switch arg1 {
-		case "":
-			return EngineAPI("quad.test", "ntimes", "40")
-		case "long":
-			return EngineAPI("quad.test", "ntimes", "400")
-		case "center":
-			return EngineAPI("quad.test", "ntimes", "1000", "testtype", "center")
-		default:
-			return nil, fmt.Errorf("unknown test type - %s", arg1)
-		}
-
-	case "obs":
-		kit.LogInfo("palette: obs command")
-		err := kit.ObsCommand(arg1)
-		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
-		}
-		// return map[string]string{"result": ""}, nil
+		fmt.Printf("Listening on %d@%s ...\n", port, host)
+		ListenAndPrint(host, port)
 		return nil, nil
 
-	case "hub":
-		// Delegate to palette_hub executable with remaining arguments
-		hubArgs := args[1:] // everything after "hub"
-		cmd := exec.Command("palette_hub", hubArgs...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Stdin = os.Stdin
-		err := cmd.Run()
-		if err != nil {
-			return map[string]string{"error": err.Error()}, nil
+	case "send":
+		if len(args) < 3 {
+			return nil, fmt.Errorf("bad osc command (%s), expected usage:\n%s", arg1, usage())
 		}
-		return map[string]string{"result": ""}, nil
+		port, host, err := getPortHost(args[2])
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("porthost = %d@%s\n", port, host)
+		client := osc.NewClient(host, port)
+		msg := osc.NewMessage(args[3]) // addr
+		for _, val := range args[4:] { // remaining values
+			s := fmt.Sprintf("%v", val)
+			msg.Append(s) // always append as a string
+		}
+		err = client.Send(msg)
+		if err != nil {
+			return nil, fmt.Errorf("client.Send, err=%s", err.Error())
+		}
+		return nil, nil
 
 	default:
-		if len(words) < 2 {
-			return nil, fmt.Errorf("unrecognized command (%s), expected usage:\n%s", api, usage())
-		} else if len(words) > 2 {
-			return nil, fmt.Errorf("invalid api format, expecting {plugin}.{api}\n%s", usage())
-		}
-		return EngineAPI(api, args[1:]...)
+		return nil, fmt.Errorf("bad osc command (%s), expected usage:\n%s", arg1, usage())
 	}
+}
+
+func cmdGetBoot(args []string) (map[string]string, error) {
+	if len(args) > 2 {
+		return nil, fmt.Errorf("bad %s command, expected usage:\n%s", args[0], usage())
+	}
+	name := ""
+	if len(args) == 2 {
+		name = args[1]
+	}
+	// Use the ...withprefix apis to get all matching parameters
+	return EngineAPI("global."+args[0]+"withprefix", "name", name)
+}
+
+func cmdPatchGet(args []string) (map[string]string, error) {
+	if len(args) < 2 || len(args) > 3 {
+		return nil, fmt.Errorf("bad patchget command, expected usage:\n%s", usage())
+	}
+	category := ""
+	if len(args) == 3 {
+		category = args[2]
+	}
+	if args[1] == "*" {
+		result := strings.Builder{}
+		for _, patchName := range []string{"A", "B", "C", "D"} {
+			if result.Len() > 0 {
+				result.WriteString("\n")
+			}
+			patchResult, err := patchGetOutput(patchName, category)
+			if err != nil {
+				return nil, err
+			}
+			result.WriteString(patchResult)
+		}
+		return map[string]string{"result": strings.TrimSuffix(result.String(), "\n")}, nil
+	}
+	result, err := patchGetOutput(args[1], category)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{"result": result}, nil
+}
+
+func cmdPatchSet(args []string) (map[string]string, error) {
+	if len(args) != 4 {
+		return nil, fmt.Errorf("bad patchset command, expected usage:\n%s", usage())
+	}
+	if args[1] == "*" {
+		for _, patchName := range []string{"A", "B", "C", "D"} {
+			_, err := EngineAPI("patch.set", "patch", patchName, "name", args[2], "value", args[3])
+			if err != nil {
+				return nil, err
+			}
+		}
+		return map[string]string{"result": ""}, nil
+	}
+	return EngineAPI("patch.set", "patch", args[1], "name", args[2], "value", args[3])
+}
+
+func cmdRecord(args []string) (map[string]string, error) {
+	if len(args) < 2 {
+		return nil, fmt.Errorf("bad record command, expected start|stop|list\n%s", usage())
+	}
+	switch args[1] {
+	case "start":
+		res, err := EngineAPI("global.obsrecord")
+		if err != nil {
+			return nil, err
+		}
+		return map[string]string{"result": formatRecordStatus(res["result"], "started")}, nil
+	case "stop":
+		res, err := EngineAPI("global.obsrecordstop")
+		if err != nil {
+			return nil, err
+		}
+		return map[string]string{"result": formatRecordStatus(res["result"], "stopped")}, nil
+	case "list":
+		res, err := EngineAPI("global.obsrecordlist")
+		if err != nil {
+			return nil, err
+		}
+		return map[string]string{"result": formatRecordList(res["result"])}, nil
+	default:
+		return nil, fmt.Errorf("bad record command (%s), expected start|stop|list\n%s", args[1], usage())
+	}
+}
+
+func cmdSetBoot(args []string) (map[string]string, error) {
+	if len(args) != 3 {
+		return nil, fmt.Errorf("bad %s command, expected usage:\n%s", args[0], usage())
+	}
+	return EngineAPI("global."+args[0], "name", args[1], "value", args[2])
+}
+
+func cmdSetBootFromCurrent(args []string) (map[string]string, error) {
+	return EngineAPI("global." + args[0])
+}
+
+func cmdEnv(args []string) (map[string]string, error) {
+	arg1 := cliArg1(args)
+	path := kit.EnvFilePath()
+	myenv, err := godotenv.Read(path)
+	if err != nil {
+		myenv = make(map[string]string)
+	}
+	if arg1 == "" {
+		s := ""
+		for k, v := range myenv {
+			s = s + k + "=" + v + "\n"
+		}
+		return map[string]string{"result": s}, nil
+	}
+	switch arg1 {
+	case "set":
+		if len(args) < 4 {
+			return nil, fmt.Errorf("not enough arguments to env command")
+		}
+		myenv[args[2]] = args[3]
+		err = godotenv.Write(myenv, path)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]string{"result": args[2] + "=" + args[3] + "\n"}, nil
+	case "get":
+		if len(args) < 3 {
+			return nil, fmt.Errorf("not enough arguments to env command")
+		}
+		// Show the effective value: the env file (.palette/.env) if set,
+		// otherwise the OS environment variable of the same name.
+		gotten := kit.EnvLookup(args[2])
+		if gotten == "" {
+			return nil, fmt.Errorf("no value for %s", args[2])
+		}
+		return map[string]string{"result": gotten}, nil
+	default:
+		return nil, fmt.Errorf("unknown env subcommand - %s", arg1)
+	}
+}
+
+func cmdStart(args []string) (map[string]string, error) {
+	arg1 := cliArg1(args)
+	switch arg1 {
+
+	case "", "monitor":
+		return nil, doStartMonitor()
+
+	case "engine":
+		return nil, doStartEngine("")
+
+	case "engineonly":
+		return nil, doStartEngine("engineonly")
+
+	default:
+		// Only the monitor and engine are started directly by palette.
+		// The monitor will restart the engine if it dies, and
+		// the engine will restart any processes specified in global.process.*.
+		for _, process := range kit.ProcessList() {
+			if arg1 == process {
+				param := "global.process." + arg1
+				return EngineAPI("global.set", "name", param, "value", "true")
+			}
+		}
+		return nil, fmt.Errorf("process %s is disabled or unknown", arg1)
+	}
+}
+
+func cmdStop(args []string) (map[string]string, error) {
+	arg1 := cliArg1(args)
+	switch arg1 {
+
+	case "", "all":
+		kit.LogInfo("Palette kill is killing everything including monitor.")
+		kit.KillExecutable(kit.MonitorExe)
+		kit.KillAllExceptMonitor()
+		return nil, nil
+
+	case "monitor":
+		kit.KillExecutable(kit.MonitorExe)
+		return nil, nil
+
+	case "engine":
+		// Don't use kit.exit API, just kill it
+		kit.KillExecutable(kit.EngineExe)
+		return nil, nil
+
+	default:
+		// Individual processes are stopped by setting global.process.* to false.
+		// If the engine isn't running, this will fail.  Use stop all as last resort.
+		param := "global.process." + arg1
+		return EngineAPI("global.set", "name", param, "value", "false")
+	}
+}
+
+func cmdActivate(args []string) (map[string]string, error) {
+	if len(args) > 2 {
+		return nil, fmt.Errorf("bad activate command, expected usage:\n%s", usage())
+	}
+	process := cliArg1(args)
+	if process == "" {
+		process = "resolume"
+	}
+	return EngineAPI("global.activate", "process", process)
+}
+
+func cmdVersion(args []string) (map[string]string, error) {
+	return map[string]string{"result": kit.GetPaletteVersion()}, nil
+}
+
+func cmdMmtt(args []string) (map[string]string, error) {
+	arg1 := cliArg1(args)
+	switch arg1 {
+	case "align":
+		return kit.MmttAPI("align_start")
+	default:
+		return nil, fmt.Errorf("unknown mmtt command - %s", arg1)
+	}
+}
+
+func cmdLog(args []string) (map[string]string, error) {
+	arg1 := cliArg1(args)
+	switch arg1 {
+	case "archive":
+		// Make sure nothing is running.
+		statusOut, nrunning := StatusOutput()
+		if nrunning > 0 {
+			return nil, fmt.Errorf("cannot archive logs while these processes are running:\n%s", statusOut)
+		}
+		return nil, kit.ArchiveLogs()
+	case "clear":
+		return nil, kit.ClearLogs()
+	case "types":
+		return map[string]string{"result": strings.Join(kit.LogTypeNames(), "\n")}, nil
+	}
+	return nil, fmt.Errorf("invalid log command: %s", arg1)
+}
+
+func cmdTest(args []string) (map[string]string, error) {
+	arg1 := cliArg1(args)
+	switch arg1 {
+	case "":
+		return EngineAPI("quad.test", "ntimes", "40")
+	case "long":
+		return EngineAPI("quad.test", "ntimes", "400")
+	case "center":
+		return EngineAPI("quad.test", "ntimes", "1000", "testtype", "center")
+	default:
+		return nil, fmt.Errorf("unknown test type - %s", arg1)
+	}
+}
+
+func cmdObs(args []string) (map[string]string, error) {
+	kit.LogInfo("palette: obs command")
+	if err := kit.ObsCommand(cliArg1(args)); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+func cmdHub(args []string) (map[string]string, error) {
+	// Delegate to palette_hub executable with remaining arguments
+	hubArgs := args[1:] // everything after "hub"
+	cmd := exec.Command("palette_hub", hubArgs...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+	return map[string]string{"result": ""}, nil
 }
 
 // formatRecordStatus turns the {"recording":..,"remaining":..} JSON returned by

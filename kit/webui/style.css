@@ -368,19 +368,6 @@ body.initial-bss #ritual-nav {
 }
 
 /* Reset message overlay */
-#restart-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 300;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 #restart-modal {
     display: flex;
     align-items: center;
@@ -399,19 +386,9 @@ body.initial-bss #ritual-nav {
 }
 
 .restart-btn {
-    color: #0ff;
-    background: var(--button-bg);
-    border: 2px solid var(--button-border);
     font-size: 4vh;
-    font-weight: bold;
     padding: 3vh 4vw;
-    cursor: pointer;
-    text-align: center;
     min-width: 30vw;
-}
-
-.restart-btn:hover {
-    background: var(--highlight);
 }
 
 .restart-cancel {
@@ -454,8 +431,11 @@ body.initial-bss #ritual-nav {
     border: none;
 }
 
-/* Record options modal overlay */
-#record-overlay {
+/* Shared overlay/modal primitives.
+   .modal-overlay: full-screen dimmed backdrop with centered content.
+   .page-overlay: full-screen opaque page (header + scrolling body).
+   .modal-button: the standard cyan bordered button used inside overlays. */
+.modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -468,6 +448,54 @@ body.initial-bss #ritual-nav {
     justify-content: center;
 }
 
+.page-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-button {
+    color: #0ff;
+    background: var(--button-bg);
+    border: 2px solid var(--button-border);
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+}
+
+.modal-button:hover {
+    background: var(--highlight);
+}
+
+/* Toast for surfacing errors/notices */
+#ui-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 6vh;
+    transform: translateX(-50%);
+    background: #300;
+    color: #fff;
+    border: 2px solid #c00;
+    padding: 1.5vh 3vw;
+    font-size: 2.5vh;
+    font-weight: bold;
+    z-index: 400;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+#ui-toast.visible {
+    opacity: 1;
+}
+
+/* Record options modal overlay */
 #record-buttons {
     display: flex;
     flex-direction: column;
@@ -478,37 +506,14 @@ body.initial-bss #ritual-nav {
 }
 
 .record-opt-btn {
-    color: #0ff;
-    background: var(--button-bg);
-    border: 2px solid var(--button-border);
     font-size: 4vh;
-    font-weight: bold;
     padding: 3vh 4vw;
-    cursor: pointer;
-    text-align: center;
     min-width: 40vw;
-}
-
-.record-opt-btn:hover {
-    background: var(--highlight);
 }
 
 .record-cancel {
     color: #fff;
     border-color: #666;
-}
-
-/* Recordings list page overlay */
-#recordings-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--bg);
-    z-index: 300;
-    display: flex;
-    flex-direction: column;
 }
 
 #recordings-header {
@@ -526,17 +531,8 @@ body.initial-bss #ritual-nav {
 }
 
 #recordings-back {
-    color: #0ff;
-    background: var(--button-bg);
-    border: 2px solid var(--button-border);
     font-size: 3vh;
-    font-weight: bold;
     padding: 1.5vh 4vw;
-    cursor: pointer;
-}
-
-#recordings-back:hover {
-    background: var(--highlight);
 }
 
 #recordings-list {
@@ -574,18 +570,9 @@ body.initial-bss #ritual-nav {
 
 .recording-play {
     flex: none;
-    color: #0ff;
-    background: var(--button-bg);
-    border: 2px solid var(--button-border);
     font-size: 2.6vh;
-    font-weight: bold;
     padding: 1.2vh 3vw;
-    cursor: pointer;
     white-space: nowrap;
-}
-
-.recording-play:hover {
-    background: var(--highlight);
 }
 
 .recordings-empty {
@@ -595,17 +582,9 @@ body.initial-bss #ritual-nav {
     padding: 5vh 0;
 }
 
-/* Video player overlay */
+/* Video player overlay (sits above the recordings page) */
 #player-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--bg);
     z-index: 310;
-    display: flex;
-    flex-direction: column;
 }
 
 #player-header {
@@ -626,17 +605,8 @@ body.initial-bss #ritual-nav {
 
 #player-back {
     flex: none;
-    color: #0ff;
-    background: var(--button-bg);
-    border: 2px solid var(--button-border);
     font-size: 3vh;
-    font-weight: bold;
     padding: 1.5vh 4vw;
-    cursor: pointer;
-}
-
-#player-back:hover {
-    background: var(--highlight);
 }
 
 #player-stage {

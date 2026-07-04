@@ -297,29 +297,27 @@ func samplePlaybackEventChannel(value any) int {
 	}
 }
 
-// XXX - Fade, Filter, and Delete should be combined into one function
-
-func (sched *Scheduler) FadeEventsWithTag(tag string) {
-
+// forEachEventWithTag applies fn to every scheduled element with the given
+// tag, in place (no removal). Compare deleteScheduledEvents, which removes.
+func (sched *Scheduler) forEachEventWithTag(tag string, fn func(*SchedElement)) {
 	sched.mutex.Lock()
 	defer sched.mutex.Unlock()
 
-	var nexti *list.Element
-	for i := sched.schedList.Front(); i != nil; i = nexti {
-		nexti = i.Next()
+	for i := sched.schedList.Front(); i != nil; i = i.Next() {
 		se := i.Value.(*SchedElement)
-		if se.Tag != tag {
-			continue
-		}
-		// LogInfo("DeleteEventsWithTag Removing schedList entry", "tag", tag, "i", i, "se", se)
-		ce, isce := se.Value.(CursorEvent)
-		// LogInfo("SAW CURSOREVENT", "v", v, "ddu", v.Ddu)
-		if isce {
-			ce.Pos.Z *= 0.3
-			se.Value = ce
-			// LogInfo("FadeEvents", "Z", se.Value.(CursorEvent).Pos.Z)
+		if se.Tag == tag {
+			fn(se)
 		}
 	}
+}
+
+func (sched *Scheduler) FadeEventsWithTag(tag string) {
+	sched.forEachEventWithTag(tag, func(se *SchedElement) {
+		if ce, isce := se.Value.(CursorEvent); isce {
+			ce.Pos.Z *= 0.3
+			se.Value = ce
+		}
+	})
 }
 
 func (sched *Scheduler) FilterEventsWithTag(tag string) {

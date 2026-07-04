@@ -158,6 +158,22 @@ export function updateRecordButton(remaining) {
     btn.innerHTML = `REC<br>${Math.round(remaining)}s`;
 }
 
+// showToast briefly displays a message at the bottom of the screen. Used to
+// surface failures that would otherwise only reach the console.
+let toastTimer = null;
+export function showToast(message) {
+    let toast = document.getElementById('ui-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'ui-toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('visible');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('visible'), 3000);
+}
+
 export function resetRecordButton() {
     const btn = document.getElementById('btn-record');
     btn.classList.remove('recording');

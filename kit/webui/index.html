@@ -35,13 +35,13 @@
     </div>
 
     <!-- Reset modal overlay -->
-    <div id="restart-overlay" class="hidden">
+    <div id="restart-overlay" class="modal-overlay hidden">
         <div id="restart-modal">
             <div id="restart-buttons">
-                <button class="restart-btn" data-action="complete">Reset<br>Completely</button>
-                <button class="restart-btn" data-action="audio">Reset<br>Audio</button>
-                <button class="restart-btn" data-action="visuals">Reset<br>Visuals</button>
-                <button class="restart-btn restart-cancel" data-action="cancel">Cancel</button>
+                <button class="restart-btn modal-button" data-action="complete">Reset<br>Completely</button>
+                <button class="restart-btn modal-button" data-action="audio">Reset<br>Audio</button>
+                <button class="restart-btn modal-button" data-action="visuals">Reset<br>Visuals</button>
+                <button class="restart-btn modal-button restart-cancel" data-action="cancel">Cancel</button>
             </div>
         </div>
         <div id="restart-message" class="hidden">
@@ -55,33 +55,33 @@
     </div>
 
     <!-- Record options modal overlay -->
-    <div id="record-overlay" class="hidden">
+    <div id="record-overlay" class="modal-overlay hidden">
         <div id="record-modal">
             <div id="record-buttons">
-                <button class="record-opt-btn" data-action="start">Start<br>Recording</button>
-                <button class="record-opt-btn" data-action="list">List<br>Recordings</button>
-                <button class="record-opt-btn record-cancel" data-action="cancel">Cancel</button>
+                <button class="record-opt-btn modal-button" data-action="start">Start<br>Recording</button>
+                <button class="record-opt-btn modal-button" data-action="list">List<br>Recordings</button>
+                <button class="record-opt-btn modal-button record-cancel" data-action="cancel">Cancel</button>
             </div>
         </div>
     </div>
 
     <!-- Recordings list page overlay -->
-    <div id="recordings-overlay" class="hidden">
+    <div id="recordings-overlay" class="page-overlay hidden">
         <div id="recordings-page">
             <header id="recordings-header">
                 <h1>Recordings</h1>
-                <button id="recordings-back" type="button">Back</button>
+                <button id="recordings-back" class="modal-button" type="button">Back</button>
             </header>
             <div id="recordings-list"></div>
         </div>
     </div>
 
     <!-- Video player overlay -->
-    <div id="player-overlay" class="hidden">
+    <div id="player-overlay" class="page-overlay hidden">
         <div id="player-page">
             <header id="player-header">
                 <h1 id="player-title"></h1>
-                <button id="player-back" type="button">Back</button>
+                <button id="player-back" class="modal-button" type="button">Back</button>
             </header>
             <div id="player-stage">
                 <video id="player-video" controls playsinline></video>

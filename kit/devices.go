@@ -27,7 +27,7 @@ func LoadMorphs() error {
 	// want the patch assignment to NOT be
 	// automatic, put them in here.
 	path := ConfigFilePath("morphs.json")
-	if !fileExists(path) {
+	if !PathExists(path) {
 		return fmt.Errorf("unable to get path to morphs.json")
 	}
 	bytes, err := os.ReadFile(path)

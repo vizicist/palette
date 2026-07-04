@@ -2,6 +2,8 @@ import { API } from './api.js';
 import { initialPageDefaultRoute, Routes, routeLabel } from './routes.js';
 import { patchNames, stepperNumSteps, samplePlaybackQuantValues, UIState } from './state.js';
 import { applyUISnapshot, requestUISnapshot, setupUIStateFeed } from './ui_nats.js';
+import { handleOBSRecordStatus, setupRecording, updateRecordButtonVisibility } from './recorder.js';
+import { setupVirtualKeyboard, showVirtualKeyboard } from './virtual-keyboard.js';
 import {
     applyInitialPageMode,
     fitAppTitle,
@@ -10,17 +12,16 @@ import {
     hideHelp,
     hideResetModal,
     renderStepperIndicator,
-    resetRecordButton,
     setPalettePadActivity,
     setupAppTitleFit,
     showAttract,
     showHelp,
     showResetMessage,
     showResetModal,
+    showToast,
     updatePalettePadRoute,
     updatePatchButtons,
     updatePresetButtons,
-    updateRecordButton,
     updateRitualNav,
     updateStepperIndicator
 } from './render.js';
@@ -153,10 +154,19 @@ async function showSigilSequencer() {
     await setStepperDefaults();
 }
 
-function updateRecordButtonVisibility(running = false) {
-    const btn = document.getElementById('btn-record');
-    if (!btn) return;
-    btn.style.display = running ? '' : 'none';
+// setCurrentParam sets a parameter according to the current category/patch
+// selection: global params via the global API, '*' fans out to all patches,
+// otherwise just the selected patch.
+async function setCurrentParam(paramName, valueStr) {
+    if (UIState.currentCategory === 'global') {
+        await API.setGlobalParam(paramName, valueStr);
+    } else if (UIState.currentPatch === '*') {
+        for (const p of patchNames) {
+            await API.setPatchParam(p, paramName, valueStr);
+        }
+    } else {
+        await API.setPatchParam(UIState.currentPatch, paramName, valueStr);
+    }
 }
 
 async function loadPresets() {
@@ -716,16 +726,7 @@ function setupParamControls() {
             console.log('Setting param:', paramName, '=', valueStr, 'patch:', UIState.currentPatch);
 
             try {
-                // Use different API for global vs patch parameters
-                if (UIState.currentCategory === 'global') {
-                    await API.setGlobalParam(paramName, valueStr);
-                } else if (UIState.currentPatch === '*') {
-                    for (const p of patchNames) {
-                        await API.setPatchParam(p, paramName, valueStr);
-                    }
-                } else {
-                    await API.setPatchParam(UIState.currentPatch, paramName, valueStr);
-                }
+                await setCurrentParam(paramName, valueStr);
                 valueEl.textContent = valueStr;
 
                 // Update bool toggle button label and class
@@ -748,6 +749,7 @@ function setupParamControls() {
                 }
             } catch (err) {
                 console.error('Failed to set param:', err);
+                showToast(`Failed to set ${paramName}`);
             }
         });
     });
@@ -765,17 +767,10 @@ function setupParamControls() {
             valueEl.textContent = valueStr;
 
             try {
-                if (UIState.currentCategory === 'global') {
-                    await API.setGlobalParam(paramName, valueStr);
-                } else if (UIState.currentPatch === '*') {
-                    for (const p of patchNames) {
-                        await API.setPatchParam(p, paramName, valueStr);
-                    }
-                } else {
-                    await API.setPatchParam(UIState.currentPatch, paramName, valueStr);
-                }
+                await setCurrentParam(paramName, valueStr);
             } catch (err) {
                 console.error('Failed to set param:', err);
+                showToast(`Failed to set ${paramName}`);
             }
         });
     });
@@ -792,17 +787,10 @@ function setupParamControls() {
             valueEl.textContent = valueStr;
 
             try {
-                if (UIState.currentCategory === 'global') {
-                    await API.setGlobalParam(paramName, valueStr);
-                } else if (UIState.currentPatch === '*') {
-                    for (const p of patchNames) {
-                        await API.setPatchParam(p, paramName, valueStr);
-                    }
-                } else {
-                    await API.setPatchParam(UIState.currentPatch, paramName, valueStr);
-                }
+                await setCurrentParam(paramName, valueStr);
             } catch (err) {
                 console.error('Failed to set param:', err);
+                showToast(`Failed to set ${paramName}`);
             }
         });
     });
@@ -827,15 +815,7 @@ function setupParamControls() {
                 valueEl.textContent = valueStr;
 
                 try {
-                    if (UIState.currentCategory === 'global') {
-                        await API.setGlobalParam(paramName, valueStr);
-                    } else if (UIState.currentPatch === '*') {
-                        for (const p of patchNames) {
-                            await API.setPatchParam(p, paramName, valueStr);
-                        }
-                    } else {
-                        await API.setPatchParam(UIState.currentPatch, paramName, valueStr);
-                    }
+                    await setCurrentParam(paramName, valueStr);
                     // Update data-original to reflect the new saved value
                     input.dataset.original = valueStr;
                     // Brief visual feedback - flash the input
@@ -924,21 +904,17 @@ async function handleSaveAs(button) {
         const presetChoices = ['patch', 'quad'].includes(UIState.currentCategory)
             ? await savedPresetNamesForCategory(UIState.currentCategory)
             : [];
-        const filename = await showVirtualKeyboard({
+        const cleanName = await showVirtualKeyboard({
             title: saveAsTitle(),
             initialValue: '',
             actionLabel: 'Save',
             choices: presetChoices,
-            choiceLabel: `Current ${saveAsCategoryLabel()} names`
+            choiceLabel: `Current ${saveAsCategoryLabel()} names`,
+            validate: presetFilenameValidationError,
+            normalize: normalizePresetFilename
         });
-        if (!filename) return;
+        if (!cleanName) return;
 
-        const error = presetFilenameValidationError(filename);
-        if (error) {
-            alert(error);
-            return;
-        }
-        const cleanName = normalizePresetFilename(filename);
         await saveCurrentParamsAs(cleanName);
         UIState.selectedPresets.set(UIState.presetKey(), cleanName);
         button.textContent = 'Saved';
@@ -962,21 +938,17 @@ async function savedPresetNamesForCategory(category) {
 async function handleRemovePreset(button) {
     try {
         const presetChoices = await savedPresetNamesForCategory(UIState.currentCategory);
-        const filename = await showVirtualKeyboard({
+        const cleanName = await showVirtualKeyboard({
             title: removeTitle(),
             initialValue: '',
             actionLabel: 'Remove',
             choices: presetChoices,
-            choiceLabel: `Current ${UIState.currentCategory} names`
+            choiceLabel: `Current ${UIState.currentCategory} names`,
+            validate: presetFilenameValidationError,
+            normalize: normalizePresetFilename
         });
-        if (!filename) return;
+        if (!cleanName) return;
 
-        const error = presetFilenameValidationError(filename);
-        if (error) {
-            alert(error);
-            return;
-        }
-        const cleanName = normalizePresetFilename(filename);
         await removeCurrentPreset(cleanName);
         if (UIState.selectedPresets.get(UIState.presetKey()) === cleanName) {
             UIState.selectedPresets.delete(UIState.presetKey());
@@ -1054,185 +1026,6 @@ async function removeCurrentPreset(filename) {
     await API.removeSaved(UIState.currentCategory, filename);
 }
 
-let keyboardResolve = null;
-let keyboardReject = null;
-let keyboardCaps = true;
-
-function setupVirtualKeyboard() {
-    if (document.getElementById('save-keyboard-modal')) return;
-
-    const modal = document.createElement('div');
-    modal.id = 'save-keyboard-modal';
-    modal.className = 'keyboard-modal hidden';
-    modal.innerHTML = `
-        <div class="keyboard-dialog" role="dialog" aria-modal="true" aria-labelledby="keyboard-title">
-            <div class="keyboard-title" id="keyboard-title">Save As</div>
-            <input id="keyboard-input" class="keyboard-input" type="text" autocomplete="off" spellcheck="false">
-            <details id="keyboard-preset-menu" class="keyboard-preset-menu hidden">
-                <summary id="keyboard-preset-summary" class="keyboard-preset-summary">Current names</summary>
-                <div id="keyboard-preset-options" class="keyboard-preset-options"></div>
-            </details>
-            <div class="keyboard-error" id="keyboard-error"></div>
-            <div class="keyboard-keys" id="keyboard-keys"></div>
-            <div class="keyboard-actions">
-                <button type="button" class="keyboard-action" data-keyboard-action="cancel">Cancel</button>
-                <button type="button" class="keyboard-action primary" data-keyboard-action="submit">Save</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-
-    const keys = [
-        ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-        ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '-', '_'],
-        ['Caps', 'Space', 'Backspace', 'Clear']
-    ];
-    const keyGrid = modal.querySelector('#keyboard-keys');
-    keyGrid.innerHTML = keys.map(row => {
-        const buttons = row.map(key => {
-            const wide = key === 'Space' || key === 'Backspace' || key === 'Clear' ? ' wide' : '';
-            return `<button type="button" class="keyboard-key${wide}" data-key="${key}">${key}</button>`;
-        }).join('');
-        return `<div class="keyboard-row">${buttons}</div>`;
-    }).join('');
-
-    modal.querySelectorAll('.keyboard-key').forEach(button => {
-        button.addEventListener('click', () => {
-            const input = modal.querySelector('#keyboard-input');
-            const key = button.dataset.key;
-            if (key === 'Backspace') {
-                input.value = input.value.slice(0, -1);
-            } else if (key === 'Clear') {
-                input.value = '';
-            } else if (key === 'Caps') {
-                keyboardCaps = !keyboardCaps;
-                updateKeyboardCaps();
-            } else if (key === 'Space') {
-                input.value += ' ';
-            } else if (/^[A-Z]$/.test(key)) {
-                input.value += keyboardCaps ? key : key.toLowerCase();
-            } else {
-                input.value += key;
-            }
-            showKeyboardError('');
-            input.focus();
-        });
-    });
-
-    modal.querySelector('[data-keyboard-action="cancel"]').addEventListener('click', closeVirtualKeyboard);
-    modal.querySelector('[data-keyboard-action="submit"]').addEventListener('click', submitVirtualKeyboard);
-    modal.querySelector('#keyboard-preset-options').addEventListener('click', event => {
-        const button = event.target.closest('.keyboard-preset-option');
-        if (!button) return;
-        const input = modal.querySelector('#keyboard-input');
-        input.value = button.dataset.value || '';
-        modal.querySelector('#keyboard-preset-menu').open = false;
-        showKeyboardError('');
-        input.focus();
-    });
-    modal.addEventListener('click', event => {
-        if (event.target === modal) closeVirtualKeyboard();
-    });
-    modal.querySelector('#keyboard-input').addEventListener('keydown', event => {
-        if (event.key === 'Escape') {
-            event.preventDefault();
-            closeVirtualKeyboard();
-        } else if (event.key === 'Enter') {
-            event.preventDefault();
-            submitVirtualKeyboard();
-        }
-    });
-    modal.querySelector('#keyboard-input').addEventListener('input', () => showKeyboardError(''));
-    updateKeyboardCaps();
-}
-
-function showVirtualKeyboard({ title, initialValue, actionLabel, choices, choiceLabel }) {
-    const modal = document.getElementById('save-keyboard-modal');
-    const input = modal.querySelector('#keyboard-input');
-    modal.querySelector('#keyboard-title').textContent = title;
-    modal.querySelector('[data-keyboard-action="submit"]').textContent = actionLabel || 'Save';
-    setKeyboardChoices(modal, choices || [], choiceLabel || 'Current names');
-    input.value = initialValue || '';
-    showKeyboardError('');
-    modal.classList.remove('hidden');
-    updateKeyboardCaps();
-    requestAnimationFrame(() => input.focus());
-
-    return new Promise((resolve, reject) => {
-        keyboardResolve = resolve;
-        keyboardReject = reject;
-    });
-}
-
-function setKeyboardChoices(modal, choices, label) {
-    const menu = modal.querySelector('#keyboard-preset-menu');
-    const summary = modal.querySelector('#keyboard-preset-summary');
-    const options = modal.querySelector('#keyboard-preset-options');
-    options.replaceChildren();
-    menu.open = false;
-    if (!choices.length) {
-        menu.classList.add('hidden');
-        return;
-    }
-
-    summary.textContent = label;
-    for (const choice of choices) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'keyboard-preset-option';
-        button.dataset.value = choice;
-        button.textContent = choice;
-        options.appendChild(button);
-    }
-    menu.classList.remove('hidden');
-}
-
-function submitVirtualKeyboard() {
-    const modal = document.getElementById('save-keyboard-modal');
-    const input = modal.querySelector('#keyboard-input');
-    const error = presetFilenameValidationError(input.value);
-    if (error) {
-        showKeyboardError(error);
-        input.focus();
-        return;
-    }
-    const cleanName = normalizePresetFilename(input.value);
-    modal.classList.add('hidden');
-    if (keyboardResolve) keyboardResolve(cleanName);
-    keyboardResolve = null;
-    keyboardReject = null;
-}
-
-function closeVirtualKeyboard() {
-    const modal = document.getElementById('save-keyboard-modal');
-    modal.classList.add('hidden');
-    if (keyboardReject) keyboardReject({ cancelled: true });
-    keyboardResolve = null;
-    keyboardReject = null;
-}
-
-function showKeyboardError(message) {
-    const error = document.getElementById('keyboard-error');
-    if (error) error.textContent = message || '';
-}
-
-function updateKeyboardCaps() {
-    const modal = document.getElementById('save-keyboard-modal');
-    if (!modal) return;
-    modal.querySelectorAll('.keyboard-key').forEach(button => {
-        const key = button.dataset.key;
-        if (/^[A-Z]$/.test(key)) {
-            button.textContent = keyboardCaps ? key : key.toLowerCase();
-        }
-        if (key === 'Caps') {
-            button.classList.toggle('active', keyboardCaps);
-            button.textContent = keyboardCaps ? 'CAPS' : 'caps';
-        }
-    });
-}
-
 async function loadPreset(name) {
     try {
         if (UIState.currentCategory === 'global') {
@@ -1256,7 +1049,8 @@ async function loadPreset(name) {
         UIState.selectedPresets.set(UIState.presetKey(), name);
         updatePresetButtons();
     } catch (e) {
-        alert('Load failed: ' + e.message);
+        console.error('Load failed:', e);
+        showToast('Load failed: ' + e.message);
     }
 }
 
@@ -1287,23 +1081,7 @@ function setupControls() {
         showHelp();
     });
 
-    document.getElementById('btn-record').addEventListener('click', async () => {
-        const btn = document.getElementById('btn-record');
-        if (btn.classList.contains('recording')) {
-            // Already recording: pressing REC stops it early.
-            try {
-                await API.obsRecordStop();
-            } catch (e) {
-                console.error('Failed to stop recording:', e);
-            }
-            stopRecordUI();
-        } else {
-            // Not recording: offer to start a recording or list existing ones.
-            showRecordModal();
-        }
-    });
-
-    setupRecordModal();
+    setupRecording();
 }
 
 // Help overlay functionality
@@ -1447,206 +1225,6 @@ function handleUIStatus(status) {
 
 function isTrueStatusValue(value) {
     return value === true || value === 'true';
-}
-
-// Recording UI
-let recordCountdownInterval = null;
-
-function startRecordUI(remaining) {
-    const btn = document.getElementById('btn-record');
-    btn.classList.add('recording');
-
-    // Re-sync to the authoritative remaining value, then tick down locally
-    // once per second. Status notifications only fire on start/stop, so the
-    // local interval is what makes the REC button count down in between.
-    let secondsLeft = Math.max(0, Math.round(remaining));
-    updateRecordButton(secondsLeft);
-
-    if (recordCountdownInterval) {
-        clearInterval(recordCountdownInterval);
-    }
-    recordCountdownInterval = setInterval(() => {
-        secondsLeft = Math.max(0, secondsLeft - 1);
-        updateRecordButton(secondsLeft);
-        if (secondsLeft <= 0) {
-            clearInterval(recordCountdownInterval);
-            recordCountdownInterval = null;
-        }
-    }, 1000);
-}
-
-function stopRecordUI() {
-    if (recordCountdownInterval) {
-        clearInterval(recordCountdownInterval);
-        recordCountdownInterval = null;
-    }
-    resetRecordButton();
-}
-
-function handleOBSRecordStatus(status) {
-    updateRecordButtonVisibility(!!(status && status.obsrunning));
-    if (status && status.recording) {
-        startRecordUI(status.remaining);
-    } else {
-        stopRecordUI();
-    }
-}
-
-// Record options modal + recordings list page
-function showRecordModal() {
-    document.getElementById('record-overlay').classList.remove('hidden');
-}
-
-function hideRecordModal() {
-    document.getElementById('record-overlay').classList.add('hidden');
-}
-
-async function startRecordingFromModal() {
-    hideRecordModal();
-    try {
-        const result = await API.obsRecord();
-        if (result && result.recording) {
-            startRecordUI(result.remaining);
-        } else {
-            showRecordError();
-        }
-    } catch (e) {
-        console.error('Failed to start recording:', e);
-        showRecordError();
-    }
-}
-
-// Briefly flag on the RECORD button that a recording failed to start (e.g. OBS
-// rejected the connection), so the failure isn't silent.
-function showRecordError() {
-    const btn = document.getElementById('btn-record');
-    if (recordCountdownInterval) {
-        clearInterval(recordCountdownInterval);
-        recordCountdownInterval = null;
-    }
-    btn.classList.remove('recording');
-    btn.classList.add('record-error');
-    btn.textContent = 'REC FAILED';
-    setTimeout(() => {
-        btn.classList.remove('record-error');
-        resetRecordButton();
-    }, 2500);
-}
-
-async function showRecordingsPage() {
-    hideRecordModal();
-    const list = document.getElementById('recordings-list');
-    list.innerHTML = '<div class="recordings-empty">Loading…</div>';
-    document.getElementById('recordings-overlay').classList.remove('hidden');
-    try {
-        const recordings = await API.obsRecordList();
-        renderRecordings(recordings);
-    } catch (e) {
-        console.error('Failed to list recordings:', e);
-        list.innerHTML = '<div class="recordings-empty">Failed to load recordings.</div>';
-    }
-}
-
-function hideRecordingsPage() {
-    document.getElementById('recordings-overlay').classList.add('hidden');
-}
-
-function renderRecordings(recordings) {
-    const list = document.getElementById('recordings-list');
-    list.innerHTML = '';
-    if (!Array.isArray(recordings) || recordings.length === 0) {
-        list.innerHTML = '<div class="recordings-empty">No recordings yet.</div>';
-        return;
-    }
-    for (const rec of recordings) {
-        const row = document.createElement('div');
-        row.className = 'recording-row';
-
-        const info = document.createElement('div');
-        info.className = 'recording-info';
-
-        const name = document.createElement('span');
-        name.className = 'recording-name';
-        name.textContent = rec.name;
-
-        const meta = document.createElement('span');
-        meta.className = 'recording-meta';
-        meta.textContent = [
-            formatRecordingDuration(rec.duration),
-            formatRecordingSize(rec.size),
-            formatRecordingTime(rec.modtime)
-        ].filter(Boolean).join(' · ');
-
-        info.appendChild(name);
-        info.appendChild(meta);
-
-        const play = document.createElement('button');
-        play.className = 'recording-play';
-        play.type = 'button';
-        play.textContent = '▶ Play';
-        play.addEventListener('click', () => playRecording(rec.name));
-
-        row.appendChild(info);
-        row.appendChild(play);
-        list.appendChild(row);
-    }
-}
-
-function playRecording(name) {
-    const video = document.getElementById('player-video');
-    document.getElementById('player-title').textContent = name;
-    video.src = `/recordings/${encodeURIComponent(name)}`;
-    document.getElementById('player-overlay').classList.remove('hidden');
-    video.play().catch(() => { /* autoplay may be blocked; controls remain */ });
-}
-
-function closePlayer() {
-    const video = document.getElementById('player-video');
-    video.pause();
-    video.removeAttribute('src');
-    video.load();
-    document.getElementById('player-overlay').classList.add('hidden');
-}
-
-function formatRecordingDuration(seconds) {
-    if (typeof seconds !== 'number' || seconds <= 0) return '';
-    const total = Math.round(seconds);
-    const m = Math.floor(total / 60);
-    const s = total % 60;
-    return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-function formatRecordingSize(bytes) {
-    if (typeof bytes !== 'number' || bytes < 0) return '';
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    let n = bytes;
-    let i = 0;
-    while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
-    return `${n.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
-}
-
-function formatRecordingTime(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? iso : d.toLocaleString();
-}
-
-function setupRecordModal() {
-    document.getElementById('record-overlay').addEventListener('click', (e) => {
-        const btn = e.target.closest('.record-opt-btn');
-        if (!btn) return;
-        const action = btn.dataset.action;
-        if (action === 'start') {
-            startRecordingFromModal();
-        } else if (action === 'list') {
-            showRecordingsPage();
-        } else {
-            hideRecordModal();
-        }
-    });
-
-    document.getElementById('recordings-back').addEventListener('click', hideRecordingsPage);
-    document.getElementById('player-back').addEventListener('click', closePlayer);
 }
 
 document.addEventListener('click', async (e) => {
