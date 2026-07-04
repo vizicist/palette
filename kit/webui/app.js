@@ -150,7 +150,10 @@ async function showSigilSequencer() {
     document.getElementById('category-tabs').classList.add('hidden');
     document.getElementById('patch-selector').classList.add('hidden');
     document.getElementById('sigil-screen').classList.remove('hidden');
-    await API.stepperPlay().catch(err => console.error('Failed to start stepper playback:', err));
+    await API.stepperPlay().catch(err => {
+        console.error('Failed to start stepper playback:', err);
+        showToast('Failed to start sequencer playback');
+    });
     await setStepperDefaults();
 }
 
@@ -270,6 +273,7 @@ function setupSigilSequencer() {
                 await refreshStepperStatus();
             } catch (err) {
                 console.error('Failed to toggle step:', err);
+                showToast('Failed to toggle step');
             }
             return;
         }
@@ -285,6 +289,7 @@ function setupSigilSequencer() {
                 await refreshStepperStatus();
             } catch (err) {
                 console.error('Failed to clear stepper track:', err);
+                showToast('Failed to clear track');
             }
         }
     });
@@ -302,6 +307,7 @@ function setupSigilSequencer() {
                 await refreshStepperStatus();
             } catch (err) {
                 console.error('Failed to set stepper route:', err);
+                showToast('Failed to set route');
             }
         });
     });
@@ -321,6 +327,7 @@ function setupPalettePads() {
             .then(() => refreshStepperStatus())
             .catch(err => {
                 console.error('Failed to set palette pad route:', err);
+                showToast('Failed to change pad mode');
                 refreshStepperStatus().catch(() => updatePalettePadRoute(patch, pad.dataset.route || Routes.samples));
             });
     });
@@ -358,7 +365,10 @@ function setupSamplePlaybackControls() {
         const index = indexForQuant(quant.value);
         quant.value = String(samplePlaybackQuantValues[index]);
         API.setGlobalParam('global.sampleplaybackquant', String(samplePlaybackQuantValues[index]))
-            .catch(err => console.error('Failed to set sample playback quantize:', err));
+            .catch(err => {
+                console.error('Failed to set sample playback quantize:', err);
+                showToast('Failed to set quantize');
+            });
     };
 
     quant.addEventListener('change', sendQuant);
@@ -455,6 +465,7 @@ function setupTempoControl() {
                 await refreshStepperStatus();
             } catch (err) {
                 console.error('Failed to set tempo:', err);
+                showToast('Failed to set tempo');
             }
         }, 80);
     };
@@ -853,7 +864,7 @@ function setupParamHeaderButtons() {
                 await loadParams();
             } catch (err) {
                 console.error('Failed to init params:', err);
-                alert('Init failed: ' + err.message);
+                showToast('Init failed: ' + err.message);
             }
         });
     }
@@ -879,7 +890,7 @@ function setupParamHeaderButtons() {
                 await loadParams();
             } catch (err) {
                 console.error('Failed to randomize params:', err);
-                alert('Rand failed: ' + err.message);
+                showToast('Rand failed: ' + err.message);
             }
         });
     }
@@ -922,7 +933,7 @@ async function handleSaveAs(button) {
     } catch (err) {
         if (err && err.cancelled) return;
         console.error('Save As failed:', err);
-        alert('Save As failed: ' + err.message);
+        showToast('Save As failed: ' + err.message);
     }
 }
 
@@ -958,7 +969,7 @@ async function handleRemovePreset(button) {
     } catch (err) {
         if (err && err.cancelled) return;
         console.error('Remove failed:', err);
-        alert('Remove failed: ' + err.message);
+        showToast('Remove failed: ' + err.message);
     }
 }
 
@@ -1257,6 +1268,7 @@ document.addEventListener('click', async (e) => {
             await API.setGlobalParam('global.process.bidule', 'true');
         } catch (e) {
             console.error('Failed to restart audio:', e);
+            showToast('Audio reset failed');
         }
         hideResetModal();
         return;
@@ -1270,6 +1282,7 @@ document.addEventListener('click', async (e) => {
             await API.setGlobalParam('global.process.resolume', 'true');
         } catch (e) {
             console.error('Failed to restart visuals:', e);
+            showToast('Visuals reset failed');
         }
         hideResetModal();
         return;
