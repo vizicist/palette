@@ -104,9 +104,17 @@ func LoadParamEnums() error {
 	}
 
 	for enumName, enumList := range toplevel {
+		list, ok := enumList.([]any)
+		if !ok {
+			return fmt.Errorf("loadParamEnums: enum %q is %T, expected an array", enumName, enumList)
+		}
 		var enums []string
-		for _, e := range enumList.([]any) {
-			enums = append(enums, e.(string))
+		for _, e := range list {
+			s, ok := e.(string)
+			if !ok {
+				return fmt.Errorf("loadParamEnums: enum %q contains %T, expected string", enumName, e)
+			}
+			enums = append(enums, s)
 		}
 		ParamEnums[enumName] = enums
 	}
@@ -233,15 +241,31 @@ func LoadParamDefs() error {
 			return fmt.Errorf("LoadParamDefs: parameter has no category - %s", name)
 		}
 		category := w[0]
-		jmap := dat.(map[string]any)
-		min := jmap["min"].(string)
-		max := jmap["max"].(string)
-		valuetype := jmap["valuetype"].(string)
+		jmap, err := jsonMap(dat, "param "+name)
+		if err != nil {
+			return fmt.Errorf("LoadParamDefs: %w", err)
+		}
+		min, err := jsonString(jmap, "min")
+		if err != nil {
+			return fmt.Errorf("LoadParamDefs: param %s: %w", name, err)
+		}
+		max, err := jsonString(jmap, "max")
+		if err != nil {
+			return fmt.Errorf("LoadParamDefs: param %s: %w", name, err)
+		}
+		valuetype, err := jsonString(jmap, "valuetype")
+		if err != nil {
+			return fmt.Errorf("LoadParamDefs: param %s: %w", name, err)
+		}
+		initval, err := jsonString(jmap, "init")
+		if err != nil {
+			return fmt.Errorf("LoadParamDefs: param %s: %w", name, err)
+		}
 
 		pd := ParamDef{
 			Category: category,
-			Init:     jmap["init"].(string),
-			comment:  jmap["comment"].(string),
+			Init:     initval,
+			comment:  jsonStringOr(jmap, "comment", ""),
 		}
 
 		switch valuetype {

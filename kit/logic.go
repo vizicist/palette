@@ -165,6 +165,11 @@ func (logic *PatchLogic) cursorToPitch(ce CursorEvent) (uint8, error) {
 			LogIfError(err)
 			return 0, err
 		}
+		if len(pitches) == 0 {
+			err := fmt.Errorf("pitchset %s is empty", pitchset)
+			LogIfError(err)
+			return 0, err
+		}
 		n := pitchSetIndexForX(ce.Pos.X, len(pitches), PitchSetPitchPreferences[pitchset])
 		// Note: pitchsets don't get pitchoffset
 		return pitches[n], nil
@@ -369,10 +374,6 @@ func (logic *PatchLogic) cursorToVisualPressure(ce CursorEvent) CursorEvent {
 		"scaledZ", scaledZ)
 	ce.Pos.Z = scaledZ
 	return ce
-}
-
-func (logic *PatchLogic) liveStepperRoute() string {
-	return NewSamplePlaybackDomain(logic.patch).route()
 }
 
 func (logic *PatchLogic) bssSampleMode() bool {

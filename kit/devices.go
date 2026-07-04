@@ -39,10 +39,17 @@ func LoadMorphs() error {
 	if err != nil {
 		return fmt.Errorf("unable to Unmarshal %s, err=%w", path, err)
 	}
-	toplevel := f.(map[string]any)
+	toplevel, err := jsonMap(f, "morphs.json top level")
+	if err != nil {
+		return err
+	}
 
 	for serialnum, patchinfo := range toplevel {
-		patchname := patchinfo.(string)
+		patchname, ok := patchinfo.(string)
+		if !ok {
+			LogWarn("morphs.json: value is not a string, ignoring", "serialnum", serialnum)
+			continue
+		}
 		MorphDefs[serialnum] = patchname
 	}
 	return nil

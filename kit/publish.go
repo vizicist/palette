@@ -8,7 +8,7 @@ var publishStartTime = time.Now()
 
 // PublishCursorEvent xxx
 func PublishCursorEvent(ce CursorEvent) {
-	if !natsIsConnected {
+	if !NatsIsConnected() {
 		return // silent
 	}
 	data := map[string]any{
@@ -29,7 +29,7 @@ func PublishCursorEvent(ce CursorEvent) {
 
 // PublishMIDIDeviceEvent xxx
 func PublishMIDIDeviceEvent(me MidiEvent) {
-	if !natsIsConnected {
+	if !NatsIsConnected() {
 		return // silent
 	}
 	// NOTE: we ignore the Timestamp on the MIDIDeviceEvent
@@ -47,7 +47,7 @@ func PublishMIDIDeviceEvent(me MidiEvent) {
 
 // PublishSpriteEvent xxx
 func PublishSpriteEvent(x, y, z float32) {
-	if !natsIsConnected {
+	if !NatsIsConnected() {
 		return // silent
 	}
 	data := map[string]any{

@@ -14,7 +14,7 @@ func uiStatusSnapshot() EngineStatusSnapshot {
 		Uptime:              Uptime(),
 		AttractMode:         false,
 		OBSRunning:          ObsIsRunning(),
-		NATSConnected:       natsIsConnected,
+		NATSConnected:       NatsIsConnected(),
 		NATSLocalRunning:    EmbeddedNATSRunning(),
 		NATSLeafConfigured:  EmbeddedNATSLeafConfigured(),
 		NATSLeafConnections: EmbeddedNATSLeafConnections(),

@@ -141,7 +141,11 @@ func (r *Resolume) sendPadOneEffectParam(layerNum int, effectName string, paramN
 		return
 	}
 
-	addr := oneParam.(string)
+	addr, ok := oneParam.(string)
+	if !ok {
+		LogWarn("resolume.json: param addr is not a string", "param", paramName, "effect", effectName)
+		return
+	}
 	resEffectName := resolumeEffectNameOf(realEffectName, realEffectNum)
 	addr = strings.Replace(addr, realEffectName, resEffectName, 1)
 	addr = addLayerAndClipNums(addr, layerNum, 1)
@@ -225,10 +229,19 @@ func (r *Resolume) sendPadOneEffectOnOff(layerNum int, effectName string, onoff 
 		LogWarn("No arg valuei in onoff for", "effect", effectName)
 		return
 	}
-	addr := onoffAddr.(string)
+	addr, ok := onoffAddr.(string)
+	if !ok {
+		LogWarn("resolume.json: onoff addr is not a string", "effect", effectName)
+		return
+	}
+	onoffFloat, ok := onoffArg.(float64)
+	if !ok {
+		LogWarn("resolume.json: onoff arg is not a number", "effect", effectName)
+		return
+	}
 	addr = r.addEffectNum(addr, realEffectName, realEffectNum)
 	addr = addLayerAndClipNums(addr, layerNum, 1)
-	onoffValue := int(onoffArg.(float64))
+	onoffValue := int(onoffFloat)
 
 	msg := osc.NewMessage(addr)
 	msg.Append(int32(onoffValue))
@@ -382,7 +395,7 @@ func (r *Resolume) bypassLayer(layerNum int, onoff bool) {
 // getEffectMap returns the resolume.json map for a given effect
 // and map type ("on", "off", or "params")
 func (r *Resolume) getEffectMap(effectName string, mapType string) (map[string]any, string, int, error) {
-	if effectName[1] != '-' {
+	if len(effectName) < 2 || effectName[1] != '-' {
 		err := fmt.Errorf("no dash in effect, name=%s", effectName)
 		return nil, "", 0, err
 	}
@@ -399,19 +412,29 @@ func (r *Resolume) getEffectMap(effectName string, mapType string) (map[string]a
 	}
 	effnum := int(n)
 
-	effectsmap := effects.(map[string]any)
+	effectsmap, err := jsonMap(effects, "resolume.json effects")
+	if err != nil {
+		return nil, "", 0, err
+	}
 	oneEffect, ok := effectsmap[realEffectName]
 	if !ok {
 		err := fmt.Errorf("no effects value for effect=%s", effectName)
 		return nil, "", 0, err
 	}
-	oneEffectMap := oneEffect.(map[string]any)
+	oneEffectMap, err := jsonMap(oneEffect, "resolume.json effect "+realEffectName)
+	if err != nil {
+		return nil, "", 0, err
+	}
 	mapValue, ok := oneEffectMap[mapType]
 	if !ok {
 		err := fmt.Errorf("no params value for effect=%s", effectName)
 		return nil, "", 0, err
 	}
-	return mapValue.(map[string]any), realEffectName, effnum, nil
+	resultMap, err := jsonMap(mapValue, "resolume.json "+realEffectName+"."+mapType)
+	if err != nil {
+		return nil, "", 0, err
+	}
+	return resultMap, realEffectName, effnum, nil
 }
 
 func addLayerAndClipNums(addr string, layerNum int, clipNum int) string {

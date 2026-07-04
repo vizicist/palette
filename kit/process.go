@@ -24,12 +24,33 @@ type ProcessInfo struct {
 }
 
 type ProcessManager struct {
-	info             map[string]*ProcessInfo
-	wasStarted       map[string]*atomic.Bool
-	runningPids      map[string]int // track PIDs of running processes
+	info       map[string]*ProcessInfo
+	wasStarted map[string]*atomic.Bool
+	// runningPids tracks PIDs of processes we started. It has its own mutex
+	// (not pm.mutex) because CheckAutorestartProcesses holds pm.mutex while
+	// calling StartRunning/StopRunning, which access runningPids — guarding
+	// them with pm.mutex would deadlock that path.
+	runningPids      map[string]int
+	pidMutex         sync.Mutex
 	mutex            sync.Mutex
 	lastProcessCheck time.Time
 	processCheckSecs float64
+}
+
+func (pm *ProcessManager) setRunningPid(process string, pid int) {
+	pm.pidMutex.Lock()
+	pm.runningPids[process] = pid
+	pm.pidMutex.Unlock()
+}
+
+// takeRunningPid returns the tracked PID for process (0 if none) and
+// removes it from the map.
+func (pm *ProcessManager) takeRunningPid(process string) int {
+	pm.pidMutex.Lock()
+	defer pm.pidMutex.Unlock()
+	pid := pm.runningPids[process]
+	delete(pm.runningPids, process)
+	return pid
 }
 
 func NewProcessInfo(exe, fullPath, arg string, activate func()) *ProcessInfo {
@@ -374,7 +395,7 @@ func (pm *ProcessManager) StartRunning(process string) error {
 	if err != nil {
 		return fmt.Errorf("StartRunning: process=%s err=%w", process, err)
 	}
-	pm.runningPids[process] = pid
+	pm.setRunningPid(process, pid)
 	pm.wasStarted[process].Store(true)
 	if pi.Activate != nil {
 		LogOfType("process", "Activate", "process", process)
@@ -426,9 +447,8 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 		} else {
 			LogWarn("StopRunning: failed to close GUI window by title, falling back to PID-based kill")
 			// Fall back to PID-based killing if window close failed
-			if pid, ok := pm.runningPids[process]; ok && pid > 0 {
+			if pid := pm.takeRunningPid(process); pid > 0 {
 				KillByPid(pid)
-				delete(pm.runningPids, process)
 			} else {
 				KillExecutable(pi.Exe)
 			}
@@ -438,9 +458,8 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 		KillSamplesplitter()
 	} else {
 		// Use PID-based killing if we have the PID (avoids killing other instances)
-		if pid, ok := pm.runningPids[process]; ok && pid > 0 {
+		if pid := pm.takeRunningPid(process); pid > 0 {
 			KillByPid(pid)
-			delete(pm.runningPids, process)
 		} else {
 			// Fall back to killing by executable name
 			KillExecutable(pi.Exe)

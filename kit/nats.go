@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	json "github.com/goccy/go-json"
@@ -26,14 +27,60 @@ func maskURLPassword(rawURL string) string {
 	return u.String()
 }
 
+// The NATS connection is written by connect/disconnect paths and by the
+// NATS client's own callback goroutines (disconnect/reconnect/closed), and
+// read from HTTP/API/scheduler goroutines — so all access goes through
+// these mutex-guarded helpers.
 var (
+	natsMutex       sync.Mutex
 	natsConn        *nats.Conn = nil
 	natsIsConnected bool       = false
 )
 
+// natsConnection returns the current connection, or nil if not connected.
+func natsConnection() *nats.Conn {
+	natsMutex.Lock()
+	defer natsMutex.Unlock()
+	if !natsIsConnected {
+		return nil
+	}
+	return natsConn
+}
+
+// setNatsConnection installs (or, with nil, clears) the connection.
+func setNatsConnection(nc *nats.Conn) {
+	natsMutex.Lock()
+	natsConn = nc
+	natsIsConnected = nc != nil
+	natsMutex.Unlock()
+}
+
+// takeNatsConnection clears the connection and returns what was there.
+func takeNatsConnection() *nats.Conn {
+	natsMutex.Lock()
+	defer natsMutex.Unlock()
+	nc := natsConn
+	natsConn = nil
+	natsIsConnected = false
+	return nc
+}
+
+// setNatsConnected flips just the connected flag; used by the NATS
+// disconnect/reconnect callbacks, where the connection object persists.
+func setNatsConnected(connected bool) {
+	natsMutex.Lock()
+	natsIsConnected = connected
+	natsMutex.Unlock()
+}
+
+// NatsIsConnected reports whether a NATS connection is currently usable.
+func NatsIsConnected() bool {
+	return natsConnection() != nil
+}
+
 func StartEmbeddedNATSAndConnectEngine() {
 
-	if natsIsConnected {
+	if NatsIsConnected() {
 		// Already connected
 		LogError(fmt.Errorf("StartEmbeddedNATSAndConnectEngine: Already connected"))
 		return
@@ -54,12 +101,11 @@ func StartEmbeddedNATSAndConnectEngine() {
 	LogInfo("Connecting to embedded local NATS", "url", maskURLPassword(url))
 	nc, err := nats.Connect(url, opts...)
 	if err != nil {
-		natsIsConnected = false
+		setNatsConnection(nil)
 		LogError(fmt.Errorf("nats.Connect to embedded local server failed, url=%s err=%w", maskURLPassword(url), err))
 		return
 	}
-	natsIsConnected = true
-	natsConn = nc
+	setNatsConnection(nc)
 
 	subscribeTo := fmt.Sprintf("to_palette.%s.>", Hostname())
 	err = SubscribeEngineAPIOverNATS(subscribeTo)
@@ -95,7 +141,7 @@ func NatsConnectRemote() error {
 }
 
 func natsConnect(url string) error {
-	if natsIsConnected {
+	if NatsIsConnected() {
 		return fmt.Errorf("natsConnect: Already connected")
 	}
 
@@ -106,11 +152,10 @@ func natsConnect(url string) error {
 
 	nc, err := nats.Connect(url, opts...)
 	if err != nil {
-		natsIsConnected = false
+		setNatsConnection(nil)
 		return fmt.Errorf("nats.Connect failed, url=%s err=%w", maskURLPassword(url), err)
 	}
-	natsIsConnected = true
-	natsConn = nc
+	setNatsConnection(nc)
 
 	LogInfo("Connected to NATS", "url", maskURLPassword(url))
 	return nil
@@ -124,12 +169,13 @@ func NatsDump(streamName string, f func(tm time.Time, subj string, data string))
 // If startTime is nil, starts from the beginning. If endTime is nil, continues to the end.
 func NatsDumpTimeRange(streamName string, startTime *time.Time, endTime *time.Time, f func(tm time.Time, subj string, data string)) error {
 
-	if !natsIsConnected {
+	nc := natsConnection()
+	if nc == nil {
 		return fmt.Errorf("NatsDumpTimeRange: not Connected")
 	}
 
 	// Create a JetStream management context
-	js, err := natsConn.JetStream()
+	js, err := nc.JetStream()
 	if err != nil {
 		return fmt.Errorf("error creating JetStream management context: %w", err)
 	}
@@ -168,7 +214,9 @@ func NatsDumpTimeRange(streamName string, startTime *time.Time, endTime *time.Ti
 				fmt.Println("No more messages to fetch.")
 				break
 			}
-			LogError(fmt.Errorf("error fetching messages: %v", err))
+			// A persistent fetch error would otherwise spin this loop
+			// forever, logging the same failure; fail fast instead.
+			return fmt.Errorf("error fetching messages: %w", err)
 		}
 
 		for _, msg := range msgs {
@@ -196,12 +244,13 @@ func NatsDumpTimeRange(streamName string, startTime *time.Time, endTime *time.Ti
 
 func NatsStreams() ([]string, error) {
 
-	if !natsIsConnected {
+	nc := natsConnection()
+	if nc == nil {
 		return nil, fmt.Errorf("NatsStreams: not Connected")
 	}
 
 	// Create a JetStream management context
-	jsm, err := natsConn.JetStream()
+	jsm, err := nc.JetStream()
 	if err != nil {
 		return nil, fmt.Errorf("error creating JetStream management context: %v", err)
 	}
@@ -234,16 +283,14 @@ func natsEngineAPIHandler(msg *nats.Msg) {
 
 // NatsRequest is used for APIs - it blocks waiting for a response and returns the response
 func NatsRequest(subj, data string, timeout time.Duration) (retdata string, err error) {
-	if !natsIsConnected {
+	nc := natsConnection()
+	if nc == nil {
 		return "", fmt.Errorf("NatsRequest: called when NATS is not Connected")
 	}
 
 	LogOfType("nats", "NatsRequest", "subject", subj, "data", data)
-	if natsConn == nil {
-		return "", fmt.Errorf("NatsRequest: no NATS connection")
-	}
 	bytes := []byte(data)
-	msg, err := natsConn.Request(subj, bytes, timeout)
+	msg, err := nc.Request(subj, bytes, timeout)
 	if err == nats.ErrTimeout {
 		return "", fmt.Errorf("timeout, nothing is subscribed to subj=%s", subj)
 	} else if err != nil {
@@ -255,8 +302,8 @@ func NatsRequest(subj, data string, timeout time.Duration) (retdata string, err 
 // NatsPublish xxx
 func NatsPublish(subj string, data map[string]any) error {
 
-	nc := natsConn
-	if !natsIsConnected || nc == nil {
+	nc := natsConnection()
+	if nc == nil {
 		return fmt.Errorf("NatsPublish: no NATS connection, subject=%s", subj)
 	}
 
@@ -265,11 +312,9 @@ func NatsPublish(subj string, data map[string]any) error {
 		return err
 	}
 
-	// bytes := []byte("foobar")
-
 	LogInfo("NatsPublish", "subject", subj, "data", string(bytes))
 
-	err = natsConn.Publish(subj, bytes)
+	err = nc.Publish(subj, bytes)
 	LogIfError(err)
 	nc.Flush()
 
@@ -277,8 +322,8 @@ func NatsPublish(subj string, data map[string]any) error {
 }
 
 func NatsPublishJSON(subj string, data any) error {
-	nc := natsConn
-	if !natsIsConnected || nc == nil {
+	nc := natsConnection()
+	if nc == nil {
 		return fmt.Errorf("NatsPublishJSON: no NATS connection, subject=%s", subj)
 	}
 	bytes, err := json.Marshal(data)
@@ -293,16 +338,12 @@ func NatsPublishJSON(subj string, data any) error {
 // NatsSubscribe subscribes to the given subject using the provided callback.
 func NatsSubscribe(subj string, callback nats.MsgHandler) error {
 
-	if !natsIsConnected {
-		return fmt.Errorf("NatsSubscribe: called when NATS is not Connected")
+	nc := natsConnection()
+	if nc == nil {
+		return fmt.Errorf("NatsSubscribe: called when NATS is not Connected, subject=%s", subj)
 	}
 
 	LogOfType("nats", "NatsSubscribe", "subject", subj)
-
-	nc := natsConn
-	if nc == nil {
-		return fmt.Errorf("NatsSubscribe: subject=%s, no connection to NATS server", subj)
-	}
 	_, err := nc.Subscribe(subj, callback)
 	LogIfError(err)
 	nc.Flush()
@@ -311,12 +352,12 @@ func NatsSubscribe(subj string, callback nats.MsgHandler) error {
 }
 
 func NatsClose() {
-	if natsConn == nil || !natsIsConnected {
+	nc := takeNatsConnection()
+	if nc == nil {
 		LogError(fmt.Errorf("NatsClose called when natsConn is nil or unconnected"))
 		return
 	}
-	natsConn.Close()
-	natsIsConnected = false
+	nc.Close()
 	LogInfo("NatsClose called")
 }
 
@@ -327,17 +368,17 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 	opts = append(opts, nats.ReconnectWait(reconnectDelay))
 	opts = append(opts, nats.MaxReconnects(int(totalWait/reconnectDelay)))
 	opts = append(opts, nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
-		natsIsConnected = false
+		setNatsConnected(false)
 		LogWarn("nats.Disconnected",
 			"err", err,
 			"waitminutes", totalWait.Minutes())
 	}))
 	opts = append(opts, nats.ReconnectHandler(func(nc *nats.Conn) {
-		natsIsConnected = true
+		setNatsConnected(true)
 		LogWarn("nats.Reconnected", "connecturl", nc.ConnectedUrl())
 	}))
 	opts = append(opts, nats.ClosedHandler(func(nc *nats.Conn) {
-		natsIsConnected = false
+		setNatsConnected(false)
 		LogWarn("nats.ClosedHandler",
 			"lasterror", nc.LastError())
 
@@ -347,7 +388,7 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 
 // NatsPublishFromEngine sends an asynchronous message via NATS
 func NatsPublishFromEngine(subject string, data map[string]any) {
-	if !natsIsConnected {
+	if !NatsIsConnected() {
 		// silent, but perhaps you could log it every once in a while
 		LogError(fmt.Errorf("NatsPublishFromEngine: called when NATS is not Connected"))
 		return
@@ -358,13 +399,9 @@ func NatsPublishFromEngine(subject string, data map[string]any) {
 }
 
 func NatsDisconnect() {
-	if natsConn == nil {
-		natsIsConnected = false
-		return
+	if nc := takeNatsConnection(); nc != nil {
+		nc.Close()
 	}
-	natsConn.Close()
-	natsIsConnected = false
-	natsConn = nil
 }
 
 func NatsEnvValue(key string) (string, error) {

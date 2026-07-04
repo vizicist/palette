@@ -172,13 +172,30 @@ async function setCurrentParam(paramName, valueStr) {
     }
 }
 
+// escapeHtml makes a server-derived string safe to interpolate into HTML
+// markup or attribute values (param names/values, preset names, errors).
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// gridLoadToken guards #preset-grid against stale async loads: rapid tab or
+// view switching starts a new load, and any earlier in-flight load discovers
+// its token is outdated and drops its result instead of overwriting.
+let gridLoadToken = 0;
+
 async function loadPresets() {
     const grid = document.getElementById('preset-grid');
+    const token = ++gridLoadToken;
     grid.classList.add('grid-mode');
     grid.innerHTML = '<div class="loading">Loading...</div>';
 
     try {
         const list = await API.getSavedList(UIState.currentCategory);
+        if (token !== gridLoadToken) return; // a newer load owns the grid
 
         const presets = savedPresetNamesFromList(list);
 
@@ -188,8 +205,8 @@ async function loadPresets() {
         }
 
         const html = presets.map(name => {
-            const display = name.replace(/_/g, '<br>').replace(/^(<br>)+/, '').replace(/(<br>)+$/, '');
-            return `<button class="preset-btn" data-name="${name}">${display}</button>`;
+            const display = escapeHtml(name).replace(/_/g, '<br>').replace(/^(<br>)+/, '').replace(/(<br>)+$/, '');
+            return `<button class="preset-btn" data-name="${escapeHtml(name)}">${display}</button>`;
         }).join('');
 
         grid.innerHTML = html;
@@ -199,7 +216,7 @@ async function loadPresets() {
         });
         updatePresetButtons();
     } catch (e) {
-        grid.innerHTML = `<div class="error">${e.message}</div>`;
+        grid.innerHTML = `<div class="error">${escapeHtml(e.message)}</div>`;
     }
 }
 
@@ -517,6 +534,7 @@ function syncStepperTiming(status) {
 
 async function loadParams() {
     const grid = document.getElementById('preset-grid');
+    const token = ++gridLoadToken;
     grid.classList.remove('grid-mode');
     grid.innerHTML = '<div class="loading">Loading parameters...</div>';
 
@@ -537,6 +555,8 @@ async function loadParams() {
             const patchToQuery = UIState.currentPatch === '*' ? 'A' : UIState.currentPatch;
             paramsStr = await API.getPatchParams(patchToQuery, UIState.currentCategory);
         }
+
+        if (token !== gridLoadToken) return; // a newer load owns the grid
 
         // Parse "name=value\n" format
         const lines = paramsStr.split('\n').filter(l => l.trim());
@@ -590,7 +610,7 @@ async function loadParams() {
             let rowClass = 'param-row';
             if (isEffectSubParam) rowClass += ' effect-sub-param';
             if (isMainEffectBool) rowClass += ' effect-main-row';
-            html += `<div class="${rowClass}" data-param="${p.name}">`;
+            html += `<div class="${rowClass}" data-param="${escapeHtml(p.name)}">`;
 
             if (isMainEffectBool) {
                 // Main effect toggle: single wide button with +/- and name
@@ -599,12 +619,12 @@ async function loadParams() {
                 const symbol = isEnabled ? '-' : '+';
                 html += `<button class="param-ctrl effect-toggle ${btnClass}" data-action="toggle">`;
                 html += `<span class="effect-symbol">${symbol}</span>`;
-                html += `<span class="effect-label">${p.name}</span>`;
+                html += `<span class="effect-label">${escapeHtml(p.name)}</span>`;
                 html += `</button>`;
-                html += `<span class="param-value" style="display:none">${p.value}</span>`;
+                html += `<span class="param-value" style="display:none">${escapeHtml(p.value)}</span>`;
                 html += `<span class="param-controls"></span>`;
             } else {
-                html += `<span class="param-name">${p.name}</span>`;
+                html += `<span class="param-name">${escapeHtml(p.name)}</span>`;
                 // Use slider for numeric params in effect sub-params, visual, sound, misc
                 const isFloat = isNumeric && p.value.includes('.');
                 const isInt = isNumeric && !p.value.includes('.');
@@ -615,7 +635,7 @@ async function loadParams() {
                     const isEnabled = p.value === 'true';
                     const btnClass = isEnabled ? 'bool-toggle-enabled' : 'bool-toggle-disabled';
                     const btnLabel = isEnabled ? 'Enabled' : 'Disabled';
-                    html += `<span class="param-value" style="display:none">${p.value}</span>`;
+                    html += `<span class="param-value" style="display:none">${escapeHtml(p.value)}</span>`;
                     html += `<span class="param-controls">`;
                     html += `<button class="param-ctrl bool-toggle ${btnClass}" data-action="toggle">${btnLabel}</button>`;
                     html += `</span>`;
@@ -637,24 +657,24 @@ async function loadParams() {
 
                     if (enumValues && enumValues.length > 0) {
                         // String param with enum - show dropdown
-                        html += `<span class="param-value" style="display:none">${p.value}</span>`;
+                        html += `<span class="param-value" style="display:none">${escapeHtml(p.value)}</span>`;
                         html += '<span class="param-controls">';
                         html += `<select class="param-select">`;
                         for (const opt of enumValues) {
                             const selected = opt === p.value ? ' selected' : '';
-                            html += `<option value="${opt}"${selected}>${opt || '(empty)'}</option>`;
+                            html += `<option value="${escapeHtml(opt)}"${selected}>${escapeHtml(opt) || '(empty)'}</option>`;
                         }
                         html += `</select>`;
                         html += '</span>';
                     } else if (isString) {
                         // String param without enum - show text input
-                        const escaped = p.value.replace(/"/g, '&quot;');
-                        html += `<span class="param-value" style="display:none">${p.value}</span>`;
+                        const escaped = escapeHtml(p.value);
+                        html += `<span class="param-value" style="display:none">${escapeHtml(p.value)}</span>`;
                         html += '<span class="param-controls">';
                         html += `<input type="text" class="param-text" value="${escaped}" data-original="${escaped}">`;
                         html += '</span>';
                     } else {
-                        html += `<span class="param-value">${p.value}</span>`;
+                        html += `<span class="param-value">${escapeHtml(p.value)}</span>`;
                         html += '<span class="param-controls">';
                         const paramDef = UIState.paramDefs ? UIState.paramDefs[p.name] : null;
                         if (sliderCategory && isFloat) {
@@ -691,7 +711,7 @@ async function loadParams() {
         setupParamControls();
         setupParamHeaderButtons();
     } catch (e) {
-        grid.innerHTML = `<div class="error">${e.message}</div>`;
+        grid.innerHTML = `<div class="error">${escapeHtml(e.message)}</div>`;
     }
 }
 
@@ -822,12 +842,11 @@ function setupParamControls() {
                 const paramName = row.dataset.param;
                 const valueStr = input.value;
 
-                // Update hidden value element
-                valueEl.textContent = valueStr;
-
                 try {
                     await setCurrentParam(paramName, valueStr);
-                    // Update data-original to reflect the new saved value
+                    // Update the displayed value and data-original only on
+                    // success, so a failed set doesn't show an unsaved value.
+                    valueEl.textContent = valueStr;
                     input.dataset.original = valueStr;
                     // Brief visual feedback - flash the input
                     input.style.backgroundColor = '#4a4';

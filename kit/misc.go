@@ -8,7 +8,6 @@ import (
 	"image"
 	"image/draw"
 	"io"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -31,7 +30,6 @@ var engineHTTPPort = 3330
 var engineHTTPBindAddress = "0.0.0.0"
 var eventClientPort = 6666
 var LocalAddress = "127.0.0.1"
-var theRand *rand.Rand
 
 func InitKit() {
 
@@ -58,10 +56,6 @@ func InitKit() {
 
 	theProcessManager = NewProcessManager()
 	theProcessManager.AddBuiltins()
-
-	// Fixed rand sequence, better for testing
-	// TheRand = rand.New(rand.NewSource(1))
-	theRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
 // PathExists returns true if path exists, whether it's a file or a directory.

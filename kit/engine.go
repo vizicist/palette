@@ -121,7 +121,7 @@ func EngineHTTPAPI(host string, api string, args ...string) (map[string]string, 
 }
 
 func EngineNatsAPI(host string, cmd string, timeout time.Duration) (result string, err error) {
-	if !natsIsConnected {
+	if !NatsIsConnected() {
 		return "", fmt.Errorf("EngineNatsAPI: NATS is not connected")
 	}
 	subject := fmt.Sprintf("to_palette.%s.api", host)
@@ -389,7 +389,18 @@ func (e *Engine) StartHTTP(port int) {
 	}))
 
 	source := fmt.Sprintf("%s:%d", engineHTTPBindAddress, port)
-	err := http.ListenAndServe(source, nil)
+	// Timeouts so a stalled client can't hold a handler goroutine forever
+	// (the server binds all interfaces, so it's reachable from the LAN).
+	// The generous write timeout allows for long recordings streamed from
+	// /recordings/ over slow connections.
+	server := &http.Server{
+		Addr:              source,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      10 * time.Minute,
+		IdleTimeout:       120 * time.Second,
+	}
+	err := server.ListenAndServe()
 	if err != nil {
 		LogIfError(err)
 	}

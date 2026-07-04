@@ -224,10 +224,12 @@ func (quad *Quad) onCursorEvent(state ActiveCursor) error {
 		// Z depth is small, i.e. when something has just entered the button area.
 		if state.Current.Ddu == "down" && state.Current.Pos.Z < mmttButtonDepth {
 			val, ok := CursorSourceToQuadPreset[state.Button]
+			preset, isString := val.(string)
 			if !ok {
 				LogInfo("No Preset is attached to button", "button", state.Button)
+			} else if !isString {
+				LogWarn("Button preset value is not a string, ignoring", "button", state.Button)
 			} else {
-				preset := val.(string)
 				if theQuad != nil {
 					LogOfType("cursor", "Button down", "z", state.Current.Pos.Z)
 					err := theQuad.Load("quad", preset)

@@ -87,7 +87,7 @@ def generate(datadir, force, sourcedir, floatType):
 		captype = types[typ]
 		realtype = rtypes[typ]
 
-		is_layer_param = (paramtype == "sprite" or paramtype == "visual" or paramtype == "NO_MORE_SOUND_PARAMS_sound")
+		is_layer_param = (paramtype == "sprite" or paramtype == "visual")
 		
 		if realtype == "float" and floatType == "float":
 			fsuffix = "f"
