@@ -115,6 +115,7 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"playcursor":           globalPlayCursor,
 	"obsrecord":            globalObsRecord,
 	"obsrecordstop":        globalObsRecordStop,
+	"obsrecordlist":        globalObsRecordList,
 	"obssetup":             globalObsSetup,
 }
 
@@ -291,6 +292,10 @@ func globalObsRecord(api string, apiargs map[string]string) (string, error) {
 
 func globalObsRecordStop(api string, apiargs map[string]string) (string, error) {
 	return ObsRecordStop()
+}
+
+func globalObsRecordList(api string, apiargs map[string]string) (string, error) {
+	return ObsRecordList()
 }
 
 func globalObsSetup(api string, apiargs map[string]string) (string, error) {

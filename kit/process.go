@@ -449,6 +449,17 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 
 	pi.Activated = false
 	pm.wasStarted[process].Store(false)
+
+	if process == "obs" {
+		// OBS just stopped; give it a moment to release its WebSocket port,
+		// then push a status update so any open GUI hides the RECORD button.
+		go func() {
+			time.Sleep(1500 * time.Millisecond)
+			NotifyStatusChanged()
+			NotifyOBSRecordChanged()
+		}()
+	}
+
 	return err
 }
 

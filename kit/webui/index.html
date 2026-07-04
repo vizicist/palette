@@ -54,6 +54,41 @@
         <iframe src="helpscreen.html" frameborder="0"></iframe>
     </div>
 
+    <!-- Record options modal overlay -->
+    <div id="record-overlay" class="hidden">
+        <div id="record-modal">
+            <div id="record-buttons">
+                <button class="record-opt-btn" data-action="start">Start<br>Recording</button>
+                <button class="record-opt-btn" data-action="list">List<br>Recordings</button>
+                <button class="record-opt-btn record-cancel" data-action="cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recordings list page overlay -->
+    <div id="recordings-overlay" class="hidden">
+        <div id="recordings-page">
+            <header id="recordings-header">
+                <h1>Recordings</h1>
+                <button id="recordings-back" type="button">Back</button>
+            </header>
+            <div id="recordings-list"></div>
+        </div>
+    </div>
+
+    <!-- Video player overlay -->
+    <div id="player-overlay" class="hidden">
+        <div id="player-page">
+            <header id="player-header">
+                <h1 id="player-title"></h1>
+                <button id="player-back" type="button">Back</button>
+            </header>
+            <div id="player-stage">
+                <video id="player-video" controls playsinline></video>
+            </div>
+        </div>
+    </div>
+
     <header id="title-bar" class="hidden">
         <h1>Space Palette Pro</h1>
     </header>

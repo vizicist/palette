@@ -69,6 +69,7 @@ func usage() string {
 	palette status
 	palette version
 	palette env [ set {name} {value} | get {name} ]
+	palette record [ start | stop | list ]
 	palette log [ archive | clear | types ]
 	palette summarize {logfile}
 	palette osc listen {port@host}
@@ -260,6 +261,33 @@ func CliCommand(args []string) (map[string]string, error) {
 		}
 		return EngineAPI("patch.set", "patch", args[1], "name", args[2], "value", args[3])
 
+	case "record":
+		if len(args) < 2 {
+			return nil, fmt.Errorf("bad record command, expected start|stop|list\n%s", usage())
+		}
+		switch args[1] {
+		case "start":
+			res, err := EngineAPI("global.obsrecord")
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{"result": formatRecordStatus(res["result"], "started")}, nil
+		case "stop":
+			res, err := EngineAPI("global.obsrecordstop")
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{"result": formatRecordStatus(res["result"], "stopped")}, nil
+		case "list":
+			res, err := EngineAPI("global.obsrecordlist")
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{"result": formatRecordList(res["result"])}, nil
+		default:
+			return nil, fmt.Errorf("bad record command (%s), expected start|stop|list\n%s", args[1], usage())
+		}
+
 	case "set", "setboot":
 		if len(args) != 3 {
 			return nil, fmt.Errorf("bad %s command, expected usage:\n%s", api, usage())
@@ -300,12 +328,13 @@ func CliCommand(args []string) (map[string]string, error) {
 			if len(args) < 3 {
 				return nil, fmt.Errorf("not enough arguments to env command")
 			}
-			gotten, ok := myenv[args[2]]
-			if !ok {
+			// Show the effective value: the env file (.palette/.env) if set,
+			// otherwise the OS environment variable of the same name.
+			gotten := kit.EnvLookup(args[2])
+			if gotten == "" {
 				return map[string]string{"error": "No value"}, nil
-			} else {
-				return map[string]string{"result": gotten}, nil
 			}
+			return map[string]string{"result": gotten}, nil
 		default:
 			return nil, fmt.Errorf("unknown env subcommand - %s", arg1)
 		}
@@ -444,6 +473,70 @@ func CliCommand(args []string) (map[string]string, error) {
 		}
 		return EngineAPI(api, args[1:]...)
 	}
+}
+
+// formatRecordStatus turns the {"recording":..,"remaining":..} JSON returned by
+// the obsrecord/obsrecordstop APIs into a human-readable line.
+func formatRecordStatus(jsonStr, action string) string {
+	var st kit.OBSRecordState
+	if err := json.Unmarshal([]byte(jsonStr), &st); err != nil {
+		return jsonStr // fall back to raw
+	}
+	switch action {
+	case "started":
+		if st.Recording {
+			return fmt.Sprintf("Recording started (%.0f seconds).", st.Remaining)
+		}
+		return "Recording did not start."
+	case "stopped":
+		if !st.Recording {
+			return "Recording stopped."
+		}
+		return fmt.Sprintf("Still recording (%.0f seconds remaining).", st.Remaining)
+	}
+	return jsonStr
+}
+
+// formatRecordList turns the JSON array returned by obsrecordlist into a
+// human-readable table (one recording per line).
+func formatRecordList(jsonStr string) string {
+	if strings.TrimSpace(jsonStr) == "" {
+		return "No recordings."
+	}
+	var recs []kit.OBSRecordingFile
+	if err := json.Unmarshal([]byte(jsonStr), &recs); err != nil {
+		return jsonStr // fall back to raw
+	}
+	if len(recs) == 0 {
+		return "No recordings."
+	}
+	b := strings.Builder{}
+	for i, r := range recs {
+		if i > 0 {
+			b.WriteString("\n")
+		}
+		dur := "-"
+		if r.Duration > 0 {
+			total := int(r.Duration + 0.5)
+			dur = fmt.Sprintf("%d:%02d", total/60, total%60)
+		}
+		fmt.Fprintf(&b, "%-30s  %6s  %10s  %s", r.Name, dur, formatByteSize(r.Size), r.ModTime)
+	}
+	return b.String()
+}
+
+func formatByteSize(n int64) string {
+	units := []string{"B", "KB", "MB", "GB", "TB"}
+	f := float64(n)
+	i := 0
+	for f >= 1024 && i < len(units)-1 {
+		f /= 1024
+		i++
+	}
+	if i == 0 {
+		return fmt.Sprintf("%d %s", n, units[i])
+	}
+	return fmt.Sprintf("%.1f %s", f, units[i])
 }
 
 func patchGetOutput(patchName string, category string) (string, error) {

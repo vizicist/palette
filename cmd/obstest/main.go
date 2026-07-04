@@ -5,18 +5,16 @@ import (
 	"log"
 
 	"github.com/andreykaipov/goobs"
-	"github.com/joho/godotenv"
 	"github.com/vizicist/palette/kit"
 )
 
 func main() {
-	myenv, err := godotenv.Read(kit.EnvFilePath())
-	if err != nil {
-		log.Fatalf("cannot read OBS env file: %v", err)
-	}
-	password := myenv["OBS_PASSWORD"]
+	// OBS_PASSWORD is read from the env file (.palette/.env), falling back to
+	// the OS environment variable. If unset anywhere we warn and still attempt
+	// the connection with an empty password (works when OBS auth is disabled).
+	password := kit.EnvLookup("OBS_PASSWORD")
 	if password == "" {
-		log.Fatal("OBS_PASSWORD not set in OBS env file")
+		log.Println("warning: OBS_PASSWORD not set in env file or environment, connecting with empty password")
 	}
 
 	client, err := goobs.New("localhost:4455", goobs.WithPassword(password))

@@ -1,19 +1,23 @@
 package kit
 
 import (
+	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	json "github.com/goccy/go-json"
 
 	"github.com/andreykaipov/goobs"
 	"github.com/andreykaipov/goobs/api/requests/config"
 	"github.com/andreykaipov/goobs/api/requests/inputs"
 	"github.com/andreykaipov/goobs/api/requests/scenes"
-	"github.com/joho/godotenv"
 )
 
 const (
@@ -94,16 +98,22 @@ func ObsActivate() {
 		err = ObsCommand("streamstart")
 		LogIfError(err)
 	}
+
+	// OBS (and its WebSocket) is now up. Push a status update so any open GUI
+	// reveals the RECORD button without needing a reload.
+	NotifyStatusChanged()
+	NotifyOBSRecordChanged()
 }
 
 func obsConnect() (*goobs.Client, error) {
-	myenv, err := godotenv.Read(EnvFilePath())
-	if err != nil {
-		return nil, fmt.Errorf("cannot read .env file: %w", err)
-	}
-	password, ok := myenv["OBS_PASSWORD"]
-	if !ok || password == "" {
-		return nil, fmt.Errorf("OBS_PASSWORD not set in .env file")
+	// OBS_PASSWORD is read from the env file (.palette/.env), falling back to
+	// the OS environment variable. If it's not set anywhere we log a warning
+	// and still attempt the connection with an empty password: this works if
+	// OBS has authentication disabled; if OBS requires auth, goobs will fail
+	// the handshake instead.
+	password := EnvLookup("OBS_PASSWORD")
+	if password == "" {
+		LogWarn("OBS: OBS_PASSWORD not set in env file or environment, connecting with empty password")
 	}
 	return goobs.New("localhost:4455", goobs.WithPassword(password))
 }
@@ -207,7 +217,7 @@ func ObsAutoSetup() error {
 	}
 
 	// Configure recording output settings
-	recordDir := filepath.Join(PaletteDataPath(), "recordings")
+	recordDir := obsRecordDir()
 	if err := os.MkdirAll(recordDir, os.ModePerm); err != nil {
 		LogOfType("obs", "Failed to create recordings dir", "err", err)
 	}
@@ -398,6 +408,7 @@ func ObsRecordClip() (string, error) {
 
 		obsRecordMu.Lock()
 		wasRecording := obsRecording
+		startTime := obsRecordStart
 		if wasRecording {
 			obsRecording = false
 			obsRecordStopChan = nil
@@ -409,10 +420,11 @@ func ObsRecordClip() (string, error) {
 		}
 
 		err := ObsCommand("recordstop")
+		elapsed := time.Since(startTime).Round(time.Millisecond)
 		if err != nil {
-			LogOfType("obs", "ObsRecordClip auto-stop failed", "err", err)
+			LogOfType("obs", "OBS recording stopped (timer elapsed) but recordstop failed", "elapsed", elapsed, "err", err)
 		} else {
-			LogOfType("obs", "ObsRecordClip finished")
+			LogOfType("obs", "OBS recording stopped: timer elapsed", "elapsed", elapsed)
 		}
 		NotifyOBSRecordChanged()
 	}(stopChan)
@@ -433,6 +445,7 @@ func ObsRecordStop() (string, error) {
 	}
 
 	obsRecording = false
+	startTime := obsRecordStart
 	stopChan := obsRecordStopChan
 	obsRecordStopChan = nil
 	if stopChan != nil {
@@ -441,12 +454,14 @@ func ObsRecordStop() (string, error) {
 	obsRecordMu.Unlock()
 
 	err := ObsCommand("recordstop")
+	elapsed := time.Since(startTime).Round(time.Millisecond)
 	if err != nil {
+		LogOfType("obs", "OBS recording stopped (early) but recordstop failed", "elapsed", elapsed, "err", err)
 		NotifyOBSRecordChanged()
 		return "", fmt.Errorf("ObsRecordStop stop: %w", err)
 	}
 
-	LogOfType("obs", "ObsRecordClip stopped early")
+	LogOfType("obs", "OBS recording stopped: stopped early", "elapsed", elapsed)
 	NotifyOBSRecordChanged()
 	return `{"recording":false}`, nil
 }
@@ -471,4 +486,155 @@ func ObsRecordStatusSnapshot() OBSRecordState {
 		remaining = 0
 	}
 	return OBSRecordState{Recording: true, Remaining: remaining}
+}
+
+// obsRecordDir is the directory OBS is configured to write recordings to.
+func obsRecordDir() string {
+	return filepath.Join(PaletteDataPath(), "recordings")
+}
+
+// OBSRecordingFile describes one recorded file for the recordings list UI.
+type OBSRecordingFile struct {
+	Name     string  `json:"name"`
+	Size     int64   `json:"size"`
+	ModTime  string  `json:"modtime"`
+	Duration float64 `json:"duration"` // seconds; 0 if unknown
+}
+
+// ObsRecordList returns a JSON array of the files in the recordings directory,
+// most-recent first. A missing directory is not an error — it returns "[]".
+func ObsRecordList() (string, error) {
+	entries, err := os.ReadDir(obsRecordDir())
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "[]", nil
+		}
+		return "", fmt.Errorf("ObsRecordList: %w", err)
+	}
+
+	files := []OBSRecordingFile{}
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		rec := OBSRecordingFile{
+			Name:    e.Name(),
+			Size:    info.Size(),
+			ModTime: info.ModTime().Format(time.RFC3339),
+		}
+		if strings.EqualFold(filepath.Ext(e.Name()), ".mp4") {
+			if secs, ok := mp4DurationSeconds(filepath.Join(obsRecordDir(), e.Name())); ok {
+				rec.Duration = secs
+			}
+		}
+		files = append(files, rec)
+	}
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].ModTime > files[j].ModTime
+	})
+
+	b, err := json.Marshal(files)
+	if err != nil {
+		return "", fmt.Errorf("ObsRecordList marshal: %w", err)
+	}
+	return string(b), nil
+}
+
+// mp4DurationSeconds reads the movie duration from an MP4/QuickTime file's
+// moov/mvhd box. Returns (seconds, true) on success, or (0, false) if the file
+// can't be read or isn't a well-formed MP4. It does not depend on any external
+// tool (ffprobe etc.).
+func mp4DurationSeconds(path string) (float64, bool) {
+	f, err := os.Open(path)
+	if err != nil {
+		return 0, false
+	}
+	defer f.Close()
+
+	info, err := f.Stat()
+	if err != nil {
+		return 0, false
+	}
+	fileEnd := info.Size()
+
+	moovStart, moovEnd, ok := findMp4Box(f, 0, fileEnd, "moov")
+	if !ok {
+		return 0, false
+	}
+	mvhdStart, mvhdEnd, ok := findMp4Box(f, moovStart, moovEnd, "mvhd")
+	if !ok {
+		return 0, false
+	}
+
+	buf := make([]byte, mvhdEnd-mvhdStart)
+	if _, err := f.ReadAt(buf, mvhdStart); err != nil {
+		return 0, false
+	}
+
+	// mvhd payload: version(1) flags(3), then version-dependent fields.
+	var timescale, duration uint64
+	switch buf[0] {
+	case 1:
+		if len(buf) < 32 {
+			return 0, false
+		}
+		timescale = uint64(binary.BigEndian.Uint32(buf[20:24]))
+		duration = binary.BigEndian.Uint64(buf[24:32])
+	default: // version 0
+		if len(buf) < 20 {
+			return 0, false
+		}
+		timescale = uint64(binary.BigEndian.Uint32(buf[12:16]))
+		duration = uint64(binary.BigEndian.Uint32(buf[16:20]))
+	}
+	if timescale == 0 {
+		return 0, false
+	}
+	return float64(duration) / float64(timescale), true
+}
+
+// findMp4Box scans the MP4 box list in [start, end) of r for a box of the given
+// 4-character type, returning the byte range [payloadStart, payloadEnd) of its
+// contents. Handles 64-bit largesize and box-extends-to-end (size 0).
+func findMp4Box(r io.ReaderAt, start, end int64, boxType string) (int64, int64, bool) {
+	off := start
+	hdr := make([]byte, 8)
+	for off+8 <= end {
+		if _, err := r.ReadAt(hdr, off); err != nil {
+			return 0, 0, false
+		}
+		size := int64(binary.BigEndian.Uint32(hdr[0:4]))
+		typ := string(hdr[4:8])
+		payloadOff := off + 8
+		var boxEnd int64
+		switch size {
+		case 1:
+			lb := make([]byte, 8)
+			if _, err := r.ReadAt(lb, off+8); err != nil {
+				return 0, 0, false
+			}
+			size = int64(binary.BigEndian.Uint64(lb))
+			payloadOff = off + 16
+			boxEnd = off + size
+		case 0:
+			boxEnd = end
+		default:
+			boxEnd = off + size
+		}
+		// boxEnd == payloadOff is a valid header-only (empty) box; only reject
+		// a box whose declared size is smaller than its header, or overruns.
+		if boxEnd < payloadOff || boxEnd > end {
+			return 0, 0, false
+		}
+		if typ == boxType {
+			return payloadOff, boxEnd, true
+		}
+		off = boxEnd
+	}
+	return 0, 0, false
 }

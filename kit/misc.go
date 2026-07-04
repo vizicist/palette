@@ -18,6 +18,7 @@ import (
 	"time"
 
 	json "github.com/goccy/go-json"
+	"github.com/joho/godotenv"
 
 	// "github.com/hpcloud/tail"
 	"gopkg.in/gomail.v2"
@@ -234,6 +235,20 @@ func EnvFilePath() string {
 		return palettePath
 	}
 	return ConfigFilePath(".env")
+}
+
+// EnvLookup returns the value for key, preferring the env file (.palette or
+// .env) and falling back to the OS environment variable of the same name.
+// Returns "" if neither source provides a non-empty value. A missing or
+// unreadable env file is not an error; the OS environment is consulted in
+// that case.
+func EnvLookup(key string) string {
+	if myenv, err := godotenv.Read(EnvFilePath()); err == nil {
+		if s, ok := myenv[key]; ok && s != "" {
+			return s
+		}
+	}
+	return os.Getenv(key)
 }
 
 func FileExists(filepath string) bool {

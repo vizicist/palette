@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
 	json "github.com/goccy/go-json"
 
-	"github.com/joho/godotenv"
 	"github.com/nats-io/nats.go"
 )
 
@@ -370,24 +368,13 @@ func NatsDisconnect() {
 }
 
 func NatsEnvValue(key string) (string, error) {
-	if s := os.Getenv(key); s != "" {
-		return s, nil
+	// Prefer the env file (.palette/.env), falling back to the OS environment
+	// variable. NATS_URL also accepts NATS_HUB_CLIENT_URL as an alias.
+	s := EnvLookup(key)
+	if s == "" && key == "NATS_URL" {
+		s = EnvLookup("NATS_HUB_CLIENT_URL")
 	}
-	if key == "NATS_URL" {
-		if s := os.Getenv("NATS_HUB_CLIENT_URL"); s != "" {
-			return s, nil
-		}
-	}
-	path := EnvFilePath()
-	myenv, err := godotenv.Read(path)
-	if err != nil {
-		return "", fmt.Errorf("no %s environment variable and error reading env file (%s) for NATS_*_URL values", key, path)
-	}
-	s, ok := myenv[key]
-	if (!ok || s == "") && key == "NATS_URL" {
-		s, ok = myenv["NATS_HUB_CLIENT_URL"]
-	}
-	if !ok || s == "" {
+	if s == "" {
 		return "", fmt.Errorf("no %s value, use 'palette env set' to set", key)
 	}
 	return s, nil

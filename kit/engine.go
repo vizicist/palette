@@ -345,6 +345,11 @@ func (e *Engine) StartHTTP(port int) {
 	// Serve web UI at root
 	http.Handle("/", WebUIHandler())
 
+	// Serve recorded video files for in-browser playback. http.FileServer
+	// supports Range requests (needed for video seeking) and http.Dir rejects
+	// path-traversal attempts outside the recordings directory.
+	http.Handle("/recordings/", http.StripPrefix("/recordings/", http.FileServer(http.Dir(obsRecordDir()))))
+
 	http.HandleFunc("/api", jsonAPIHandler(func(req *http.Request) (string, error) {
 		if req.Method != "POST" {
 			return "", fmt.Errorf("HTTP server unable to handle method=%s", req.Method)
