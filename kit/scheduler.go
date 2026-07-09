@@ -13,6 +13,8 @@ import (
 
 var theScheduler *Scheduler
 
+const maxSameClickSchedulePasses = 64
+
 type Event any
 
 type Scheduler struct {
@@ -90,15 +92,33 @@ func (sched *Scheduler) savePendingSchedEvent(se *SchedElement) {
 	// }
 }
 
-func (sched *Scheduler) handlePendingSchedEvents() {
-
+func (sched *Scheduler) handlePendingSchedEvents() int {
 	sched.pendingMutex.Lock()
-	defer sched.pendingMutex.Unlock()
-
-	for _, se := range sched.pendingScheduled {
-		theScheduler.insertScheduleElement(se)
-	}
+	pending := sched.pendingScheduled
 	sched.pendingScheduled = nil
+	sched.pendingMutex.Unlock()
+
+	for _, se := range pending {
+		sched.insertScheduleElement(se)
+	}
+	return len(pending)
+}
+
+// triggerClickAndDrain executes everything due at this click, including events
+// scheduled by handlers that run during the same click. Keeping this work on
+// the scheduler goroutine preserves event serialization while avoiding an
+// additional click of latency for CursorEvent -> NoteOn chains.
+func (sched *Scheduler) triggerClickAndDrain(click Clicks) {
+	sched.handlePendingSchedEvents()
+	for pass := 0; pass < maxSameClickSchedulePasses; pass++ {
+		sched.triggerItemsScheduledAtOrBefore(click)
+		if sched.handlePendingSchedEvents() == 0 {
+			return
+		}
+	}
+	LogWarn("Scheduler stopped draining same-click events",
+		"click", click,
+		"maxpasses", maxSameClickSchedulePasses)
 }
 
 // Start runs the scheduler and never returns
@@ -149,10 +169,6 @@ func (sched *Scheduler) Start() {
 		sched.advanceClickTo(newclick)
 		theEngine.advanceTransposeTo(newclick)
 
-		SetCurrentClick(newclick)
-
-		sched.handlePendingSchedEvents()
-
 		theProcessManager.checkProcess()
 		theAttractManager.checkAttract()
 		if now.Sub(lastMIDINoteWatchdog) >= midiNoteWatchdogInterval {
@@ -178,7 +194,10 @@ func (sched *Scheduler) advanceClickTo(toClick Clicks) {
 	doAutoCursorUp := true
 	sched.lastClick += 1
 	for clk := sched.lastClick; clk <= toClick; clk++ {
-		sched.triggerItemsScheduledAtOrBefore(clk)
+		// Handlers triggered at this click must observe the click currently
+		// being processed, especially when catching up across several clicks.
+		SetCurrentClick(clk)
+		sched.triggerClickAndDrain(clk)
 		// sched.advancePendingNoteOffsByOneClick()
 		if doAutoCursorUp {
 			theCursorManager.CheckAutoCursorUp()

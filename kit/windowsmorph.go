@@ -157,20 +157,30 @@ SenselSetupAndStart(unsigned char idx)
 		return -3;
 	}
 
-	s = senselAllocateFrameData(handle, &(Morphs[idx].frame));
+	s = senselSetScanDetail(handle, SCAN_DETAIL_MEDIUM);
 	if ( s != SENSEL_OK ) {
 		return -4;
 	}
 
-	s = senselStartScanning(handle);
+	s = senselSetMaxFrameRate(handle, 250);
 	if ( s != SENSEL_OK ) {
 		return -5;
+	}
+
+	s = senselAllocateFrameData(handle, &(Morphs[idx].frame));
+	if ( s != SENSEL_OK ) {
+		return -6;
+	}
+
+	s = senselStartScanning(handle);
+	if ( s != SENSEL_OK ) {
+		return -7;
 	}
 
 	for (int led = 0; led < 16; led++) {
 		s = senselSetLEDBrightness(handle, led, 0); //turn off LED
 		if ( s != SENSEL_OK ) {
-			return -6;
+			return -8;
 		}
 	}
 	return SENSEL_OK;
