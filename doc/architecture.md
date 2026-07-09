@@ -91,7 +91,7 @@ flowchart TB
     SSplitter --> Audio
     ProcMgr --> Bidule
     ProcMgr --> Resolume
-    LocalNATS -. "leaf, excluding palette.local.>" .-> HubNATS["Remote NATS hub\nphotonsalon.com"]
+    Engine <-. "direct client connection" .-> HubNATS["Central NATS server\nphotonsalon.com"]
     ProcMgr --> OBS
     Params --> Data
     DefaultData --> Data
@@ -313,7 +313,8 @@ The UI is split into small browser modules:
 The web UI no longer runs recurring HTTP polls. Engine state used by the UI is
 published locally on NATS subjects under `palette.local.ui.*`, and startup state
 is fetched with a local NATS request to `palette.local.ui.snapshot.request`.
-The embedded NATS leaf configuration keeps those subjects local-only.
+Those subjects live only on the embedded local NATS server; hub traffic uses
+the engine's separate direct connection to the central NATS server.
 
 Current UI concepts include the original Space Palette Pro page, the Sequencer
 page, and the newer BSS page controlled by `global.mode` values `pro`

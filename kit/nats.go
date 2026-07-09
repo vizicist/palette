@@ -78,50 +78,113 @@ func NatsIsConnected() bool {
 	return natsConnection() != nil
 }
 
-func StartEmbeddedNATSAndConnectEngine() {
+// The engine's connection to the embedded local NATS server, used only
+// for palette.local.> traffic (the web UI state feed). Separate from the
+// hub connection above so the UI keeps working when the hub is unreachable.
+var (
+	localNatsMutex sync.Mutex
+	localNatsConn  *nats.Conn = nil
+)
 
-	if NatsIsConnected() {
-		// Already connected
-		LogError(fmt.Errorf("StartEmbeddedNATSAndConnectEngine: Already connected"))
-		return
-	}
+func localNatsConnection() *nats.Conn {
+	localNatsMutex.Lock()
+	defer localNatsMutex.Unlock()
+	return localNatsConn
+}
+
+func setLocalNatsConnection(nc *nats.Conn) {
+	localNatsMutex.Lock()
+	localNatsConn = nc
+	localNatsMutex.Unlock()
+}
+
+func takeLocalNatsConnection() *nats.Conn {
+	localNatsMutex.Lock()
+	defer localNatsMutex.Unlock()
+	nc := localNatsConn
+	localNatsConn = nil
+	return nc
+}
+
+// StartEmbeddedNATSAndConnectEngine starts the embedded local NATS server
+// (which feeds palette.local.> UI state to the browser over websocket) and
+// connects the engine to it, then makes a separate, direct client connection
+// to the central NATS server (NATS_URL) for hub traffic.
+func StartEmbeddedNATSAndConnectEngine() {
 
 	if err := StartEmbeddedLocalNATSServer(); err != nil {
 		LogError(err)
+	} else {
+		connectEngineToLocalNATS()
+	}
+
+	connectEngineToHubNATS()
+}
+
+// connectEngineToLocalNATS connects the engine to the embedded local NATS
+// server, which carries only palette.local.> traffic for the web UI.
+func connectEngineToLocalNATS() {
+	url := EmbeddedNATSURL()
+	LogInfo("Connecting to embedded local NATS", "url", url)
+	nc, err := nats.Connect(url, nats.Name("Palette Engine Local NATS"))
+	if err != nil {
+		LogError(fmt.Errorf("nats.Connect to embedded local server failed, url=%s err=%w", url, err))
 		return
 	}
-	url := EmbeddedNATSURL()
+	setLocalNatsConnection(nc)
+}
 
-	// Connect Options.
-	opts := []nats.Option{nats.Name("Palette Engine Local NATS Subscriber")}
+// connectEngineToHubNATS connects the engine directly to the central NATS
+// server (NATS_URL). If the hub is unreachable, the client keeps retrying in
+// the background and the engine runs locally in the meantime; the engine API
+// subscription and the connect.info publish are buffered by the client and
+// take effect once the connection is established.
+func connectEngineToHubNATS() {
+
+	if NatsIsConnected() {
+		LogError(fmt.Errorf("connectEngineToHubNATS: Already connected"))
+		return
+	}
+
+	hubURL, err := NatsEnvValue("NATS_URL")
+	if err != nil {
+		LogWarn("connectEngineToHubNATS: no NATS_URL configured; engine will run without a hub connection", "err", err)
+		return
+	}
+
+	opts := []nats.Option{nats.Name("Palette Engine Hub NATS")}
 	opts = setupConnOptions(opts)
+	opts = append(opts, nats.RetryOnFailedConnect(true))
 
-	// Connect to the embedded local server. The server owns the leaf
-	// connection to the hub, keeping palette.local.> traffic local-only.
-	LogInfo("Connecting to embedded local NATS", "url", maskURLPassword(url))
-	nc, err := nats.Connect(url, opts...)
+	LogInfo("Connecting to hub NATS", "url", maskURLPassword(hubURL))
+	nc, err := nats.Connect(hubURL, opts...)
 	if err != nil {
 		setNatsConnection(nil)
-		LogError(fmt.Errorf("nats.Connect to embedded local server failed, url=%s err=%w", maskURLPassword(url), err))
+		LogError(fmt.Errorf("nats.Connect to hub failed, url=%s err=%w", maskURLPassword(hubURL), err))
 		return
 	}
 	setNatsConnection(nc)
+	setNatsConnected(nc.IsConnected())
 
 	subscribeTo := fmt.Sprintf("to_palette.%s.>", Hostname())
-	err = SubscribeEngineAPIOverNATS(subscribeTo)
-	if err != nil {
+	if _, err := nc.Subscribe(subscribeTo, natsEngineAPIHandler); err != nil {
 		LogError(err)
-	} else {
-		LogInfo("Connected to embedded local NATS and subscribed", "subscribeTo", subscribeTo)
-		NatsPublishFromEngine("connect.info", map[string]any{
-			"hostname": Hostname(),
-		})
+		return
 	}
 
-}
+	connectInfo, err := json.Marshal(map[string]any{"hostname": Hostname()})
+	if err != nil {
+		LogIfError(err)
+		return
+	}
+	subject := fmt.Sprintf("from_palette.%s.connect.info", Hostname())
+	LogIfError(nc.Publish(subject, connectInfo))
 
-func SubscribeEngineAPIOverNATS(subject string) error {
-	return NatsSubscribe(subject, natsEngineAPIHandler)
+	if nc.IsConnected() {
+		LogInfo("Connected to hub NATS and subscribed", "url", maskURLPassword(hubURL), "subscribeTo", subscribeTo)
+	} else {
+		LogWarn("Hub NATS not reachable yet, will keep retrying", "url", maskURLPassword(hubURL))
+	}
 }
 
 func NatsConnectLocal() error {
@@ -321,10 +384,12 @@ func NatsPublish(subj string, data map[string]any) error {
 	return nc.LastError()
 }
 
-func NatsPublishJSON(subj string, data any) error {
-	nc := natsConnection()
+// NatsPublishLocalJSON publishes to the embedded local NATS server,
+// which carries the palette.local.> web UI feed.
+func NatsPublishLocalJSON(subj string, data any) error {
+	nc := localNatsConnection()
 	if nc == nil {
-		return fmt.Errorf("NatsPublishJSON: no NATS connection, subject=%s", subj)
+		return fmt.Errorf("NatsPublishLocalJSON: no local NATS connection, subject=%s", subj)
 	}
 	bytes, err := json.Marshal(data)
 	if err != nil {
@@ -332,6 +397,19 @@ func NatsPublishJSON(subj string, data any) error {
 	}
 	err = nc.Publish(subj, bytes)
 	LogIfError(err)
+	return nc.LastError()
+}
+
+// NatsSubscribeLocal subscribes on the embedded local NATS server.
+func NatsSubscribeLocal(subj string, callback nats.MsgHandler) error {
+	nc := localNatsConnection()
+	if nc == nil {
+		return fmt.Errorf("NatsSubscribeLocal: no local NATS connection, subject=%s", subj)
+	}
+	LogOfType("nats", "NatsSubscribeLocal", "subject", subj)
+	_, err := nc.Subscribe(subj, callback)
+	LogIfError(err)
+	nc.Flush()
 	return nc.LastError()
 }
 
@@ -400,6 +478,9 @@ func NatsPublishFromEngine(subject string, data map[string]any) {
 
 func NatsDisconnect() {
 	if nc := takeNatsConnection(); nc != nil {
+		nc.Close()
+	}
+	if nc := takeLocalNatsConnection(); nc != nil {
 		nc.Close()
 	}
 }

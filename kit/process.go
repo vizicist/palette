@@ -141,6 +141,7 @@ func KillAllExceptMonitor() {
 		LogInfo("KillAllExceptMonitor: no Palette Control window to close")
 	}
 	KillExecutable(EngineExe)
+	obsGracefulRecordStop()
 	KillExecutable(ObsExe)
 	KillSamplesplitter()
 	KillExecutable(ChatExe)
@@ -457,6 +458,9 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 		StopSamplePlaybackService()
 		KillSamplesplitter()
 	} else {
+		if process == "obs" {
+			obsGracefulRecordStop()
+		}
 		// Use PID-based killing if we have the PID (avoids killing other instances)
 		if pid := pm.takeRunningPid(process); pid > 0 {
 			KillByPid(pid)

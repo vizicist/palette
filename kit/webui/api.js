@@ -77,6 +77,8 @@ export const API = {
     obsRecord() { return this.call('global.obsrecord'); },
     obsRecordStop() { return this.call('global.obsrecordstop'); },
     obsRecordList() { return this.call('global.obsrecordlist'); },
+    obsRecordDelete(name) { return this.call('global.obsrecorddelete', { name }); },
+    youtubeUpload(name) { return this.call('global.youtubeupload', { name }); },
 
     // Stepper APIs
     stepperPlay() { return this.call('stepper.play'); },

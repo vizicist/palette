@@ -178,6 +178,7 @@
             } else if (isTopRightTap) {
                 topRightTapCount += 1;
                 if (topRightTapCount >= requiredTopRightTaps) {
+                    topRightTapCount = 0;
                     window.parent.postMessage('advancedMode', '*');
                 }
             } else {

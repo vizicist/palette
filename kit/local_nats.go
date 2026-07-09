@@ -2,8 +2,6 @@ package kit
 
 import (
 	"fmt"
-	"net"
-	"net/url"
 	"sync"
 	"time"
 
@@ -14,14 +12,11 @@ const (
 	embeddedNATSHost          = "127.0.0.1"
 	embeddedNATSPort          = 4222
 	embeddedNATSWebsocketPort = 9222
-	embeddedNATSLocalSubject  = "palette.local.>"
 )
 
 var embeddedNATS struct {
-	mutex          sync.Mutex
-	server         *natsserver.Server
-	leafURL        string
-	leafConfigured bool
+	mutex  sync.Mutex
+	server *natsserver.Server
 }
 
 func StartEmbeddedLocalNATSServer() error {
@@ -48,28 +43,6 @@ func StartEmbeddedLocalNATSServer() error {
 		},
 	}
 
-	if leafURL, err := EmbeddedNATSLeafURL(); err == nil && leafURL != "" {
-		remoteURL, parseErr := url.Parse(leafURL)
-		if parseErr != nil {
-			LogWarn("StartEmbeddedLocalNATSServer: unable to parse leaf remote URL", "err", parseErr, "url", maskURLPassword(leafURL))
-		} else {
-			opts.LeafNode.ReconnectInterval = 5 * time.Second
-			opts.LeafNode.Remotes = []*natsserver.RemoteLeafOpts{
-				{
-					URLs:        []*url.URL{remoteURL},
-					DenyImports: []string{embeddedNATSLocalSubject},
-					DenyExports: []string{embeddedNATSLocalSubject},
-				},
-			}
-			embeddedNATS.leafURL = leafURL
-			embeddedNATS.leafConfigured = true
-		}
-	} else {
-		LogWarn("StartEmbeddedLocalNATSServer: no NATS_URL configured; local NATS will run without a leaf remote", "err", err)
-		embeddedNATS.leafURL = ""
-		embeddedNATS.leafConfigured = false
-	}
-
 	server, err := natsserver.NewServer(opts)
 	if err != nil {
 		return fmt.Errorf("unable to create embedded NATS server: %w", err)
@@ -84,34 +57,8 @@ func StartEmbeddedLocalNATSServer() error {
 	embeddedNATS.server = server
 	LogInfo("Started embedded NATS server",
 		"url", EmbeddedNATSURL(),
-		"websocket", EmbeddedNATSWebsocketURL(),
-		"leafConfigured", embeddedNATS.leafConfigured,
-		"leafURL", maskURLPassword(embeddedNATS.leafURL))
+		"websocket", EmbeddedNATSWebsocketURL())
 	return nil
-}
-
-func EmbeddedNATSLeafURL() (string, error) {
-	if leafURL, err := NatsEnvValue("NATS_LEAF_URL"); err == nil && leafURL != "" {
-		return leafURL, nil
-	}
-	hubURL, err := NatsEnvValue("NATS_URL")
-	if err != nil {
-		return "", err
-	}
-	return deriveNATSLeafURL(hubURL)
-}
-
-func deriveNATSLeafURL(hubURL string) (string, error) {
-	u, err := url.Parse(hubURL)
-	if err != nil {
-		return "", err
-	}
-	hostname := u.Hostname()
-	if hostname == "" {
-		return "", fmt.Errorf("NATS_URL has no hostname")
-	}
-	u.Host = net.JoinHostPort(hostname, "7422")
-	return u.String(), nil
 }
 
 type paletteNATSLogger struct{}
@@ -155,22 +102,6 @@ func EmbeddedNATSRunning() bool {
 	embeddedNATS.mutex.Lock()
 	defer embeddedNATS.mutex.Unlock()
 	return embeddedNATS.server != nil && embeddedNATS.server.Running()
-}
-
-func EmbeddedNATSLeafConfigured() bool {
-	embeddedNATS.mutex.Lock()
-	defer embeddedNATS.mutex.Unlock()
-	return embeddedNATS.leafConfigured
-}
-
-func EmbeddedNATSLeafConnections() int {
-	embeddedNATS.mutex.Lock()
-	server := embeddedNATS.server
-	embeddedNATS.mutex.Unlock()
-	if server == nil {
-		return 0
-	}
-	return server.NumLeafNodes()
 }
 
 func EmbeddedNATSURL() string {

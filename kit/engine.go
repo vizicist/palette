@@ -141,6 +141,12 @@ func StartEngine() {
 
 func WaitTillDone() {
 	theEngine.WaitTillDone()
+	// The engine is exiting; finalize any recording it started so the file
+	// isn't corrupted and the auto-stop timer goroutine is cleaned up.
+	if ObsRecordStatusSnapshot().Recording {
+		_, err := ObsRecordStop()
+		LogIfError(err)
+	}
 }
 
 func GetParam(name string) (string, error) {

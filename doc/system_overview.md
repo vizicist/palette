@@ -20,11 +20,12 @@ live UI state over the embedded local NATS WebSocket using the vendored
 pad mode selection, SamplePlayback controls, and sequencer views.
 
 The engine also embeds a local NATS server. It listens on `127.0.0.1:4222` for
-local NATS clients and `127.0.0.1:9222` for browser WebSocket clients. When
-`NATS_URL` is configured, this embedded server creates an outbound leaf
-connection to the remote hub. The `palette.local.>` subject namespace is denied
-on the leaf connection and is reserved for local GUI-engine traffic, including
-the UI startup snapshot request and live `palette.local.ui.*` updates.
+local NATS clients and `127.0.0.1:9222` for browser WebSocket clients. It
+carries only the `palette.local.>` subject namespace, which is reserved for
+local GUI-engine traffic, including the UI startup snapshot request and live
+`palette.local.ui.*` updates. When `NATS_URL` is configured, the engine also
+makes a separate, direct client connection to the central NATS server for
+hub traffic (`to_palette.>` and `from_palette.>`).
 
 Bidule is the main synth host. Palette sends MIDI to Bidule, and Bidule routes
 that MIDI to Omnisphere instances and other synth/effect chains.
@@ -54,7 +55,7 @@ flowchart LR
     CLI["palette CLI"] <--> API
     API <--> Engine
     Engine <--> LocalNATS
-    LocalNATS -. "leaf connection\nnot palette.local.>" .-> Hub["Remote NATS hub\nphotonsalon.com"]
+    Engine <-. "direct client connection\nto_palette / from_palette" .-> Hub["Central NATS server\nphotonsalon.com"]
 
     Monitor["palette_monitor\nwatchdog"] --> Engine
 

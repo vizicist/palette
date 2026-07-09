@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -83,7 +84,18 @@ func deleteObsSentinel() {
 
 // ObsActivate is called in a goroutine, so it can block.
 func ObsActivate() {
-	time.Sleep(3 * time.Second)
+
+	// Wait for OBS's websocket to accept connections rather than sleeping
+	// a fixed time; a cold OBS start can take well over 3 seconds, and the
+	// status push below is what reveals the RECORD button in the GUI.
+	deadline := time.Now().Add(60 * time.Second)
+	for !ObsIsRunning() {
+		if time.Now().After(deadline) {
+			LogWarn("ObsActivate: OBS websocket never became ready")
+			break
+		}
+		time.Sleep(time.Second)
+	}
 
 	// Auto-setup the Palette scene if needed
 	err := ObsAutoSetup()
@@ -229,9 +241,16 @@ func ObsAutoSetup() error {
 		LogOfType("obs", "Failed to set record directory", "err", err)
 	}
 
-	// Set recording format to mp4 via profile parameter
+	// Set recording format via profile parameter. OBS 30.2+ supports "hybrid
+	// mp4", which stays playable even if OBS dies mid-recording; plain mp4
+	// only writes its index at finalization and is corrupted by a hard kill.
+	recFormat := "mp4"
+	if version, err := client.General.GetVersion(); err == nil && obsVersionAtLeast(version.ObsVersion, 30, 2) {
+		recFormat = "hybrid_mp4"
+	}
+	LogOfType("obs", "Setting OBS recording format", "format", recFormat)
 	profileParams := []struct{ category, name, value string }{
-		{"SimpleOutput", "RecFormat", "mp4"},
+		{"SimpleOutput", "RecFormat", recFormat},
 		{"SimpleOutput", "RecQuality", "Stream"},
 	}
 	for _, pp := range profileParams {
@@ -248,6 +267,52 @@ func ObsAutoSetup() error {
 
 	LogOfType("obs", "OBS auto-setup complete", "scene", obsSceneName, "recordDir", recordDir)
 	return nil
+}
+
+// obsVersionAtLeast reports whether an OBS version string like "30.2.3" is at
+// least major.minor. Any parse failure returns false.
+func obsVersionAtLeast(version string, major, minor int) bool {
+	parts := strings.Split(version, ".")
+	if len(parts) < 2 {
+		return false
+	}
+	maj, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return false
+	}
+	min, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return false
+	}
+	return maj > major || (maj == major && min >= minor)
+}
+
+// obsGracefulRecordStop makes a best-effort attempt to stop an in-progress
+// recording before OBS is killed, so OBS finalizes the file instead of
+// leaving a corrupt mp4. Errors are ignored — obs-websocket returns an error
+// when no recording is active, and shutdown must proceed regardless. The
+// recordstop runs against a deadline so a hung OBS can't stall shutdown.
+func obsGracefulRecordStop() {
+	if !ObsIsRunning() {
+		return
+	}
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- ObsCommand("recordstop")
+	}()
+	select {
+	case err := <-errChan:
+		if err != nil {
+			LogOfType("obs", "obsGracefulRecordStop: no active recording to stop", "err", err)
+			return
+		}
+	case <-time.After(3 * time.Second):
+		LogOfType("obs", "obsGracefulRecordStop: timed out waiting for recordstop")
+		return
+	}
+	LogOfType("obs", "obsGracefulRecordStop: finalized in-progress recording before OBS is killed")
+	// Give OBS a moment to finish writing the file before it gets killed.
+	time.Sleep(2 * time.Second)
 }
 
 func obsResolumeWindowSettings() map[string]any {
@@ -347,7 +412,8 @@ func ObsCommand(cmd string) error {
 		if err != nil {
 			return err
 		}
-		LogOfType("obs", "Recording stopped", "path", resp.OutputPath)
+		path := renameRecordingToGeneratedName(resp.OutputPath)
+		LogOfType("obs", "Recording stopped", "path", path)
 		return nil
 
 	case "streamstart":
@@ -367,6 +433,38 @@ func ObsCommand(cmd string) error {
 	return nil
 }
 
+// obsSetRecordFilename tells OBS to name its next recording with a freshly
+// generated three-word name (OBS appends the container extension itself).
+// Generated names are lowercase letters and underscores only, so OBS can't
+// misread them as % format specifiers. Returns the name it set.
+func obsSetRecordFilename() (string, error) {
+	name, err := UniqueRandomName(func(name string) bool {
+		return FileExists(filepath.Join(obsRecordDir(), name+".mp4"))
+	})
+	if err != nil {
+		return "", err
+	}
+
+	client, err := obsConnect()
+	if err != nil {
+		return "", err
+	}
+	defer client.Disconnect()
+
+	// FilenameFormatting lives under [Output] in the profile's basic.ini,
+	// not under SimpleOutput like the RecFormat/RecQuality settings.
+	_, err = client.Config.SetProfileParameter(
+		config.NewSetProfileParameterParams().
+			WithParameterCategory("Output").
+			WithParameterName("FilenameFormatting").
+			WithParameterValue(name),
+	)
+	if err != nil {
+		return "", err
+	}
+	return name, nil
+}
+
 // ObsRecordClip starts a timed recording for obsRecordSeconds seconds.
 // Returns immediately with status info. The recording stops automatically.
 func ObsRecordClip() (string, error) {
@@ -384,6 +482,13 @@ func ObsRecordClip() (string, error) {
 	if err != nil {
 		obsRecordMu.Unlock()
 		return "", fmt.Errorf("ObsRecordClip setup: %w", err)
+	}
+
+	// Name the recording up front so the file is born with its generated
+	// name; the rename at stop remains only as a fallback.
+	name, err := obsSetRecordFilename()
+	if err != nil {
+		LogOfType("obs", "ObsRecordClip could not preset recording filename", "err", err)
 	}
 
 	// Start recording
@@ -429,7 +534,7 @@ func ObsRecordClip() (string, error) {
 		NotifyOBSRecordChanged()
 	}(stopChan)
 
-	LogOfType("obs", "ObsRecordClip started", "seconds", obsRecordSeconds)
+	LogOfType("obs", "ObsRecordClip started", "seconds", obsRecordSeconds, "name", name)
 	obsRecordMu.Unlock()
 	NotifyOBSRecordChanged()
 	return fmt.Sprintf(`{"recording":true,"remaining":%d}`, obsRecordSeconds), nil
@@ -491,6 +596,67 @@ func ObsRecordStatusSnapshot() OBSRecordState {
 // obsRecordDir is the directory OBS is configured to write recordings to.
 func obsRecordDir() string {
 	return filepath.Join(PaletteDataPath(), "recordings")
+}
+
+// renameRecordingToGeneratedName renames a just-finished OBS recording from
+// its default timestamp name to a memorable, anonymous three-word name (e.g.
+// "gentle_otter_sunrise.mp4"), keeping it in the same directory and preserving
+// the extension. On any failure it logs and returns the original path so the
+// recording is never lost.
+func renameRecordingToGeneratedName(outputPath string) string {
+	if outputPath == "" {
+		return outputPath
+	}
+	dir := filepath.Dir(outputPath)
+	ext := filepath.Ext(outputPath)
+
+	// The filename is normally preset at record start; if it already has a
+	// generated-style name, there is nothing to do.
+	if IsGeneratedName(strings.TrimSuffix(filepath.Base(outputPath), ext)) {
+		return outputPath
+	}
+
+	name, err := UniqueRandomName(func(name string) bool {
+		return FileExists(filepath.Join(dir, name+ext))
+	})
+	if err != nil {
+		LogOfType("obs", "Recording keeping default name; could not generate a unique one", "err", err, "path", outputPath)
+		return outputPath
+	}
+
+	newPath := filepath.Join(dir, name+ext)
+	if err := os.Rename(outputPath, newPath); err != nil {
+		LogOfType("obs", "Recording keeping default name; rename failed", "err", err, "from", outputPath, "to", newPath)
+		return outputPath
+	}
+	return newPath
+}
+
+// recordingPath validates a recording filename from the UI or CLI and
+// returns its full path.  The name must be a plain filename (no directory
+// components) of a file that exists in the recordings directory.
+func recordingPath(name string) (string, error) {
+	if name == "" || name != filepath.Base(name) || strings.Contains(name, "..") {
+		return "", fmt.Errorf("bad recording name: %s", name)
+	}
+	path := filepath.Join(obsRecordDir(), name)
+	if !FileExists(path) {
+		return "", fmt.Errorf("no such recording: %s", name)
+	}
+	return path, nil
+}
+
+// ObsRecordDelete deletes one file from the recordings directory.
+func ObsRecordDelete(name string) error {
+	path, err := recordingPath(name)
+	if err != nil {
+		return err
+	}
+	if err := os.Remove(path); err != nil {
+		return fmt.Errorf("ObsRecordDelete: %w", err)
+	}
+	LogInfo("Recording deleted", "name", name)
+	return nil
 }
 
 // OBSRecordingFile describes one recorded file for the recordings list UI.

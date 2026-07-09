@@ -116,7 +116,9 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"obsrecord":            globalObsRecord,
 	"obsrecordstop":        globalObsRecordStop,
 	"obsrecordlist":        globalObsRecordList,
+	"obsrecorddelete":      globalObsRecordDelete,
 	"obssetup":             globalObsSetup,
+	"youtubeupload":        globalYouTubeUpload,
 }
 
 func ExecuteGlobalAPI(api string, apiargs map[string]string) (string, error) {
@@ -296,6 +298,25 @@ func globalObsRecordStop(api string, apiargs map[string]string) (string, error) 
 
 func globalObsRecordList(api string, apiargs map[string]string) (string, error) {
 	return ObsRecordList()
+}
+
+func globalObsRecordDelete(api string, apiargs map[string]string) (string, error) {
+	name, err := needStringArg("name", api, apiargs)
+	if err != nil {
+		return "", err
+	}
+	return "", ObsRecordDelete(name)
+}
+
+func globalYouTubeUpload(api string, apiargs map[string]string) (string, error) {
+	name, err := needStringArg("name", api, apiargs)
+	if err != nil {
+		return "", err
+	}
+	if err := StartYouTubeUpload(name); err != nil {
+		return "", err
+	}
+	return `{"status":"started"}`, nil
 }
 
 func globalObsSetup(api string, apiargs map[string]string) (string, error) {

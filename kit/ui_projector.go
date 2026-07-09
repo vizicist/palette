@@ -14,7 +14,7 @@ var (
 
 func StartUIStateProjector() {
 	uiProjectorStartOnce.Do(func() {
-		_ = NatsSubscribe(uiSnapshotRequestSubject, uiSnapshotRequestHandler)
+		_ = NatsSubscribeLocal(uiSnapshotRequestSubject, uiSnapshotRequestHandler)
 		uiEventBus.Subscribe(UIEventStatusChanged, func() {
 			publishUIState(uiStatusSubject, uiStatusSnapshot())
 		})
@@ -54,7 +54,7 @@ func publishUIState(subject string, value any) {
 	if value == nil {
 		return
 	}
-	if err := NatsPublishJSON(subject, value); err != nil {
+	if err := NatsPublishLocalJSON(subject, value); err != nil {
 		LogOfType("nats", "publishUIState", "subject", subject, "err", err)
 	}
 }

@@ -11,12 +11,35 @@ export function updateRecordButtonVisibility(running = false) {
     btn.style.display = running ? '' : 'none';
 }
 
+// Whether YouTube upload credentials are configured in the engine; arrives
+// with every obsrecord snapshot and decides whether upload buttons render.
+let youtubeConfigured = false;
+
 export function handleOBSRecordStatus(status) {
     updateRecordButtonVisibility(!!(status && status.obsrunning));
+    youtubeConfigured = !!(status && status.youtubeconfigured);
     if (status && status.recording) {
         startRecordUI(status.remaining);
     } else {
         stopRecordUI();
+    }
+    handleUploadStatus(status && status.upload);
+}
+
+// Toast when a YouTube upload finishes or fails. Upload state arrives with
+// every obsrecord snapshot, so remember the last state to only announce
+// transitions.
+let lastUploadAnnounced = '';
+
+function handleUploadStatus(upload) {
+    if (!upload || upload.state === 'uploading') return;
+    const key = `${upload.state}:${upload.file}:${upload.url || upload.error || ''}`;
+    if (key === lastUploadAnnounced) return;
+    lastUploadAnnounced = key;
+    if (upload.state === 'done') {
+        showToast(`Uploaded ${recordingDisplayName(upload.file)} to YouTube`);
+    } else if (upload.state === 'error') {
+        showToast(`YouTube upload of ${recordingDisplayName(upload.file)} failed: ${upload.error}`);
     }
 }
 
@@ -55,6 +78,30 @@ export function setupRecording() {
 
     document.getElementById('recordings-back').addEventListener('click', hideRecordingsPage);
     document.getElementById('player-back').addEventListener('click', closePlayer);
+    setupPlayerSeek();
+}
+
+// The video's built-in controls auto-hide during playback, so a separate
+// always-visible seek bar sits under the video. While the user is dragging
+// it, timeupdate must not fight the thumb position.
+function setupPlayerSeek() {
+    const video = document.getElementById('player-video');
+    const seek = document.getElementById('player-seek');
+    let dragging = false;
+
+    video.addEventListener('timeupdate', () => {
+        if (!dragging && video.duration > 0) {
+            seek.value = String(Math.round((video.currentTime / video.duration) * 1000));
+        }
+    });
+    seek.addEventListener('pointerdown', () => { dragging = true; });
+    seek.addEventListener('pointerup', () => { dragging = false; });
+    seek.addEventListener('pointercancel', () => { dragging = false; });
+    seek.addEventListener('input', () => {
+        if (video.duration > 0) {
+            video.currentTime = (Number(seek.value) / 1000) * video.duration;
+        }
+    });
 }
 
 function startRecordUI(remaining) {
@@ -148,6 +195,11 @@ function hideRecordingsPage() {
     document.getElementById('recordings-overlay').classList.add('hidden');
 }
 
+// recordingDisplayName shows the generated filename without its .mp4 suffix.
+function recordingDisplayName(filename) {
+    return filename.replace(/\.mp4$/i, '');
+}
+
 function renderRecordings(recordings) {
     const list = document.getElementById('recordings-list');
     list.innerHTML = '';
@@ -156,15 +208,17 @@ function renderRecordings(recordings) {
         return;
     }
     for (const rec of recordings) {
+        // The name gets its own full-width line so it is never truncated;
+        // the meta text and action buttons share the line below it.
         const row = document.createElement('div');
         row.className = 'recording-row';
 
-        const info = document.createElement('div');
-        info.className = 'recording-info';
-
         const name = document.createElement('span');
         name.className = 'recording-name';
-        name.textContent = rec.name;
+        name.textContent = recordingDisplayName(rec.name);
+
+        const bottom = document.createElement('div');
+        bottom.className = 'recording-bottom';
 
         const meta = document.createElement('span');
         meta.className = 'recording-meta';
@@ -174,8 +228,8 @@ function renderRecordings(recordings) {
             formatRecordingTime(rec.modtime)
         ].filter(Boolean).join(' · ');
 
-        info.appendChild(name);
-        info.appendChild(meta);
+        const actions = document.createElement('div');
+        actions.className = 'recording-actions';
 
         const play = document.createElement('button');
         play.className = 'recording-play modal-button';
@@ -183,15 +237,65 @@ function renderRecordings(recordings) {
         play.textContent = '▶ Play';
         play.addEventListener('click', () => playRecording(rec.name));
 
-        row.appendChild(info);
-        row.appendChild(play);
+        const del = document.createElement('button');
+        del.className = 'recording-delete modal-button';
+        del.type = 'button';
+        del.textContent = '🗑 Delete';
+        del.addEventListener('click', () => deleteRecording(rec.name));
+
+        actions.appendChild(play);
+        if (youtubeConfigured) {
+            const upload = document.createElement('button');
+            upload.className = 'recording-upload modal-button';
+            upload.type = 'button';
+            upload.textContent = '⇧ YouTube';
+            upload.addEventListener('click', () => uploadRecording(rec.name));
+            actions.appendChild(upload);
+        }
+        actions.appendChild(del);
+
+        bottom.appendChild(meta);
+        bottom.appendChild(actions);
+
+        row.appendChild(name);
+        row.appendChild(bottom);
         list.appendChild(row);
+    }
+}
+
+async function uploadRecording(name) {
+    if (!window.confirm(`Upload ${recordingDisplayName(name)} to YouTube?`)) return;
+    try {
+        await API.youtubeUpload(name);
+        showToast(`Uploading ${recordingDisplayName(name)} to YouTube…`);
+    } catch (e) {
+        console.error('Failed to start YouTube upload:', e);
+        showToast(`Upload failed: ${e.message}`);
+    }
+}
+
+async function deleteRecording(name) {
+    if (!window.confirm(`Delete ${recordingDisplayName(name)}? This cannot be undone.`)) return;
+    try {
+        await API.obsRecordDelete(name);
+        showToast(`Deleted ${recordingDisplayName(name)}`);
+    } catch (e) {
+        console.error('Failed to delete recording:', e);
+        showToast(`Delete failed: ${e.message}`);
+        return;
+    }
+    // Refresh the list so the row disappears.
+    try {
+        renderRecordings(await API.obsRecordList());
+    } catch (e) {
+        console.error('Failed to refresh recordings:', e);
     }
 }
 
 function playRecording(name) {
     const video = document.getElementById('player-video');
-    document.getElementById('player-title').textContent = name;
+    document.getElementById('player-title').textContent = recordingDisplayName(name);
+    document.getElementById('player-seek').value = '0';
     video.src = `/recordings/${encodeURIComponent(name)}`;
     document.getElementById('player-overlay').classList.remove('hidden');
     video.play().catch(() => { /* autoplay may be blocked; controls remain */ });
@@ -202,6 +306,7 @@ function closePlayer() {
     video.pause();
     video.removeAttribute('src');
     video.load();
+    document.getElementById('player-seek').value = '0';
     document.getElementById('player-overlay').classList.add('hidden');
 }
 
@@ -225,5 +330,7 @@ function formatRecordingSize(bytes) {
 function formatRecordingTime(iso) {
     if (!iso) return '';
     const d = new Date(iso);
-    return isNaN(d.getTime()) ? iso : d.toLocaleString();
+    if (isNaN(d.getTime())) return iso;
+    // Compact form (no seconds) so the whole meta line fits on one line.
+    return d.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
 }

@@ -63,7 +63,8 @@ func usage() string {
 	palette status
 	palette version
 	palette env [ set {name} {value} | get {name} ]
-	palette record [ start | stop | list ]
+	palette record [ start | stop | list | delete {name} | upload {name} ]
+	palette youtube auth
 	palette log [ archive | clear | types ]
 	palette summarize {logfile}
 	palette osc listen {port@host}
@@ -155,6 +156,7 @@ func init() {
 		"logs":               cmdLog,
 		"test":               cmdTest,
 		"obs":                cmdObs,
+		"youtube":            cmdYouTube,
 		"hub":                cmdHub,
 	}
 }
@@ -330,9 +332,44 @@ func cmdRecord(args []string) (map[string]string, error) {
 			return nil, err
 		}
 		return map[string]string{"result": formatRecordList(res["result"])}, nil
+	case "delete":
+		if len(args) < 3 {
+			return nil, fmt.Errorf("record delete needs a recording name")
+		}
+		_, err := EngineAPI("global.obsrecorddelete", "name", args[2])
+		if err != nil {
+			return nil, err
+		}
+		return map[string]string{"result": "Deleted " + args[2] + "\n"}, nil
+	case "upload":
+		if len(args) < 3 {
+			return nil, fmt.Errorf("record upload needs a recording name")
+		}
+		_, err := EngineAPI("global.youtubeupload", "name", args[2])
+		if err != nil {
+			return nil, err
+		}
+		return map[string]string{"result": "Upload of " + args[2] + " started, watch engine.log for the result\n"}, nil
 	default:
-		return nil, fmt.Errorf("bad record command (%s), expected start|stop|list\n%s", args[1], usage())
+		return nil, fmt.Errorf("bad record command (%s), expected start|stop|list|delete|upload\n%s", args[1], usage())
 	}
+}
+
+// cmdYouTube handles one-time YouTube authorization.  It runs in the CLI
+// process (not the engine) so it can print the code and block while the
+// user visits the URL; the resulting refresh token goes into the shared
+// env file, where the engine reads it.
+func cmdYouTube(args []string) (map[string]string, error) {
+	if len(args) < 2 || args[1] != "auth" {
+		return nil, fmt.Errorf("bad youtube command, expected: palette youtube auth")
+	}
+	err := kit.YouTubeDeviceAuth(func(verificationURL, userCode string) {
+		fmt.Printf("On any device, visit:\n\n    %s\n\nand enter the code:  %s\n\nWaiting for authorization...\n", verificationURL, userCode)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{"result": "YouTube authorization complete, uploads are now enabled.\n"}, nil
 }
 
 func cmdSetBoot(args []string) (map[string]string, error) {

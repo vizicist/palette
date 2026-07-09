@@ -35,5 +35,5 @@ INC_DBL_PARAM(sizeinitial,0.01f,10.0f);
 INC_DBL_PARAM(sizetime,0.01f,10.0f);
 INC_DBL_PARAM(speed,0.0f,1.0f);
 INC_DBL_PARAM(thickness,0.01f,10.0f);
-INC_INT_PARAM(nsprites,1,10000);
+INC_INT_PARAM(nsprites,1,500);
 INC_INT_PARAM(smoothxyz,0,10);

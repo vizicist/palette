@@ -14,8 +14,6 @@ type EngineStatusSnapshot struct {
 	OBSRunning          bool              `json:"obsrunning"`
 	NATSConnected       bool              `json:"natsconnected"`
 	NATSLocalRunning    bool              `json:"natslocalrunning"`
-	NATSLeafConfigured  bool              `json:"natsleafconfigured"`
-	NATSLeafConnections int               `json:"natsleafconnections"`
 	NATSLocalURL        string            `json:"natslocalurl"`
 	NATSWebsocket       string            `json:"natswebsocket"`
 	Hostname            string            `json:"hostname"`
@@ -28,7 +26,9 @@ type EngineStatusSnapshot struct {
 
 type OBSRecordUISnapshot struct {
 	OBSRecordState
-	OBSRunning bool `json:"obsrunning"`
+	OBSRunning        bool                `json:"obsrunning"`
+	YouTubeConfigured bool                `json:"youtubeconfigured"`
+	Upload            *YouTubeUploadState `json:"upload,omitempty"`
 }
 
 type UISnapshot struct {

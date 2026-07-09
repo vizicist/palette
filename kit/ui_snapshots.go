@@ -16,8 +16,6 @@ func uiStatusSnapshot() EngineStatusSnapshot {
 		OBSRunning:          ObsIsRunning(),
 		NATSConnected:       NatsIsConnected(),
 		NATSLocalRunning:    EmbeddedNATSRunning(),
-		NATSLeafConfigured:  EmbeddedNATSLeafConfigured(),
-		NATSLeafConnections: EmbeddedNATSLeafConnections(),
 		NATSLocalURL:        EmbeddedNATSURL(),
 		NATSWebsocket:       EmbeddedNATSWebsocketURL(),
 		Hostname:            Hostname(),
@@ -61,7 +59,9 @@ func cursorActivitySnapshot() map[string]int64 {
 
 func obsRecordStatusSnapshot() OBSRecordUISnapshot {
 	return OBSRecordUISnapshot{
-		OBSRecordState: ObsRecordStatusSnapshot(),
-		OBSRunning:     ObsIsRunning(),
+		OBSRecordState:    ObsRecordStatusSnapshot(),
+		OBSRunning:        ObsIsRunning(),
+		YouTubeConfigured: YouTubeConfigured(),
+		Upload:            YouTubeUploadSnapshot(),
 	}
 }
