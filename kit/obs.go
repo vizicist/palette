@@ -25,6 +25,7 @@ const (
 	obsSceneName     = "Palette"
 	obsWindowInput   = "Resolume Window"
 	obsAudioInput    = "Desktop Audio"
+	obsMicAuxInput   = "Mic/Aux"
 	obsRecordSeconds = 60
 )
 
@@ -178,6 +179,22 @@ func ObsAutoSetup() error {
 	existingInputs := make(map[string]bool)
 	for _, inp := range inputList.Inputs {
 		existingInputs[inp.InputName] = true
+	}
+
+	// Palette recordings intentionally contain desktop audio only. Mic/Aux is
+	// a global OBS input, so it can be recorded even though it is not a source
+	// in the Palette scene. Re-apply the mute on every OBS startup in case it
+	// was changed during a previous session.
+	if existingInputs[obsMicAuxInput] {
+		LogOfType("obs", "Muting Mic/Aux for Palette recording")
+		_, err = client.Inputs.SetInputMute(
+			inputs.NewSetInputMuteParams().
+				WithInputName(obsMicAuxInput).
+				WithInputMuted(true),
+		)
+		if err != nil {
+			return fmt.Errorf("ObsAutoSetup mute Mic/Aux: %w", err)
+		}
 	}
 
 	resolumeWindowSettings := obsResolumeWindowSettings()
