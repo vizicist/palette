@@ -235,7 +235,7 @@ func (sched *Scheduler) DeleteSamplePlaybackStarts(tag string, sigilChannel int)
 		return false
 	})
 	if deleted > 0 {
-		LogInfo("DeleteSamplePlaybackStarts", "tag", tag, "sigilChannel", sigilChannel, "deleted", deleted)
+		LogOfType("sampleplayback", "DeleteSamplePlaybackStarts", "tag", tag, "sigilChannel", sigilChannel, "deleted", deleted)
 	}
 }
 

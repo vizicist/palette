@@ -174,7 +174,7 @@ func (vals *ParamValues) GetWithPrefix(prefix string) (string, error) {
 	vals.mutex.RLock()
 	defer vals.mutex.RUnlock()
 
-	LogInfo("params GetWithPrefix", "prefix", prefix)
+	LogOfType("params", "params GetWithPrefix", "prefix", prefix)
 	// Collect matching names and sort them
 	var names []string
 	for name := range vals.values {

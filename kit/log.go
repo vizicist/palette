@@ -291,6 +291,7 @@ var LogEnabled = map[string]bool{
 	"pressure":       false,
 	"quant":          false,
 	"saved":          false,
+	"sampleplayback": false,
 	"realtime":       false,
 	"resolume":       false,
 	"remote":         false,

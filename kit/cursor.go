@@ -767,7 +767,7 @@ func stopSamplePlayback(tag string, playback *ActiveSamplePlayback, reason strin
 	if playback == nil {
 		return false
 	}
-	LogInfo("stopActiveSamplePlayback", "reason", reason, "gid", gid, "patch", playback.Patch, "sigilChannel", playback.SigilChannel, "sampleSelector", playback.SampleSelector, "voiceKey", playback.VoiceKey)
+	LogOfType("sampleplayback", "stopActiveSamplePlayback", "reason", reason, "gid", gid, "patch", playback.Patch, "sigilChannel", playback.SigilChannel, "sampleSelector", playback.SampleSelector, "voiceKey", playback.VoiceKey)
 	if theScheduler != nil {
 		theScheduler.DeleteSamplePlaybackStarts(tag, playback.SigilChannel)
 		ScheduleAt(CurrentClick(), tag, playback.StopEvent())

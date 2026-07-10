@@ -55,6 +55,7 @@ LayerParams_InitializeTypes() {
 	LayerParams_logTypes.push_back("transpose");
 	LayerParams_logTypes.push_back("ffgl");
 	LayerParams_logTypes.push_back("gesture");
+	LayerParams_logTypes.push_back("sampleplayback");
 
 	LayerParams_pitchsetTypes.push_back("");
 

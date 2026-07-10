@@ -81,7 +81,7 @@ func StartSamplePlaybackService() error {
 	}
 	samplePlaybackService.service = service
 	samplePlaybackService.cancel = cancel
-	LogInfo("StartSamplePlaybackService", "mp3Dir", config.MP3Dir, "ffmpeg", config.FFmpegPath)
+	LogOfType("sampleplayback", "StartSamplePlaybackService", "mp3Dir", config.MP3Dir, "ffmpeg", config.FFmpegPath)
 	logSelectedSamplePlaybackFiles("StartSamplePlaybackService", service)
 	return nil
 }
@@ -245,7 +245,7 @@ func logSelectedSamplePlaybackFiles(context string, service *ss.Service) {
 		return
 	}
 	for _, file := range service.State().SelectedSampleFiles() {
-		LogInfo("SamplePlayback selected file", "context", context, "sigil", file.Sigil, "file", filepath.Base(file.Path), "path", file.Path)
+		LogOfType("sampleplayback", "SamplePlayback selected file", "context", context, "sigil", file.Sigil, "file", filepath.Base(file.Path), "path", file.Path)
 	}
 }
 

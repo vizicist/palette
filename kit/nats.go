@@ -375,7 +375,7 @@ func NatsPublish(subj string, data map[string]any) error {
 		return err
 	}
 
-	LogInfo("NatsPublish", "subject", subj, "data", string(bytes))
+	LogOfType("nats", "NatsPublish", "subject", subj, "data", string(bytes))
 
 	err = nc.Publish(subj, bytes)
 	LogIfError(err)

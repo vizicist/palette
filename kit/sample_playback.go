@@ -132,13 +132,13 @@ func (d SamplePlaybackDomain) HandleCursor(ce CursorEvent, ac *ActiveCursor) {
 
 	case "up":
 		if ac.ActiveSamplePlayback != nil {
-			LogInfo("SamplePlayback cursor up", "patch", ac.ActiveSamplePlayback.Patch, "sigilChannel", ac.ActiveSamplePlayback.SigilChannel, "sampleSelector", ac.ActiveSamplePlayback.SampleSelector, "click", CurrentClick())
+			LogOfType("sampleplayback", "SamplePlayback cursor up", "patch", ac.ActiveSamplePlayback.Patch, "sigilChannel", ac.ActiveSamplePlayback.SigilChannel, "sampleSelector", ac.ActiveSamplePlayback.SampleSelector, "click", CurrentClick())
 			d.cancelPendingStarts(ce.Tag, ac.ActiveSamplePlayback.SigilChannel)
 			d.scheduleStop(ce.Tag, ac.ActiveSamplePlayback, CurrentClick())
 			ac.ActiveSamplePlayback = nil
 		} else {
 			sigilChannel := SamplePlaybackChannelForPatch(d.patchName())
-			LogInfo("SamplePlayback cursor up without active playback", "patch", d.patchName(), "sigilChannel", sigilChannel, "click", CurrentClick())
+			LogOfType("sampleplayback", "SamplePlayback cursor up without active playback", "patch", d.patchName(), "sigilChannel", sigilChannel, "click", CurrentClick())
 			d.cancelPendingStarts(ce.Tag, sigilChannel)
 			ScheduleAt(CurrentClick(), ce.Tag, &SamplePlaybackStop{Patch: d.patchName(), SigilChannel: sigilChannel, SampleSelector: -1})
 			ScheduleAt(CurrentClick()+1, ce.Tag, &SamplePlaybackPitch{Patch: d.patchName(), SigilChannel: sigilChannel, Value: MidiPitchBendCenter})
@@ -271,7 +271,7 @@ func (event *SamplePlaybackStart) Trigger() {
 		return
 	}
 	if !withSamplePlaybackService(func(service *ss.Service) {
-		LogInfo("SamplePlaybackStart.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "velocity", event.Velocity, "pitchbend", event.PitchBend, "voiceKey", event.VoiceKey)
+		LogOfType("sampleplayback", "SamplePlaybackStart.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "velocity", event.Velocity, "pitchbend", event.PitchBend, "voiceKey", event.VoiceKey)
 		service.MIDIPitchBend(event.SigilChannel, event.PitchBend)
 		if err := service.NoteOnVoice(event.SigilChannel, event.SampleSelector, event.Velocity, event.VoiceKey); err != nil {
 			LogWarn("SamplePlaybackStart", "err", err, "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector)
@@ -287,16 +287,16 @@ func (event *SamplePlaybackStop) Trigger() {
 	}
 	if !withSamplePlaybackService(func(service *ss.Service) {
 		if event.VoiceKey != "" {
-			LogInfo("SamplePlaybackStop.Trigger StopVoice", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "voiceKey", event.VoiceKey)
+			LogOfType("sampleplayback", "SamplePlaybackStop.Trigger StopVoice", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "voiceKey", event.VoiceKey)
 			service.StopVoice(event.VoiceKey)
 			return
 		}
 		if event.SampleSelector < 0 {
-			LogInfo("SamplePlaybackStop.Trigger StopChannel", "patch", event.Patch, "sigilChannel", event.SigilChannel)
+			LogOfType("sampleplayback", "SamplePlaybackStop.Trigger StopChannel", "patch", event.Patch, "sigilChannel", event.SigilChannel)
 			service.StopChannel(event.SigilChannel)
 			return
 		}
-		LogInfo("SamplePlaybackStop.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector)
+		LogOfType("sampleplayback", "SamplePlaybackStop.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector)
 		service.NoteOff(event.SigilChannel, event.SampleSelector)
 	}) {
 		LogWarn("SamplePlaybackStop: sample playback service is not running", "patch", event.Patch)
@@ -308,7 +308,7 @@ func (event *SamplePlaybackPitch) Trigger() {
 		return
 	}
 	if !withSamplePlaybackService(func(service *ss.Service) {
-		LogInfo("SamplePlaybackPitch.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "value", event.Value)
+		LogOfType("sampleplayback", "SamplePlaybackPitch.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "value", event.Value)
 		service.MIDIPitchBend(event.SigilChannel, event.Value)
 	}) {
 		LogWarn("SamplePlaybackPitch: sample playback service is not running", "patch", event.Patch)
@@ -318,7 +318,7 @@ func (event *SamplePlaybackPitch) Trigger() {
 func stopSamplePlaybackChannelForPatch(patch string, reason string) bool {
 	sigilChannel := SamplePlaybackChannelForPatch(patch)
 	stopped := withSamplePlaybackService(func(service *ss.Service) {
-		LogInfo("stopSamplePlaybackChannelForPatch", "reason", reason, "patch", patch, "sigilChannel", sigilChannel)
+		LogOfType("sampleplayback", "stopSamplePlaybackChannelForPatch", "reason", reason, "patch", patch, "sigilChannel", sigilChannel)
 		service.StopChannel(sigilChannel)
 		service.MIDIPitchBend(sigilChannel, MidiPitchBendCenter)
 	})

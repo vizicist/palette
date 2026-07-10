@@ -22,3 +22,13 @@ func TestUnknownLogtypeDoesNotDeadlock(t *testing.T) {
 		t.Fatal("deadlock: unknown logtype hung IsLogging/SetLogTypes")
 	}
 }
+
+func TestSamplePlaybackLogtypeCanBeEnabled(t *testing.T) {
+	InitLog("test")
+	defer SetLogTypes("")
+
+	SetLogTypes("sampleplayback")
+	if !IsLogging("sampleplayback") {
+		t.Fatal("sampleplayback logtype was not enabled")
+	}
+}
