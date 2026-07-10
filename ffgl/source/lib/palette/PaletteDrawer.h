@@ -64,7 +64,7 @@ private:
 	FFGLViewportStruct m_vp;
 	PaletteParams *m_params;
 	bool m_isdrawing;
-	
+
 	glm::mat4 m_matrix;
 	glm::mat4 m_matrix_identity;
 
