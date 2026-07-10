@@ -81,6 +81,12 @@ compresses/normalizes them, supports peak-position playback, exposes a browser
 UI on port 9876, and plays audio through a selected output device. The bundled
 `ffmpeg.exe` is used for MP3 decoding on Windows.
 
+`global.wordthreshold` controls the minimum sound level for MP3s used as word
+samples. It is a normalized 0.0 to 1.0 threshold measured as peak 10 ms RMS
+loudness after decode: `0` disables this filter, and an MP3 is eligible only
+when its loudest short window is greater than the threshold. The default is
+`0.01`, roughly -40 dBFS.
+
 ## Palette.dll
 
 `Palette.dll` is the FreeFrame/FFGL visual plugin used by Resolume. The engine

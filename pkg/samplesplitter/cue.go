@@ -6,6 +6,7 @@ type CueData struct {
 	Mode       string    `json:"mode"`
 	Splits     []float64 `json:"splits"`
 	PeakStarts []float64 `json:"peak_starts"`
+	MaxRMS     float64   `json:"max_rms"`
 	NumSplits  int       `json:"num_splits"`
 	Words      *int      `json:"words_per_split,omitempty"`
 }
@@ -16,6 +17,7 @@ type AnalyzeOptions struct {
 	SilenceThreshold float64
 	SilenceMinimum   float64
 	WordsPerSplit    int
+	WordThreshold    float64
 }
 
 func DefaultAnalyzeOptions() AnalyzeOptions {
@@ -25,5 +27,6 @@ func DefaultAnalyzeOptions() AnalyzeOptions {
 		SilenceThreshold: DefaultSilenceThreshold,
 		SilenceMinimum:   DefaultSilenceMinimum,
 		WordsPerSplit:    DefaultWordsPerSplit,
+		WordThreshold:    DefaultWordThreshold,
 	}
 }

@@ -183,6 +183,13 @@ func (s *Service) SetMinimumMP3Duration(seconds float64) {
 	s.state.SetMinimumMP3Duration(seconds)
 }
 
+func (s *Service) SetWordThreshold(threshold float64) {
+	if s == nil || s.state == nil {
+		return
+	}
+	s.state.SetWordThreshold(threshold)
+}
+
 func (s *Service) ReloadSigilSamples() error {
 	if s == nil || s.state == nil {
 		return errors.New("samplesplitter service is not initialized")

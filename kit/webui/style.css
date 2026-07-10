@@ -906,6 +906,7 @@ body.initial-bss.advanced-mode #preset-selector-panel {
 
 .palette-pad-mode-choice {
     color: rgba(255, 255, 255, 0.54);
+    font-size: 1.1em;
     padding: 3px 4px;
 }
 

@@ -18,6 +18,10 @@ type Analyzer struct {
 
 const wordValleySplitRatio = 0.5
 
+const wordLoudnessWindowSeconds = 0.01
+
+var ErrBelowWordThreshold = errors.New("MP3 does not exceed the word threshold")
+
 func (a Analyzer) AnalyzeFile(mp3Path string, opts AnalyzeOptions) (CueData, []float64, error) {
 	if opts.Mode == "" {
 		opts.Mode = DefaultSplitMode
@@ -57,6 +61,11 @@ func (a Analyzer) AnalyzeFile(mp3Path string, opts AnalyzeOptions) (CueData, []f
 	if err != nil {
 		return CueData{}, nil, err
 	}
+	maxRMS := maxWindowRMS(samples, frameRate, wordLoudnessWindowSeconds)
+	threshold := clampWordThreshold(opts.WordThreshold)
+	if !exceedsWordThreshold(maxRMS, threshold) {
+		return CueData{}, nil, fmt.Errorf("%w: maximum RMS %.4f, threshold %.4f", ErrBelowWordThreshold, maxRMS, threshold)
+	}
 
 	waveform := computeWaveform(samples, WaveformPoints)
 	var splits []float64
@@ -86,6 +95,7 @@ func (a Analyzer) AnalyzeFile(mp3Path string, opts AnalyzeOptions) (CueData, []f
 		Mode:       opts.Mode,
 		Splits:     splits,
 		PeakStarts: peakStarts,
+		MaxRMS:     round4(maxRMS),
 		NumSplits:  len(splits),
 		Words:      words,
 	}
@@ -455,6 +465,24 @@ func rms(samples []float64) float64 {
 		sum += sample * sample
 	}
 	return math.Sqrt(sum / float64(len(samples)))
+}
+
+func maxWindowRMS(samples []float64, frameRate int, windowSeconds float64) float64 {
+	if len(samples) == 0 || frameRate <= 0 {
+		return 0
+	}
+	windowSize := max(1, int(float64(frameRate)*windowSeconds))
+	maximum := 0.0
+	for start := 0; start < len(samples); start += windowSize {
+		end := min(len(samples), start+windowSize)
+		maximum = max(maximum, rms(samples[start:end]))
+	}
+	return maximum
+}
+
+func exceedsWordThreshold(maxRMS, threshold float64) bool {
+	threshold = clampWordThreshold(threshold)
+	return threshold <= 0 || maxRMS > threshold
 }
 
 func round4(v float64) float64 {

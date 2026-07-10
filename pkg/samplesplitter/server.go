@@ -107,6 +107,7 @@ func (s Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 	opts.SilenceThreshold = parseFloat(q.Get("silence_thresh"), opts.SilenceThreshold)
 	opts.SilenceMinimum = parseFloat(q.Get("silence_min"), opts.SilenceMinimum)
 	opts.WordsPerSplit = parseInt(q.Get("words_per_split"), opts.WordsPerSplit)
+	opts.WordThreshold = s.State.Config.WordThreshold
 
 	cue, waveform, err := s.Analyzer.AnalyzeFile(path, opts)
 	if err != nil {

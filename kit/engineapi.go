@@ -658,6 +658,15 @@ func ApplyGlobalParam(name string, value string) (err error) {
 			}
 		}
 
+	case "global.wordthreshold":
+		threshold := defaultSamplePlaybackWordThreshold
+		if GetFloat(value, &threshold) {
+			SetSamplePlaybackServiceWordThreshold(clampSamplePlaybackWordThreshold(threshold))
+			if err := ReloadSamplePlaybackServiceSamples(); err != nil {
+				LogWarn("global.wordthreshold reload failed", "err", err)
+			}
+		}
+
 	case "global.midithru":
 		theRouter.midithru = IsTrueValue(value)
 

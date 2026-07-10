@@ -282,6 +282,7 @@ SampleSplitter itself lives in `pkg/samplesplitter`. It is responsible for:
 
 - Finding and loading MP3 files.
 - Splitting audio into chunks by words or other supported split modes.
+- Rejecting MP3s whose peak 10 ms RMS loudness does not exceed `global.wordthreshold`.
 - Using the peak position of the first word when peak playback is enabled.
 - Optional compression and normalization.
 - Mapping chunks to playable note indexes.

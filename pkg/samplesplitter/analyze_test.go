@@ -96,3 +96,43 @@ func TestDetectSplitsWordsDoesNotSplitModerateOneShotDip(t *testing.T) {
 		t.Fatalf("word splits = %v, want a single split at 0", got)
 	}
 }
+
+func TestMaxWindowRMS(t *testing.T) {
+	samples := []float64{
+		0.3, 0.4,
+		0.0, 0.0,
+		0.6, 0.8,
+		0.1,
+	}
+
+	got := maxWindowRMS(samples, 100, 0.02)
+	want := 0.7071067811865476
+	if got != want {
+		t.Fatalf("maxWindowRMS = %v, want %v", got, want)
+	}
+}
+
+func TestExceedsWordThreshold(t *testing.T) {
+	tests := []struct {
+		name      string
+		maxRMS    float64
+		threshold float64
+		want      bool
+	}{
+		{name: "disabled", maxRMS: 0, threshold: 0, want: true},
+		{name: "below", maxRMS: 0.009, threshold: 0.01, want: false},
+		{name: "equal", maxRMS: 0.01, threshold: 0.01, want: false},
+		{name: "above", maxRMS: 0.011, threshold: 0.01, want: true},
+		{name: "negative disables", maxRMS: 0, threshold: -1, want: true},
+		{name: "above one clamps", maxRMS: 0.99, threshold: 2, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := exceedsWordThreshold(tt.maxRMS, tt.threshold)
+			if got != tt.want {
+				t.Fatalf("exceedsWordThreshold(%v, %v) = %v, want %v", tt.maxRMS, tt.threshold, got, tt.want)
+			}
+		})
+	}
+}

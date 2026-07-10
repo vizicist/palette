@@ -182,6 +182,7 @@
 "global.sampleplaybackreverblength": {"valuetype": "float", "min": "0.25", "max": "8.0", "init": "4.0", "comment": "# sample playback reverb decay length multiplier, 1 is short and 4 is the default" },
 "global.sampleplaybackwords": {"valuetype":"int", "min":"1", "max":"16", "init":"2", "comment":"# words per sample playback split" },
 "global.sampleplaybackminmp3seconds": {"valuetype": "float", "min": "0.0", "max": "600.0", "init": "10.0", "comment": "# minimum MP3 duration in seconds for sample playback" },
+"global.wordthreshold": {"valuetype": "float", "min": "0.0", "max": "1.0", "init": "0.01", "comment": "# minimum peak 10 ms RMS loudness for word MP3 eligibility; 0 disables filtering" },
 "global.sampleplaybackvolume": {"valuetype": "float", "min": "0.0", "max": "2.0", "init": "1.0", "comment": "# master volume multiplier for sample playback" },
 "global.pressuresoundzmin": {"valuetype": "float", "min": "0.0", "max": "1.0", "init": "0.0", "comment": "# global sound pressure input minimum" },
 "global.pressuresoundzmax": {"valuetype": "float", "min": "0.01", "max": "3.0", "init": "1.0", "comment": "# global sound pressure input maximum" },

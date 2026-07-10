@@ -17,6 +17,7 @@ const (
 	defaultSamplePlaybackReverbWet              = 0.0
 	defaultSamplePlaybackReverbLength           = ss.DefaultReverbLength
 	defaultSamplePlaybackMinimumMP3DurationSecs = ss.DefaultMinimumMP3DurationSeconds
+	defaultSamplePlaybackWordThreshold          = ss.DefaultWordThreshold
 )
 
 var samplePlaybackService struct {
@@ -54,6 +55,7 @@ func StartSamplePlaybackService() error {
 	config.ReverbWet = samplePlaybackReverbWet()
 	config.ReverbLength = samplePlaybackReverbLength()
 	config.MinimumMP3DurationSeconds = samplePlaybackMinimumMP3Duration()
+	config.WordThreshold = samplePlaybackWordThreshold()
 	if words, err := samplePlaybackWords(); err == nil {
 		config.DefaultWords = words
 	}
@@ -154,6 +156,24 @@ func clampSamplePlaybackMinimumMP3Duration(seconds float64) float64 {
 	return seconds
 }
 
+func samplePlaybackWordThreshold() float64 {
+	threshold, err := getSamplePlaybackFloatParam("global.wordthreshold", defaultSamplePlaybackWordThreshold)
+	if err != nil {
+		LogIfError(err)
+	}
+	return clampSamplePlaybackWordThreshold(threshold)
+}
+
+func clampSamplePlaybackWordThreshold(threshold float64) float64 {
+	if threshold < 0 {
+		return 0
+	}
+	if threshold > 1 {
+		return 1
+	}
+	return threshold
+}
+
 func clampSamplePlaybackWords(words int) int {
 	if words < 1 {
 		return 1
@@ -200,6 +220,12 @@ func SetSamplePlaybackServiceWords(words int) bool {
 func SetSamplePlaybackServiceMinimumMP3Duration(seconds float64) bool {
 	return withSamplePlaybackService(func(service *ss.Service) {
 		service.SetMinimumMP3Duration(seconds)
+	})
+}
+
+func SetSamplePlaybackServiceWordThreshold(threshold float64) bool {
+	return withSamplePlaybackService(func(service *ss.Service) {
+		service.SetWordThreshold(threshold)
 	})
 }
 

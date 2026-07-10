@@ -91,6 +91,27 @@ func TestSamplePlaybackReverbLengthDefaultsWhenParamsUnavailable(t *testing.T) {
 	}
 }
 
+func TestClampSamplePlaybackWordThreshold(t *testing.T) {
+	tests := []struct {
+		name string
+		in   float64
+		want float64
+	}{
+		{name: "below", in: -0.1, want: 0},
+		{name: "inside", in: 0.25, want: 0.25},
+		{name: "above", in: 2, want: 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := clampSamplePlaybackWordThreshold(tt.in)
+			if got != tt.want {
+				t.Fatalf("clampSamplePlaybackWordThreshold(%v) = %v, want %v", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSamplesplitterMP3DirUsesConfigBSSDir(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "data_default", "config", "mp3", "bss")

@@ -25,6 +25,39 @@ func TestConfigNormalizeClampsReverbLength(t *testing.T) {
 	}
 }
 
+func TestDefaultConfigSetsWordThreshold(t *testing.T) {
+	config := DefaultConfig()
+	if config.WordThreshold != DefaultWordThreshold {
+		t.Fatalf("WordThreshold = %v, want %v", config.WordThreshold, DefaultWordThreshold)
+	}
+}
+
+func TestConfigNormalizeDefaultsAndClampsWordThreshold(t *testing.T) {
+	config := Config{}
+	if err := config.Normalize(); err != nil {
+		t.Fatalf("Normalize err = %v", err)
+	}
+	if config.WordThreshold != 0 {
+		t.Fatalf("WordThreshold default = %v, want 0 for zero-value config", config.WordThreshold)
+	}
+
+	config = Config{WordThreshold: -1}
+	if err := config.Normalize(); err != nil {
+		t.Fatalf("Normalize err = %v", err)
+	}
+	if config.WordThreshold != 0 {
+		t.Fatalf("negative WordThreshold = %v, want 0", config.WordThreshold)
+	}
+
+	config = Config{WordThreshold: 2}
+	if err := config.Normalize(); err != nil {
+		t.Fatalf("Normalize err = %v", err)
+	}
+	if config.WordThreshold != 1 {
+		t.Fatalf("large WordThreshold = %v, want 1", config.WordThreshold)
+	}
+}
+
 func TestConfigNormalizePreservesExplicitMP3Dir(t *testing.T) {
 	dir := t.TempDir()
 	config := Config{MP3Dir: dir}

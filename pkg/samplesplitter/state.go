@@ -1,10 +1,12 @@
 package samplesplitter
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -224,6 +226,12 @@ func (s *State) SetMinimumMP3Duration(seconds float64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.Config.MinimumMP3DurationSeconds = seconds
+}
+
+func (s *State) SetWordThreshold(threshold float64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Config.WordThreshold = clampWordThreshold(threshold)
 }
 
 func (s *State) SetBusy(busy bool, message string) {
@@ -471,14 +479,7 @@ func (s *State) LoadChannelDefault(channel int, dir string, analyzer Analyzer) e
 	if len(files) == 0 {
 		return fmt.Errorf("no usable MP3 files in %s", dir)
 	}
-	mp3 := files[0]
-	cue, waveform, err := analyzer.AnalyzeFile(mp3.Path, AnalyzeOptions{
-		Mode:             DefaultSplitMode,
-		Interval:         DefaultIntervalSeconds,
-		WordsPerSplit:    s.Config.DefaultWords,
-		SilenceThreshold: s.Config.SilenceThreshold,
-		SilenceMinimum:   s.Config.SilenceMinimum,
-	})
+	mp3, cue, waveform, err := analyzeFirstUsableMP3(files, analyzer.AnalyzeFile, s.defaultAnalyzeOptions())
 	sample := SampleState{Sigil: fmt.Sprintf("channel-%d", channel), CurrentFile: mp3.Path}
 	if err != nil {
 		sample.Error = err.Error()
@@ -502,6 +503,69 @@ func minFloat(a, b float64) float64 {
 	return b
 }
 
+type analyzeMP3Func func(string, AnalyzeOptions) (CueData, []float64, error)
+
+func (s *State) defaultAnalyzeOptions() AnalyzeOptions {
+	s.mu.RLock()
+	config := s.Config
+	s.mu.RUnlock()
+	return AnalyzeOptions{
+		Mode:             DefaultSplitMode,
+		Interval:         DefaultIntervalSeconds,
+		WordsPerSplit:    config.DefaultWords,
+		SilenceThreshold: config.SilenceThreshold,
+		SilenceMinimum:   config.SilenceMinimum,
+		WordThreshold:    config.WordThreshold,
+	}
+}
+
+func analyzeFirstUsableMP3(files []MP3File, analyze analyzeMP3Func, opts AnalyzeOptions) (MP3File, CueData, []float64, error) {
+	var quietErr error
+	for _, mp3 := range files {
+		cue, waveform, err := analyze(mp3.Path, opts)
+		if err == nil {
+			return mp3, cue, waveform, nil
+		}
+		if errors.Is(err, ErrBelowWordThreshold) {
+			quietErr = err
+			continue
+		}
+		return mp3, CueData{}, nil, err
+	}
+	if quietErr != nil {
+		return MP3File{}, CueData{}, nil, quietErr
+	}
+	return MP3File{}, CueData{}, nil, errors.New("no usable MP3 files")
+}
+
+func prefixedMP3Candidates(files []MP3File, prefix, excludePath string, rng *rand.Rand) []MP3File {
+	matches := make([]MP3File, 0)
+	for _, file := range files {
+		if strings.HasPrefix(strings.ToLower(file.Name), strings.ToLower(prefix)) {
+			matches = append(matches, file)
+		}
+	}
+	if rng != nil {
+		rng.Shuffle(len(matches), func(i, j int) {
+			matches[i], matches[j] = matches[j], matches[i]
+		})
+	}
+	excludePath = normalizePathForCompare(excludePath)
+	if excludePath == "" || len(matches) < 2 {
+		return matches
+	}
+	ordered := make([]MP3File, 0, len(matches))
+	var excluded []MP3File
+	for _, file := range matches {
+		if normalizePathForCompare(file.Path) == excludePath {
+			excluded = append(excluded, file)
+		} else {
+			ordered = append(ordered, file)
+		}
+	}
+	return append(ordered, excluded...)
+}
+
 func maxFloat(a, b float64) float64 {
 	if a > b {
 		return a
@@ -516,23 +580,27 @@ func (s *State) LoadSigilDefaults(analyzer Analyzer, rng *rand.Rand) {
 	previous := s.previousSigilFiles()
 	loaded := make(map[string]SampleState)
 	var first *SampleState
+	files, listErr := ListMP3FilesWithMinimumDuration(s.Config.MP3Dir, s.Config.MinimumMP3DurationSeconds)
+	opts := s.defaultAnalyzeOptions()
 
 	for _, sigil := range Sigils {
-		mp3, err := ChooseRandomPrefixedMP3ExcludingWithMinimumDuration(s.Config.MP3Dir, sigil, previous[sigil], s.Config.MinimumMP3DurationSeconds, rng)
-		if err != nil {
+		if listErr != nil {
+			loaded[sigil] = SampleState{Sigil: sigil, Error: listErr.Error()}
+			continue
+		}
+		candidates := prefixedMP3Candidates(files, sigil, previous[sigil], rng)
+		if len(candidates) == 0 {
 			loaded[sigil] = SampleState{Sigil: sigil, Error: "No MP3 files start with '" + sigil + "'"}
 			continue
 		}
-		cue, waveform, err := analyzer.AnalyzeFile(mp3.Path, AnalyzeOptions{
-			Mode:             DefaultSplitMode,
-			Interval:         DefaultIntervalSeconds,
-			WordsPerSplit:    s.Config.DefaultWords,
-			SilenceThreshold: s.Config.SilenceThreshold,
-			SilenceMinimum:   s.Config.SilenceMinimum,
-		})
+		mp3, cue, waveform, err := analyzeFirstUsableMP3(candidates, analyzer.AnalyzeFile, opts)
 		sample := SampleState{Sigil: sigil, CurrentFile: mp3.Path}
 		if err != nil {
-			sample.Error = err.Error()
+			if errors.Is(err, ErrBelowWordThreshold) {
+				sample.Error = fmt.Sprintf("No MP3 files starting with '%s' exceed word threshold %.4f", sigil, opts.WordThreshold)
+			} else {
+				sample.Error = err.Error()
+			}
 		} else {
 			sample.CueData = &cue
 			sample.Waveform = waveform
@@ -547,6 +615,9 @@ func (s *State) LoadSigilDefaults(analyzer Analyzer, rng *rand.Rand) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.SigilSamples = loaded
+	s.CurrentFile = ""
+	s.CueData = nil
+	s.Waveform = nil
 	if first != nil {
 		s.CurrentFile = first.CurrentFile
 		s.CueData = first.CueData
@@ -579,15 +650,9 @@ func (s *State) LoadFirstIfEmpty(analyzer Analyzer) {
 	if err != nil || len(files) == 0 {
 		return
 	}
-	cue, waveform, err := analyzer.AnalyzeFile(files[0].Path, AnalyzeOptions{
-		Mode:             DefaultSplitMode,
-		Interval:         DefaultIntervalSeconds,
-		WordsPerSplit:    s.Config.DefaultWords,
-		SilenceThreshold: s.Config.SilenceThreshold,
-		SilenceMinimum:   s.Config.SilenceMinimum,
-	})
+	mp3, cue, waveform, err := analyzeFirstUsableMP3(files, analyzer.AnalyzeFile, s.defaultAnalyzeOptions())
 	if err != nil {
 		return
 	}
-	s.SetCurrent(files[0].Path, cue, waveform)
+	s.SetCurrent(mp3.Path, cue, waveform)
 }

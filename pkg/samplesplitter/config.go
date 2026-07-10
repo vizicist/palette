@@ -15,6 +15,7 @@ const (
 	DefaultSilenceThreshold          = 0.01
 	DefaultSilenceMinimum            = 0.5
 	DefaultWordsPerSplit             = 2
+	DefaultWordThreshold             = 0.01
 	DefaultReverbLength              = 4.0
 	DefaultMinimumMP3DurationSeconds = 10.0
 	MinReverbLength                  = 0.25
@@ -46,6 +47,7 @@ type Config struct {
 	SilenceThreshold          float64 `json:"silence_threshold"`
 	SilenceMinimum            float64 `json:"silence_minimum"`
 	MinimumMP3DurationSeconds float64 `json:"minimum_mp3_duration_seconds"`
+	WordThreshold             float64 `json:"word_threshold"`
 	FFmpegPath                string  `json:"ffmpeg_path"`
 }
 
@@ -60,6 +62,7 @@ func DefaultConfig() Config {
 		DefaultWords:              DefaultWordsPerSplit,
 		ReverbLength:              DefaultReverbLength,
 		MinimumMP3DurationSeconds: DefaultMinimumMP3DurationSeconds,
+		WordThreshold:             DefaultWordThreshold,
 		SilenceThreshold:          DefaultSilenceThreshold,
 		SilenceMinimum:            DefaultSilenceMinimum,
 	}
@@ -99,6 +102,7 @@ func (c *Config) Normalize() error {
 	if c.MinimumMP3DurationSeconds < 0 {
 		c.MinimumMP3DurationSeconds = DefaultMinimumMP3DurationSeconds
 	}
+	c.WordThreshold = clampWordThreshold(c.WordThreshold)
 	c.ReverbWet = clampReverbWet(c.ReverbWet)
 	if c.ReverbLength <= 0 {
 		c.ReverbLength = DefaultReverbLength
@@ -126,6 +130,16 @@ func clampReverbWet(wet float64) float64 {
 		return 1
 	}
 	return wet
+}
+
+func clampWordThreshold(threshold float64) float64 {
+	if threshold < 0 {
+		return 0
+	}
+	if threshold > 1 {
+		return 1
+	}
+	return threshold
 }
 
 func clampReverbLength(length float64) float64 {
