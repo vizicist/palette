@@ -50,7 +50,9 @@ Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depend
 
 - Install Visual Studio 2022 Community from https://visualstudio.microsoft.com/vs/community/
 
-	- in the Workload tab, select "Visual C++ Build Tools"
+	- In the Workload tab, select "Visual C++ Build Tools".
+	- Include a Windows 10 or Windows 11 SDK; the bespoke installer build uses
+	  the SDK's Manifest Tool (`mt.exe`) to mark its executables as per-user.
 <p>
 
 - Install mingw64 to get the gcc compiler.

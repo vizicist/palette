@@ -34,5 +34,7 @@ set "installer_output=%PALETTE_SOURCE%\release\palette_%version%_%datadir%.exe"
 set "installer_delete=saved/quad/Filagree_Dance.json,saved/quad/Jigsaw_Puzzles.json,saved/quad/Pretty_Pulses.json,saved/quad/Too Many_Triangles.json"
 call build_installer.bat data "%ship%\%datadir%" "%installer_output%" "%version%" "%data%" "%installer_delete%"
 if errorlevel 1 goto getout
+exit /b 0
 
 :getout
+exit /b 1

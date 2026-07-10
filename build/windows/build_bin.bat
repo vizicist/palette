@@ -196,9 +196,10 @@ if "%PALETTE_MMTT%" == "kinect" set "installer_output=%PALETTE_SOURCE%\release\p
 set "installer_delete=bin/samplesplitter.exe,samplesplitter/main.go,samplesplitter/README.md,samplesplitter/CONTRACT.md,samplesplitter/ffmpeg/bin/ffplay.exe,samplesplitter/ffmpeg/bin/ffprobe.exe"
 call build_installer.bat app "%ship%" "%installer_output%" "%version%" "" "%installer_delete%"
 if errorlevel 1 goto getout
+exit /b 0
 
 :getout
-goto :eof
+exit /b 1
 
 :set_msdev_env
 set "vswhere=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"

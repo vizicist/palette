@@ -6,7 +6,7 @@ del /q hostname.txt
 echo =============== Installing Palette version %version%
 if not "%PALETTE_MMTT%" == "kinect" goto no_mmtt_kinect
 ..\..\release\palette_%version%_win_setup_with_kinect.exe --quiet
-goto done
+exit /b %ERRORLEVEL%
 :no_mmtt_kinect
 ..\..\release\palette_%version%_win_setup.exe --quiet
-:done
+exit /b %ERRORLEVEL%
