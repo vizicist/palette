@@ -695,7 +695,12 @@ func cleanupDeletedActiveCursor(ac *ActiveCursor, reason string) {
 		ac.NoteOn.Synth.SendNoteToMidiOutput(noteOff)
 		// LogInfo("DeleteActiveCursor: gid found AFTER NOTEOFF!","noteoff",noteOff,"gid",gid)
 	} else if !stoppedSample {
-		LogWarn("DeleteActiveCursor: gid found, NO NOTEON?", "gid", ac.Current.GID)
+		LogOfType("cursor", "DeleteActiveCursor without active sound",
+			"reason", reason,
+			"gid", ac.Current.GID,
+			"tag", ac.Current.Tag,
+			"ddu", ac.Current.Ddu,
+			"button", ac.Button)
 	}
 }
 
