@@ -1,5 +1,9 @@
 # Palette Project Notes
 
+## Git Workflow
+
+- Make all future changes directly on the `main` branch. Do not create or switch to a feature branch unless the user explicitly requests one.
+
 ## Build Instructions
 
 ### palette_engine
