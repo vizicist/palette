@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -347,6 +348,35 @@ void PaletteDrawer::drawPolyline( SpriteParams& params, SpriteState& state, cons
 		if( n == remaining )
 			break;
 		idx += n - 1;
+	}
+}
+
+void PaletteDrawer::drawLineSegments( SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count )
+{
+	if( count < 2 )
+		return;
+	if( !prepareToDraw( params, state ) )
+		return;
+
+	ffglex::ScopedVAOBinding vaoBinding( vaoID );
+	ffglex::ScopedVBOBinding vboBinding( vboID );
+
+	// GL_LINES makes every pair independent, allowing all SVG subpaths to be
+	// submitted together without inserting degenerate connector geometry.
+	for( int idx = 0; idx < count; )
+	{
+		int n = std::min( count - idx, MAX_VERTICES );
+		n -= n % 2;
+		if( n < 2 )
+			break;
+		for( int k = 0; k < n; ++k )
+		{
+			float s       = float( k ) / float( n > 1 ? n - 1 : 1 );
+			vertices[ k ] = { s, 1.0f, pts[ idx + k ].x, pts[ idx + k ].y, 0.0f };
+		}
+		glBufferSubData( GL_ARRAY_BUFFER, 0, n * sizeof( vertices[ 0 ] ), vertices );
+		glDrawArrays( GL_LINES, 0, n );
+		idx += n;
 	}
 }
 

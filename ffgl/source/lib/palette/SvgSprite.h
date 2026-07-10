@@ -12,6 +12,8 @@ class PaletteDrawer;
 
 struct ParsedSvg {
 	std::vector< std::vector< glm::vec2 > > subpaths;
+	// Consecutive point pairs ready for one batched GL_LINES draw.
+	std::vector< glm::vec2 > lineSegments;
 };
 
 class SpriteSVG : public Sprite {

@@ -445,6 +445,7 @@ bool SpriteSVG::parseFile( const std::string& path, ParsedSvg& out ) {
 	// SVG user space is y-down; Sprite/GL space is y-up. Flip y during
 	// normalization so the sigil renders right-side-up.
 	out.subpaths.clear();
+	out.lineSegments.clear();
 	for( auto& s : raw ) {
 		std::vector< glm::vec2 > norm;
 		norm.reserve( s.size() );
@@ -454,6 +455,12 @@ bool SpriteSVG::parseFile( const std::string& path, ParsedSvg& out ) {
 			norm.push_back( q );
 		}
 		out.subpaths.push_back( std::move( norm ) );
+	}
+	for( const auto& sub : out.subpaths ) {
+		for( size_t i = 1; i < sub.size(); ++i ) {
+			out.lineSegments.push_back( sub[ i - 1 ] );
+			out.lineSegments.push_back( sub[ i ] );
+		}
 	}
 	return true;
 }
@@ -477,9 +484,6 @@ SpriteSVG* SpriteSVG::tryLoad( const std::string& shapeName ) {
 void SpriteSVG::drawShape( PaletteDrawer* app, int xdir, int ydir ) {
 	if( !_data )
 		return;
-	for( const auto& sub : _data->subpaths ) {
-		if( sub.size() < 2 )
-			continue;
-		app->drawPolyline( params, state, sub.data(), (int)sub.size() );
-	}
+	if( !_data->lineSegments.empty() )
+		app->drawLineSegments( params, state, _data->lineSegments.data(), (int)_data->lineSegments.size() );
 }

@@ -286,12 +286,9 @@ func (patch *Patch) API(api string, apiargs map[string]string) (string, error) {
 		if preserveRoute {
 			savedRoute = patch.Get("stepper.route")
 		}
-		err = patch.Load(category, paramsMap)
+		err = patch.load(category, paramsMap, savedRoute, preserveRoute)
 		if err != nil {
 			return "", err
-		}
-		if preserveRoute {
-			patch.restoreStepperRoute(savedRoute)
 		}
 		err = patch.SaveQuadAndAlert()
 		if err == nil {
@@ -501,6 +498,10 @@ func (patch *Patch) SetPatchValuesFromQuadMap(paramsmap map[string]any) error {
 }
 
 func (patch *Patch) Load(category string, paramsMap ParamsMap) error {
+	return patch.load(category, paramsMap, "", false)
+}
+
+func (patch *Patch) load(category string, paramsMap ParamsMap, preservedRoute string, preserveRoute bool) error {
 
 	if category == "quad" {
 		// this will only load things to this one patch
@@ -540,6 +541,12 @@ func (patch *Patch) Load(category string, paramsMap ParamsMap) error {
 				// Don't fail completely
 			}
 		}
+	}
+	// Preset loads intentionally preserve the live pad route. Restore it before
+	// broadcasting values so no cursor or stepper event can observe the preset's
+	// transient sample route and briefly start sample playback.
+	if preserveRoute {
+		patch.restoreStepperRoute(preservedRoute)
 	}
 	patch.RefreshAllPatchValues()
 	return nil

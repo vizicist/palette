@@ -604,9 +604,14 @@ func (a *AudioManager) dataCallback(output, _ []byte, _ uint32) {
 func (a *AudioManager) mixIntoLocked(output []byte) []string {
 	frameCount := len(output) / 2
 	completed := make([]string, 0)
+	// Reuse this map for the whole device callback. Allocating it inside the
+	// frame loop created one map per audio sample (44,100 allocations/second),
+	// causing enough GC pressure to interfere with the graphics process while
+	// sample playback was active.
+	mixedVoiceKeys := make(map[string]bool, len(a.voices))
 	for frame := 0; frame < frameCount; frame++ {
 		mixed := 0
-		mixedVoiceKeys := make(map[string]bool)
+		clear(mixedVoiceKeys)
 		for voiceKey, voice := range a.voices {
 			if mixedVoiceKeys[voiceKey] || (voice.loop && voice.channel >= 0 && !voice.active) {
 				continue

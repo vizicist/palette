@@ -51,6 +51,7 @@ public:
 	void drawQuad(SpriteParams& params, SpriteState& state, float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3);
 	void drawEllipse(SpriteParams& params, SpriteState& state, float x0, float y0, float radius, float fromang=0.0f, float toang=360.0f);
 	void drawPolyline(SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count);
+	void drawLineSegments(SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count);
 	void drawPolygon(PointMem* p, int npoints);
 
 	float finalAspect( float aspect );
@@ -67,7 +68,7 @@ private:
 	glm::mat4 m_matrix;
 	glm::mat4 m_matrix_identity;
 
-#define MAX_VERTICES 72
+#define MAX_VERTICES 4096
 	ffglex::GlVertexTextured vertices[ MAX_VERTICES ];
 
 	GLuint vaoID;

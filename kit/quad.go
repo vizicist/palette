@@ -388,15 +388,10 @@ func (quad *Quad) Load(category string, filename string) error {
 			}
 		}
 		for _, patch := range quad.patch {
-			err := patch.Load(category, paramsMap)
+			err := patch.load(category, paramsMap, savedRoutes[patch.Name()], preserveRoutes)
 			if err != nil {
 				LogIfError(err)
 				lasterr = err
-			}
-		}
-		if preserveRoutes {
-			for _, patch := range quad.patch {
-				patch.restoreStepperRoute(savedRoutes[patch.Name()])
 			}
 		}
 	}
