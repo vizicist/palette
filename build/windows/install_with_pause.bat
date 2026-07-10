@@ -5,4 +5,4 @@ set /p hostname=<hostname.txt
 del /q hostname.txt
 echo You are about to install Palette version %version%
 pause
-..\..\release\palette_%version%_win_setup.exe /CURRENTUSER /SILENT
+..\..\release\palette_%version%_win_setup.exe

@@ -30,8 +30,6 @@ rem mkdir %ship%\keykit\lib
 
 copy %PALETTE_SOURCE%\VERSION %ship% >nul
 set /p version=<../../VERSION
-rem putting the PALETTE_VERSION in the environment so it can be used in the installer
-set PALETTE_VERSION=%version%
 
 echo ================ Upgrading Python
 python -m pip install pip | grep -v "already.*satisfied"
@@ -182,6 +180,7 @@ copy %PALETTE_SOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
 rem copy %PALETTE_SOURCE%\depthlib\build\x64\Release\depthlib.dll %bin% >nul
 copy vc15\bin\depthai-core.dll %bin% >nul
 copy vc15\bin\opencv_world454.dll %bin% >nul
+copy vc15\bin\VC_redist.x64.exe %bin% >nul
 copy "%USERPROFILE%\mingw64\bin\libwinpthread-1.dll" %bin% >nul
 copy "%USERPROFILE%\mingw64\bin\libgcc_s_seh-1.dll" %bin% >nul
 if exist "%USERPROFILE%\mingw64\bin\libgcc_s_sjlj-1.dll" copy "%USERPROFILE%\mingw64\bin\libgcc_s_sjlj-1.dll" %bin% >nul
@@ -192,24 +191,13 @@ if exist %bin%\pyinstalled\tcl\tzdata rm -fr %bin%\pyinstalled\tcl\tzdata
 
 echo ================ Creating installer for VERSION %version%
 
-call :find_inno_setup
+set "installer_output=%PALETTE_SOURCE%\release\palette_%version%_win_setup.exe"
+if "%PALETTE_MMTT%" == "kinect" set "installer_output=%PALETTE_SOURCE%\release\palette_%version%_win_setup_with_kinect.exe"
+set "installer_delete=bin/samplesplitter.exe,samplesplitter/main.go,samplesplitter/README.md,samplesplitter/CONTRACT.md,samplesplitter/ffmpeg/bin/ffplay.exe,samplesplitter/ffmpeg/bin/ffprobe.exe"
+call build_installer.bat app "%ship%" "%installer_output%" "%version%" "" "%installer_delete%"
 if errorlevel 1 goto getout
 
-"%ISCC_EXE%" /Q palette_win_setup.iss
-
-if not "%PALETTE_MMTT%" == "kinect" goto no_kinect
-move Output\palette_%version%_win_setup.exe %PALETTE_SOURCE%\release\palette_%version%_win_setup_with_kinect.exe >nul
-goto finish
-
-:no_kinect
-move Output\palette_%version%_win_setup.exe %PALETTE_SOURCE%\release >nul
-
-:finish
-
-rmdir Output
-
 :getout
-set PALETTE_VERSION=
 goto :eof
 
 :set_msdev_env
@@ -266,7 +254,6 @@ if errorlevel 1 (
 	exit /b 1
 )
 exit /b 0
-
 :check_lfs_file
 set "LFSFILE=%~1"
 for %%F in ("%LFSFILE%") do set "LFSFILE_SIZE=%%~zF"
@@ -282,18 +269,3 @@ if %LFSFILE_SIZE% LSS 1000000 (
 	exit /b 1
 )
 exit /b 0
-
-:find_inno_setup
-set "ISCC_EXE="
-
-for %%i in (ISCC.exe) do if not "%%~$PATH:i" == "" set "ISCC_EXE=%%~$PATH:i"
-
-if not "%ISCC_EXE%" == "" exit /b 0
-if exist "%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe" set "ISCC_EXE=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
-if exist "%ProgramFiles%\Inno Setup 6\ISCC.exe" set "ISCC_EXE=%ProgramFiles%\Inno Setup 6\ISCC.exe"
-
-if not "%ISCC_EXE%" == "" exit /b 0
-
-echo Inno Setup 6 is required to create the Windows installer, but ISCC.exe was not found.
-echo Install Inno Setup 6, or add ISCC.exe to PATH.
-exit /b 1

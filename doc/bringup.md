@@ -28,7 +28,7 @@
 
 - Install desired Palette data (e.g. for data_omnisphere or data_sfmoma)
 
-- Set Resolume ffgl folder to c:\program files\Palette\ffgl, enable OSC, open %LOCALAPPDATA%\Palette\data_default\config\PaletteDefault.avc
+- Set Resolume's FFGL folder to `%LOCALAPPDATA%\Programs\Palette\ffgl`, enable OSC, and open `%LOCALAPPDATA%\Palette\data_default\config\PaletteDefault.avc`
 
 - Pin Start Palette and Stop Palette to the taskbar
 

@@ -1,8 +1,6 @@
 @echo off
 
 set /p version=<../../VERSION
-rem putting the PALETTE_VERSION in the environment so it can be used in the installer
-set PALETTE_VERSION=%version%
 
 set data=%1
 
@@ -32,15 +30,9 @@ rm -f %ship%\%datadir%\saved\global\_Boot.json
 
 echo ================ Creating installer for %datadir%
 
-set save_PALETTE_DATA=%PALETTE_DATA%
-set PALETTE_DATA=%data%
-"c:\Program Files (x86)\Inno Setup 6\ISCC.exe" /Q data.iss
-
-move Output\%datadir%_%version%.exe %PALETTE_SOURCE%\release\palette_%version%_%datadir%.exe >nul
-
-rm -fr Output > nul 2>&1
+set "installer_output=%PALETTE_SOURCE%\release\palette_%version%_%datadir%.exe"
+set "installer_delete=saved/quad/Filagree_Dance.json,saved/quad/Jigsaw_Puzzles.json,saved/quad/Pretty_Pulses.json,saved/quad/Too Many_Triangles.json"
+call build_installer.bat data "%ship%\%datadir%" "%installer_output%" "%version%" "%data%" "%installer_delete%"
+if errorlevel 1 goto getout
 
 :getout
-set PALETTE_VERSION=
-set PALETTE_DATA=%save_PALETTE_DATA%
-set save_PALETTE_DATA=

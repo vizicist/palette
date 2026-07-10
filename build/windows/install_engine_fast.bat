@@ -5,7 +5,7 @@ set PALETTE_SOURCE=%~dp0..\..
 for %%I in ("%PALETTE_SOURCE%") do set PALETTE_SOURCE=%%~fI
 
 if "%PALETTE%" == "" (
-    set PALETTE_INSTALL=C:\Program Files\Palette
+    set PALETTE_INSTALL=%LOCALAPPDATA%\Programs\Palette
 ) else (
     set PALETTE_INSTALL=%PALETTE%
 )

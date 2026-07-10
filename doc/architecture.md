@@ -341,6 +341,14 @@ runtime assets, packages installers, and stages the install layout. On Windows,
 `doit.bat` is the local build/install/run convenience entry point and should be
 run from `build/windows`.
 
+Windows release executables use Palette's bespoke installer format. The
+`cmd/palette_installer` native stub installs and uninstalls per-user files,
+environment values, PATH entries, shortcuts, and Apps & Features metadata.
+`cmd/palette_installer_packager` appends a ZIP payload and JSON manifest to that
+stub, producing one self-contained executable for the application and one for
+each data set. The format implementation and safety checks live in
+`internal/installerbundle`.
+
 `testit.bat` runs the current minimal test suite for the build, including Go
 tests and the web UI smoke test. The smoke test is implemented in
 `build/webui_smoke_test.mjs` and can optionally require a live engine.

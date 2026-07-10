@@ -35,7 +35,7 @@ In the list below, the === instructions are only appropriate for machines that w
  	- Add %USERPROFILE%\mingw64\bin to your PATH (adjust path if installed elsewhere)
 	- Add the following new environment variables:
 ```
- PALETTE=C:\Program Files\Palette
+ PALETTE=%LOCALAPPDATA%\Programs\Palette
  PALETTE_SOURCE=%USERPROFILE%\Github\palette
 ```
 Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depends on how you execute things during development.
@@ -47,8 +47,6 @@ Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depend
   DO NOT INSTALL python FROM THE WINDOWS STORE!
 
 - Install Visual Studio Code from https://code.visualstudio.com/download
-
-- Install Inno Setup from https://jrsoftware.org/isinfo.php
 
 - Install Visual Studio 2022 Community from https://visualstudio.microsoft.com/vs/community/
 
@@ -89,8 +87,11 @@ build
 - Install SenselApp0.19.32 (for the Morph)
 
 - Other useful things to install are:  7zip, sharpkeys
-- The result of this should be an installer executable in the release directory,
-which you should execute to install Palette.
+- The result is two self-contained installer executables in the `release`
+  directory: the Palette application installer and the `data_default`
+  installer. These are built by Palette's Go-based installer packager and do
+  not require a third-party installer compiler. Execute both to install
+  Palette.
 
 - If this is the first time you've run the Palette software, you should follow the instructions for one-time steps
 <a href=installation.md>here</a>.

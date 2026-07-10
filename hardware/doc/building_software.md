@@ -36,7 +36,7 @@ This may require using the Bidule GUI to set the audio output device to a suitab
     </ul>
 <li>Install Resolume 7 (Avenue)  
     <ul>
-    <li>In Avenue->Preferences->Video, add C:\Program Files\Palette\ffgl
+    <li>In Avenue-&gt;Preferences-&gt;Video, add %LOCALAPPDATA%\Programs\Palette\ffgl
     <li>In Avenue->Preferences->OSC, enable OSC Input on port 7000
     <li>Quit and restart Resolume
     <li>Verify that Palette plugin is seen in Sources under Generators

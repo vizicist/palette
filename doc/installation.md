@@ -39,14 +39,15 @@ https://learn.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=ms
 
 - Start the SenselApp, make sure the Morph is updated to the latest firmware, and then quit the SenselApp.
 
-- Download and execute the latest Palette installer from the
-<a href=https://github.com/vizicist/palette/tree/main/release>release directory</a>.
-
-- If the Palette installer asks you to reboot Windows, please do so.
+- Download and execute the latest Palette application installer and matching
+  `data_default` installer from the
+  <a href=https://github.com/vizicist/palette/tree/main/release>release directory</a>.
+  Both bespoke installers operate per-user and do not require Administrator
+  privileges.
 
 - Start Resolume, and
   - In the <i>Preferences->OSC</i> section, enable OSC Input on port 7000
-  - In the <i>Preferences->Video</i> section, add this directory to the list of FreeFrame (FFGL) plugin directories: `C:\Program Files\Palette\ffgl`
+  - In the <i>Preferences->Video</i> section, add this directory to the list of FreeFrame (FFGL) plugin directories: `%LOCALAPPDATA%\Programs\Palette\ffgl`
 <p>
 
 - Quit and restart Resolume.
