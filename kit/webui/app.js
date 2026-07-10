@@ -417,7 +417,7 @@ function setupSamplePlaybackControls() {
                 if (newSet) {
                     newSet.textContent = 'Ready';
                     setTimeout(() => {
-                        if (newSet.textContent === 'Ready') newSet.textContent = 'Receive New Prophecies';
+                        if (newSet.textContent === 'Ready') newSet.textContent = 'Receive New Words';
                     }, 1200);
                 }
             } catch (err) {
@@ -431,7 +431,7 @@ function setupSamplePlaybackControls() {
     }
 
     if (newSet) {
-        const newSetLabel = 'Receive New Prophecies';
+        const newSetLabel = 'Receive New Words';
         newSet.addEventListener('click', async () => {
             newSet.disabled = true;
             newSet.textContent = 'Busy';

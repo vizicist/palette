@@ -6,7 +6,7 @@ export const Routes = {
 };
 
 export function routeLabel(route) {
-    return route === Routes.samples ? 'Prophecy' :
+    return route === Routes.samples ? 'Words' :
         route === Routes.bidule ? 'Bidule' :
         route === Routes.both ? 'Both' :
         'Off';

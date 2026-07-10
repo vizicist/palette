@@ -44,7 +44,7 @@ export function updatePalettePadRoute(patch, route) {
     pad.classList.toggle('synth', normalized === Routes.bidule);
     const button = pad.querySelector('.palette-pad-route');
     if (button) {
-        const mode = normalized === Routes.samples ? 'Prophesize' : 'Oscillate';
+        const mode = normalized === Routes.samples ? 'Words' : 'Music';
         button.setAttribute('aria-label', `Mode: ${mode}`);
     }
 }

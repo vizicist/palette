@@ -29,7 +29,7 @@ For a deeper module-by-module map, see
 - Starting and stopping managed processes such as Bidule, Resolume, OBS, and
   the in-engine SampleSplitter service.
 
-The normal Oscillation/Synth path sends MIDI to Bidule/Omnisphere and sends OSC
+The normal Music/Synth path sends MIDI to Bidule/Omnisphere and sends OSC
 to Resolume and the Palette FFGL plugin. The newer SamplePlayback path uses the
 Go SampleSplitter service inside the engine for direct sample playback from cursor
 gestures.

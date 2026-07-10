@@ -190,7 +190,7 @@ these sources into the same runtime flow where possible.
 
 The cursor manager tracks active touches and their associated state. A cursor
 event is then interpreted by patch logic for the relevant A/B/C/D pad. Patch
-logic decides whether that cursor is controlling the normal Oscillation/Synth
+logic decides whether that cursor is controlling the normal Music/Synth
 path, the BSS SamplePlayback path, visual output, recording into Stepper, or some
 combination of those.
 
@@ -245,7 +245,7 @@ The original looping system records and replays cursor gestures and related
 scheduled behavior over the global loop length. Loop timing is defined in click
 space, with beat-based quantization derived from global loop parameters.
 
-For normal Oscillation/Synth behavior, the loop records cursor-driven notes and
+For normal Music/Synth behavior, the loop records cursor-driven notes and
 visual behavior through the existing scheduling infrastructure. This is why the
 loop can affect both audio and visuals without a separate sequencer path.
 
@@ -318,8 +318,8 @@ the engine's separate direct connection to the central NATS server.
 
 Current UI concepts include the original Space Palette Pro page, the Sequencer
 page, and the newer BSS page controlled by `global.mode` values `pro`
-and `bss`. The BSS UI presents virtual pads, Prophecy/Oscillation
-mode toggles, SamplePlayback controls, and Oscillation/Photonic preset controls.
+and `bss`. The BSS UI presents virtual pads, Words/Music
+mode toggles, SamplePlayback controls, and Music/Photonic preset controls.
 
 ## Process Management
 
