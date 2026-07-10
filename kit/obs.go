@@ -51,13 +51,6 @@ func ObsProcessInfo() *ProcessInfo {
 		return EmptyProcessInfo()
 	}
 
-	LogOfType("obs", "Calling deleteObsSentinelpath", "fullpath", fullpath)
-	// Delete the .sentinel folder to prevent OBS from showing the safe mode dialog.
-	// This is needed for OBS 32.0.0+ where --disable-shutdown-check was removed.
-	deleteObsSentinel()
-
-	LogOfType("obs", "after deleteObsSentinelpath", "fullpath", fullpath)
-
 	exe := filepath.Base(fullpath)
 	pi := NewProcessInfo(exe, fullpath, "", ObsActivate)
 	pi.DirPath = filepath.Dir(fullpath)

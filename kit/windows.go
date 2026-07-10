@@ -47,6 +47,22 @@ func KillByPid(pid int) {
 	_ = cmd.Run()
 }
 
+// CloseWindowByPid asks a GUI process to shut down normally by posting
+// WM_CLOSE to its main window. This lets applications persist their state and
+// remove crash-detection sentinels before exiting.
+func CloseWindowByPid(pid int) bool {
+	if pid <= 0 {
+		return false
+	}
+	hwnd := getMainWindowForProcess(uint32(pid), "")
+	if hwnd == 0 {
+		return false
+	}
+	LogInfo("CloseWindowByPid", "pid", pid, "hwnd", hwnd)
+	postMessageW.Call(hwnd, WM_CLOSE, 0, 0)
+	return true
+}
+
 // StartExecutableLogOutput executes something.  If background is true, it doesn't block
 // Returns the PID of the started process
 func StartExecutableLogOutput(logName string, fullexe string, args ...string) (int, error) {
@@ -475,8 +491,8 @@ func enumWindowsCallback(hwnd uintptr, lParam uintptr) uintptr {
 	getWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&titleBuf[0])), 256)
 	actualTitle := syscall.UTF16ToString(titleBuf[:])
 
-	// Check if title matches exactly
-	if actualTitle == data.expectedTitle {
+	// An empty expected title means any visible top-level window for the PID.
+	if data.expectedTitle == "" || actualTitle == data.expectedTitle {
 		data.foundHwnd = hwnd
 		return 0 // Stop enumeration, we found it
 	}

@@ -373,6 +373,12 @@ func (pm *ProcessManager) StartRunning(process string) error {
 	if pi.FullPath == "" {
 		return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 	}
+	if process == "obs" {
+		// OBS creates this marker while running and removes it during a clean
+		// shutdown. Clear a stale marker before every launch (including runtime
+		// re-enables) so OBS always starts normally instead of prompting for mode.
+		deleteObsSentinel()
+	}
 
 	// Log the command being executed
 	LogInfo("StartRunning", "process", process, "fullPath", pi.FullPath, "arg", pi.Arg)
@@ -463,7 +469,25 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 		}
 		// Use PID-based killing if we have the PID (avoids killing other instances)
 		if pid := pm.takeRunningPid(process); pid > 0 {
-			KillByPid(pid)
+			if process == "obs" && CloseWindowByPid(pid) {
+				// Give OBS time to save its configuration and remove its shutdown
+				// sentinel. Force-kill only if normal window shutdown stalls.
+				deadline := time.Now().Add(10 * time.Second)
+				for time.Now().Before(deadline) {
+					running, _ := IsRunning(process)
+					if !running {
+						break
+					}
+					time.Sleep(200 * time.Millisecond)
+				}
+				running, _ := IsRunning(process)
+				if running {
+					LogWarn("StopRunning: OBS did not close normally; forcing shutdown", "pid", pid)
+					KillByPid(pid)
+				}
+			} else {
+				KillByPid(pid)
+			}
 		} else {
 			// Fall back to killing by executable name
 			KillExecutable(pi.Exe)

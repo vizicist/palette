@@ -77,6 +77,10 @@ func KillByPid(pid int) {
 	Spawn("kill", false, noWriter, noWriter, "-9", fmt.Sprintf("%d", pid))
 }
 
+func CloseWindowByPid(pid int) bool {
+	return false
+}
+
 func FindWindowByTitleContains(substring string) bool {
 	return false
 }
