@@ -15,12 +15,13 @@ import (
 var theProcessManager *ProcessManager
 
 type ProcessInfo struct {
-	Exe       string // just the last part
-	FullPath  string
-	DirPath   string
-	Arg       string
-	Activate  func()
-	Activated bool
+	Exe          string // just the last part
+	FullPath     string
+	DirPath      string
+	Arg          string
+	BeforeLaunch func() error
+	Activate     func()
+	Activated    bool
 }
 
 type ProcessManager struct {
@@ -373,13 +374,6 @@ func (pm *ProcessManager) StartRunning(process string) error {
 	if pi.FullPath == "" {
 		return fmt.Errorf("StartRunning: unable to start %s, no executable path", process)
 	}
-	if process == "obs" {
-		// OBS creates this marker while running and removes it during a clean
-		// shutdown. Clear a stale marker before every launch (including runtime
-		// re-enables) so OBS always starts normally instead of prompting for mode.
-		deleteObsSentinel()
-	}
-
 	// Log the command being executed
 	LogInfo("StartRunning", "process", process, "fullPath", pi.FullPath, "arg", pi.Arg)
 
@@ -398,6 +392,14 @@ func (pm *ProcessManager) StartRunning(process string) error {
 
 	// LogInfo("StartRunning", "path", pi.FullPath, "arg", pi.Arg, "lenarg", len(pi.Arg))
 
+	// Keep per-process launch preparation at the process-creation boundary.
+	// StartRunning is shared by initial starts, runtime re-enables, and automatic
+	// restarts, so this hook runs immediately before every actual launch.
+	if pi.BeforeLaunch != nil {
+		if err := pi.BeforeLaunch(); err != nil {
+			return fmt.Errorf("StartRunning: process=%s pre-launch preparation failed: %w", process, err)
+		}
+	}
 	pid, err := StartExecutableLogOutput(process, pi.FullPath, pi.Arg)
 	if err != nil {
 		return fmt.Errorf("StartRunning: process=%s err=%w", process, err)

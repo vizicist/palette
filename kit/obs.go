@@ -55,6 +55,7 @@ func ObsProcessInfo() *ProcessInfo {
 	pi := NewProcessInfo(exe, fullpath, "", ObsActivate)
 	pi.DirPath = filepath.Dir(fullpath)
 	pi.Arg = "--disable-shutdown-check"
+	pi.BeforeLaunch = deleteObsSentinel
 	return pi
 }
 
@@ -62,18 +63,25 @@ func ObsProcessInfo() *ProcessInfo {
 // OBS uses this folder to detect unclean shutdowns. By deleting it before
 // starting OBS, we prevent the "safe mode" dialog from appearing.
 // This is the workaround for OBS 32.0.0+ where --disable-shutdown-check was removed.
-func deleteObsSentinel() {
+func deleteObsSentinel() error {
 	// OBS config is in %APPDATA%\obs-studio on Windows
 	appData := os.Getenv("APPDATA")
 	if appData == "" {
-		return
+		return fmt.Errorf("cannot locate OBS sentinel: APPDATA is not set")
 	}
 	sentinelPath := filepath.Join(appData, "obs-studio", ".sentinel")
 	if err := os.RemoveAll(sentinelPath); err != nil {
-		LogIfError(err)
-	} else {
-		LogOfType("obs", "Deleted OBS sentinel folder", "path", sentinelPath)
+		return fmt.Errorf("remove OBS sentinel %q: %w", sentinelPath, err)
 	}
+	// Do not launch OBS if a stale marker remains. Otherwise OBS can present the
+	// safe-mode chooser even though Palette attempted the cleanup.
+	if _, err := os.Lstat(sentinelPath); err == nil {
+		return fmt.Errorf("OBS sentinel still exists after removal: %q", sentinelPath)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("verify OBS sentinel removal %q: %w", sentinelPath, err)
+	}
+	LogOfType("obs", "Cleared OBS sentinel before launch", "path", sentinelPath)
+	return nil
 }
 
 // ObsActivate is called in a goroutine, so it can block.
