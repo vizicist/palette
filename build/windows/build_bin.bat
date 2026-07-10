@@ -5,6 +5,7 @@ if not "%PALETTE_SOURCE%" == "" goto keepgoing1
 	echo You must set the PALETTE_SOURCE environment variable.
 	goto getout
 :keepgoing1
+for %%I in ("%PALETTE_SOURCE%") do set "PALETTE_SOURCE=%%~fI"
 
 call :check_git_lfs
 if errorlevel 1 goto getout

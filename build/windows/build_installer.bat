@@ -9,6 +9,12 @@ if "%PALETTE_SOURCE%"=="" (
 	echo PALETTE_SOURCE must be set.
 	exit /b 1
 )
+for %%i in ("%PALETTE_SOURCE%") do set "PALETTE_SOURCE_ROOT=%%~fi"
+if not exist "%PALETTE_SOURCE_ROOT%\go.mod" (
+	echo PALETTE_SOURCE does not resolve to the Palette repository root:
+	echo     %PALETTE_SOURCE_ROOT%
+	exit /b 1
+)
 
 set "INSTALLER_KIND=%~1"
 set "INSTALLER_SOURCE=%~2"
@@ -23,19 +29,25 @@ call :find_manifest_tool
 if errorlevel 1 goto failed
 
 echo Building bespoke Palette installer stub...
-go build -ldflags "-H=windowsgui" -o "%INSTALLER_STUB%" "%PALETTE_SOURCE%\cmd\palette_installer"
-if errorlevel 1 goto failed
+pushd "%PALETTE_SOURCE_ROOT%"
+go build -ldflags "-H=windowsgui" -o "%INSTALLER_STUB%" .\cmd\palette_installer
+set "GO_BUILD_RESULT=%ERRORLEVEL%"
+popd
+if not "%GO_BUILD_RESULT%"=="0" goto failed
 
 rem An explicit asInvoker manifest prevents Windows installer detection from
 rem demanding elevation for this per-user executable, including 32-bit builds.
-"%MT_EXE%" -nologo -manifest "%PALETTE_SOURCE%\cmd\palette_installer\app.manifest" "-outputresource:%INSTALLER_STUB%;#1"
+"%MT_EXE%" -nologo -manifest "%PALETTE_SOURCE_ROOT%\cmd\palette_installer\app.manifest" "-outputresource:%INSTALLER_STUB%;#1"
 if errorlevel 1 goto failed
 
 rem Do not let go run name its temporary executable palette_installer_packager:
 rem Windows can treat executable names containing "install" as elevation-worthy.
-go build -o "%INSTALLER_PACKER%" "%PALETTE_SOURCE%\cmd\palette_installer_packager"
-if errorlevel 1 goto failed
-"%MT_EXE%" -nologo -manifest "%PALETTE_SOURCE%\cmd\palette_installer\app.manifest" "-outputresource:%INSTALLER_PACKER%;#1"
+pushd "%PALETTE_SOURCE_ROOT%"
+go build -o "%INSTALLER_PACKER%" .\cmd\palette_installer_packager
+set "GO_BUILD_RESULT=%ERRORLEVEL%"
+popd
+if not "%GO_BUILD_RESULT%"=="0" goto failed
+"%MT_EXE%" -nologo -manifest "%PALETTE_SOURCE_ROOT%\cmd\palette_installer\app.manifest" "-outputresource:%INSTALLER_PACKER%;#1"
 if errorlevel 1 goto failed
 
 echo Packaging %INSTALLER_KIND% installer...
