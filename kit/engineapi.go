@@ -732,7 +732,69 @@ func ExecuteSavedAPI(api string, apiargs map[string]string) (result string, err 
 		if err != nil {
 			return "", err
 		}
+		// For quad, a category is a theme link dir; removing curates that
+		// theme (or, for the master quad dir, removes the preset everywhere).
+		if IsQuadCategory(category) {
+			return "", RemoveQuadPresetOrLink(category, filename)
+		}
 		return "", RemoveSavedFile(category, filename)
+	case "rename":
+		category, err := needStringArg("category", "saved.rename", apiargs)
+		if err != nil {
+			return "", err
+		}
+		filename, err := needStringArg("filename", "saved.rename", apiargs)
+		if err != nil {
+			return "", err
+		}
+		newname, err := needStringArg("newname", "saved.rename", apiargs)
+		if err != nil {
+			return "", err
+		}
+		// A quad rename always targets the master preset and updates every
+		// theme link, regardless of which theme it was triggered from.
+		if IsQuadCategory(category) {
+			return "", RenameQuadPreset(filename, newname)
+		}
+		return "", RenameSavedFile(category, filename, newname)
+	case "move":
+		category, err := needStringArg("category", "saved.move", apiargs)
+		if err != nil {
+			return "", err
+		}
+		filename, err := needStringArg("filename", "saved.move", apiargs)
+		if err != nil {
+			return "", err
+		}
+		targetcategory, err := needStringArg("targetcategory", "saved.move", apiargs)
+		if err != nil {
+			return "", err
+		}
+		// Moving a quad preset between themes just relinks it; the master
+		// preset stays put.
+		if IsQuadCategory(category) && IsQuadCategory(targetcategory) {
+			return "", MoveQuadThemeLink(category, filename, targetcategory)
+		}
+		return "", MoveSavedFile(category, filename, targetcategory)
+	case "copy":
+		category, err := needStringArg("category", "saved.copy", apiargs)
+		if err != nil {
+			return "", err
+		}
+		filename, err := needStringArg("filename", "saved.copy", apiargs)
+		if err != nil {
+			return "", err
+		}
+		targetcategory, err := needStringArg("targetcategory", "saved.copy", apiargs)
+		if err != nil {
+			return "", err
+		}
+		// Copying a quad preset into a theme adds a link; it does not
+		// duplicate the master preset data.
+		if IsQuadCategory(category) && IsQuadCategory(targetcategory) {
+			return "", CopyQuadThemeLink(category, filename, targetcategory)
+		}
+		return "", CopySavedFile(category, filename, targetcategory)
 	case "paramdefs":
 		category := optionalStringArg("category", apiargs, "*")
 		return ParamDefsForCategory(category)

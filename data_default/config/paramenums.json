@@ -3,7 +3,7 @@
   "plugins": [ "", "quad" ],
   "log": ["","cursor","midi","midinote","midicontroller","pitchset","pressure","cursor,midi","cursor,midi,osc","osc","api","loop", "morph","mmtt", "quant", "transpose", "ffgl", "gesture", "sampleplayback"],
   "pitchset": [""],
-  "mode": ["pro", "bss"],
+  "mode": ["pro", "bss", "pro2"],
   "guisize": ["small","medium","palette"],
 	"mmtt": ["kinect", "depthai", ""],
 	"destination": [ ".", "A", "B", "C", "D" ],

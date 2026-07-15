@@ -73,6 +73,36 @@ func TestModeControlsPageSelection(t *testing.T) {
 	}
 }
 
+func TestPro2ModeIsDistinctAndNotBSS(t *testing.T) {
+	cleanup := setupModeTest(t, "pro2")
+	defer cleanup()
+
+	if IsBSSInitialPage() {
+		t.Fatal("pro2 mode should not be treated as BSS")
+	}
+	if !IsPro2Mode() {
+		t.Fatal("pro2 mode should be reported by IsPro2Mode")
+	}
+	if got := CurrentMode(); got != "pro2" {
+		t.Fatalf("CurrentMode = %q, want pro2", got)
+	}
+}
+
+func TestIsQuadCategory(t *testing.T) {
+	quadLike := []string{"quad", "quad_chill", "quad_melodic", "quad_rhythmic"}
+	for _, c := range quadLike {
+		if !IsQuadCategory(c) {
+			t.Errorf("IsQuadCategory(%q) = false, want true", c)
+		}
+	}
+	notQuad := []string{"global", "patch", "sound", "visual", "effect", "misc", "quadrant", ""}
+	for _, c := range notQuad {
+		if IsQuadCategory(c) {
+			t.Errorf("IsQuadCategory(%q) = true, want false", c)
+		}
+	}
+}
+
 func TestLegacyInitialPageMigratesToMode(t *testing.T) {
 	tests := map[string]string{
 		"global.initialpage": "global.mode",

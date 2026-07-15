@@ -1,9 +1,10 @@
 import { API } from './api.js';
 import { initialPageDefaultRoute, Routes, routeLabel } from './routes.js';
-import { patchNames, stepperNumSteps, samplePlaybackQuantValues, UIState } from './state.js';
+import { patchNames, stepperNumSteps, samplePlaybackQuantValues, themes, themeForDir, defaultThemeDir, UIState } from './state.js';
 import { applyUISnapshot, requestUISnapshot, setupUIStateFeed } from './ui_nats.js';
 import { handleOBSRecordStatus, setupRecording, updateRecordButtonVisibility } from './recorder.js';
 import { setupVirtualKeyboard, showVirtualKeyboard } from './virtual-keyboard.js';
+import { setupActionMenu, showActionMenu } from './action-menu.js';
 import {
     applyInitialPageMode,
     fitAppTitle,
@@ -49,8 +50,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyInitialPageMode();
     setupAppTitleFit();
     setupRitualNav();
+    setupThemeSelector();
     setupControls();
     setupVirtualKeyboard();
+    setupActionMenu();
     setupHelpOverlay();
     setupAttractOverlay();
     setupCategoryTabs();
@@ -128,6 +131,37 @@ function setupRitualNav() {
     document.getElementById('btn-nav-sigil').addEventListener('click', showSigilSequencer);
 }
 
+// The Theme Selector (pro2 only) switches which quad directory the Quad presets
+// are loaded from and saved to. Each theme is a sibling saved/quad_* directory.
+function setupThemeSelector() {
+    const selector = document.getElementById('theme-selector');
+    if (!selector) return;
+    selector.innerHTML = themes.map(theme => {
+        const cls = 'theme-btn' + (theme.advancedOnly ? ' theme-btn-advanced' : '');
+        return `<button class="${cls}" type="button" data-theme="${theme.dir}">${escapeHtml(theme.name)}</button>`;
+    }).join('');
+    selector.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectTheme(btn.dataset.theme));
+    });
+    updateThemeButtons();
+}
+
+async function selectTheme(dir) {
+    if (dir === UIState.currentTheme) return;
+    UIState.setTheme(dir);
+    updateThemeButtons();
+    // Refresh the Quad preset grid so it reflects the new theme's directory.
+    if (UIState.currentCategory === 'quad' && !UIState.showingParams) {
+        await loadPresets();
+    }
+}
+
+function updateThemeButtons() {
+    document.querySelectorAll('#theme-selector .theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === UIState.currentTheme);
+    });
+}
+
 async function startSpacePalette() {
     await stopStepperQuietly();
     UIState.setActiveAdventure('space');
@@ -194,7 +228,7 @@ async function loadPresets() {
     grid.innerHTML = '<div class="loading">Loading...</div>';
 
     try {
-        const list = await API.getSavedList(UIState.currentCategory);
+        const list = await API.getSavedList(UIState.savedCategory(UIState.currentCategory));
         if (token !== gridLoadToken) return; // a newer load owns the grid
 
         const presets = savedPresetNamesFromList(list);
@@ -211,9 +245,7 @@ async function loadPresets() {
 
         grid.innerHTML = html;
 
-        grid.querySelectorAll('.preset-btn').forEach(btn => {
-            btn.addEventListener('click', () => loadPreset(btn.dataset.name));
-        });
+        grid.querySelectorAll('.preset-btn').forEach(bindPresetButton);
         updatePresetButtons();
     } catch (e) {
         grid.innerHTML = `<div class="error">${escapeHtml(e.message)}</div>`;
@@ -234,6 +266,153 @@ function savedPresetNamesFromList(list) {
     presets = presets.map(p => p.trim().replace(/\r/g, '')).filter(p => p && !p.startsWith('_') && !p.startsWith('{'));
     presets.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
     return presets;
+}
+
+// bindPresetButton wires a preset grid button. A single click always loads the
+// preset immediately. In pro2 advanced mode a double click additionally opens
+// the preset action menu (Move / Rename / Delete); the load from the first
+// click is harmless, so the two gestures don't need to be kept apart.
+function bindPresetButton(btn) {
+    const name = btn.dataset.name;
+    btn.addEventListener('click', () => loadPreset(name));
+    btn.addEventListener('dblclick', () => {
+        if (presetActionsAvailable()) handlePresetActions(name);
+    });
+}
+
+// presetActionsAvailable reports whether the double-click preset action menu
+// should be offered. It's a pro2 advanced-mode editing affordance.
+function presetActionsAvailable() {
+    return UIState.initialPage === 'pro2' && UIState.advancedMode;
+}
+
+// presetActionItems builds the action menu for the current category. Rename and
+// Delete apply everywhere; Copy/Move (between themes) only make sense for quad.
+// In the All view (the master), Move is omitted since a preset can't be removed
+// from All — it always shows every master preset.
+function presetActionItems() {
+    const items = [];
+    if (UIState.currentCategory === 'quad' && themeDestinations().length) {
+        items.push({ id: 'copy', label: 'Copy to Theme…' });
+        if (!currentThemeIsMasterView()) {
+            items.push({ id: 'move', label: 'Move to Theme…' });
+        }
+    }
+    items.push({ id: 'rename', label: 'Rename…' });
+    items.push({ id: 'delete', label: 'Delete', danger: true });
+    return items;
+}
+
+// themeDestinations are the themes a preset can be copied/moved into: curated
+// themes other than the current one. The master-view All theme is excluded
+// since its contents are automatic.
+function themeDestinations() {
+    return themes.filter(theme => theme.dir !== UIState.currentTheme && !theme.masterView);
+}
+
+function currentThemeIsMasterView() {
+    const theme = themeForDir(UIState.currentTheme);
+    return !!(theme && theme.masterView);
+}
+
+async function handlePresetActions(name) {
+    const action = await showActionMenu({ title: name, items: presetActionItems() });
+    if (action === 'copy') {
+        await copyPresetToTheme(name);
+    } else if (action === 'move') {
+        await movePresetToTheme(name);
+    } else if (action === 'rename') {
+        await renamePreset(name);
+    } else if (action === 'delete') {
+        await deletePreset(name);
+    }
+}
+
+// pickTargetTheme asks which theme to copy/move a preset into and returns the
+// chosen theme directory, or null if cancelled. The current theme is excluded.
+async function pickTargetTheme(verb, name) {
+    const destinations = themeDestinations();
+    if (!destinations.length) return null;
+    return showActionMenu({
+        title: `${verb} "${name}" to…`,
+        items: destinations.map(theme => ({ id: theme.dir, label: theme.name }))
+    });
+}
+
+async function copyPresetToTheme(name) {
+    const targetDir = await pickTargetTheme('Copy', name);
+    if (!targetDir) return;
+    try {
+        await API.copySaved(UIState.currentTheme, name, targetDir);
+        showToast(`Copied "${name}" to ${themeNameForDir(targetDir)}`);
+    } catch (err) {
+        console.error('Copy failed:', err);
+        showToast('Copy failed: ' + err.message);
+    }
+}
+
+async function movePresetToTheme(name) {
+    const targetDir = await pickTargetTheme('Move', name);
+    if (!targetDir) return;
+    try {
+        await API.moveSaved(UIState.currentTheme, name, targetDir);
+        forgetPresetSelection(name);
+        await loadPresets();
+        showToast(`Moved "${name}" to ${themeNameForDir(targetDir)}`);
+    } catch (err) {
+        console.error('Move failed:', err);
+        showToast('Move failed: ' + err.message);
+    }
+}
+
+async function renamePreset(name) {
+    try {
+        const newName = await showVirtualKeyboard({
+            title: `Rename ${saveAsCategoryLabel()}`,
+            initialValue: name,
+            actionLabel: 'Rename',
+            choices: [],
+            validate: presetFilenameValidationError,
+            normalize: normalizePresetFilename
+        });
+        if (!newName || newName === name) return;
+        await API.renameSaved(UIState.savedCategory(UIState.currentCategory), name, newName);
+        if (UIState.selectedPresets.get(UIState.presetKey()) === name) {
+            UIState.selectedPresets.set(UIState.presetKey(), newName);
+        }
+        await loadPresets();
+    } catch (err) {
+        if (err && err.cancelled) return;
+        console.error('Rename failed:', err);
+        showToast('Rename failed: ' + err.message);
+    }
+}
+
+async function deletePreset(name) {
+    const confirmed = await showActionMenu({
+        title: `Delete "${name}"?`,
+        items: [{ id: 'delete', label: 'Delete', danger: true }]
+    });
+    if (confirmed !== 'delete') return;
+    try {
+        await API.removeSaved(UIState.savedCategory(UIState.currentCategory), name);
+        forgetPresetSelection(name);
+        await loadPresets();
+    } catch (err) {
+        console.error('Delete failed:', err);
+        showToast('Delete failed: ' + err.message);
+    }
+}
+
+function forgetPresetSelection(name) {
+    if (UIState.selectedPresets.get(UIState.presetKey()) === name) {
+        UIState.selectedPresets.delete(UIState.presetKey());
+    }
+}
+
+function themeNameForDir(dir) {
+    const theme = themes.find(t => t.dir === dir);
+    return theme ? theme.name : dir;
 }
 
 async function stopStepperQuietly() {
@@ -958,7 +1137,7 @@ async function handleSaveAs(button) {
 
 async function savedPresetNamesForCategory(category) {
     try {
-        return savedPresetNamesFromList(await API.getSavedList(category));
+        return savedPresetNamesFromList(await API.getSavedList(UIState.savedCategory(category)));
     } catch (err) {
         console.error('Failed to load preset names:', err);
         return [];
@@ -1045,7 +1224,7 @@ async function saveCurrentParamsAs(filename) {
     if (UIState.currentCategory === 'global') {
         await API.saveGlobal(filename);
     } else if (UIState.currentCategory === 'quad') {
-        await API.saveQuad('quad', filename);
+        await API.saveQuad(UIState.currentTheme, filename);
     } else {
         const patchToSave = UIState.currentPatch === '*' ? 'A' : UIState.currentPatch;
         await API.savePatch(patchToSave, UIState.currentCategory, filename);
@@ -1053,7 +1232,7 @@ async function saveCurrentParamsAs(filename) {
 }
 
 async function removeCurrentPreset(filename) {
-    await API.removeSaved(UIState.currentCategory, filename);
+    await API.removeSaved(UIState.savedCategory(UIState.currentCategory), filename);
 }
 
 async function loadPreset(name) {
@@ -1062,11 +1241,11 @@ async function loadPreset(name) {
             await API.loadGlobal(name);
         } else if (UIState.currentCategory === 'quad') {
             if (UIState.currentPatch === '*') {
-                // Load quad to all patches
-                await API.loadQuad(name);
+                // Load quad to all patches (from the current theme's directory)
+                await API.loadQuad(UIState.currentTheme, name);
             } else {
                 // Load only this patch's portion of the quad
-                await API.loadPatch(UIState.currentPatch, 'quad', name);
+                await API.loadPatch(UIState.currentPatch, UIState.currentTheme, name);
             }
         } else if (UIState.currentPatch === '*') {
             // Load to all patches
@@ -1135,7 +1314,8 @@ function setAdvancedMode(enabled, shouldLoadPresets = true) {
     const categoryTabs = document.getElementById('category-tabs');
     const patchSelector = document.getElementById('patch-selector');
     const titleBar = document.getElementById('title-bar');
-    const proInitialPage = UIState.initialPage === 'pro';
+    // pro2 starts as a clone of pro, so it shares pro's chrome (only bss differs).
+    const proInitialPage = UIState.initialPage !== 'bss';
 
     if (enabled) {
         categoryTabs.classList.remove('hidden');
@@ -1146,6 +1326,13 @@ function setAdvancedMode(enabled, shouldLoadPresets = true) {
         categoryTabs.classList.add('hidden');
         patchSelector.classList.add('hidden');
         titleBar.classList.toggle('hidden', !proInitialPage);
+        // The All theme is advanced-only; leaving advanced mode falls back to
+        // the Default theme so a now-hidden theme isn't left selected.
+        const theme = themeForDir(UIState.currentTheme);
+        if (theme && theme.advancedOnly) {
+            UIState.setTheme(defaultThemeDir);
+            updateThemeButtons();
+        }
         // Reset to quad category in normal mode
         UIState.resetNormalPresetView();
         if (shouldLoadPresets) {

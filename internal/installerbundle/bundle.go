@@ -212,7 +212,15 @@ func addTree(zw *zip.Writer, root string) error {
 			return fmt.Errorf("describe payload file: %w", err)
 		}
 		header.Name = filepath.ToSlash(rel)
-		header.Modified = time.Unix(0, 0).UTC()
+		if IsPresetPath(header.Name) {
+			// Preserve the real modification time for preset files so the
+			// installer can avoid overwriting presets the user has modified
+			// since installing. Other files use a fixed time for reproducible,
+			// deterministic installer output.
+			header.Modified = info.ModTime().UTC()
+		} else {
+			header.Modified = time.Unix(0, 0).UTC()
+		}
 		if info.IsDir() {
 			header.Name += "/"
 		} else {
@@ -239,6 +247,15 @@ func addTree(zw *zip.Writer, root string) error {
 		}
 	}
 	return nil
+}
+
+// IsPresetPath reports whether a payload-relative path is a user preset file,
+// i.e. one under the saved/ directory. The installer must not overwrite such a
+// file when the installed copy is newer than the bundled one, so these files
+// carry their real modification time in the payload.
+func IsPresetPath(name string) bool {
+	name = filepath.ToSlash(name)
+	return name == "saved" || strings.HasPrefix(name, "saved/")
 }
 
 // SafeRelativePath reports whether a slash-separated archive path stays below

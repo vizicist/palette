@@ -3,14 +3,17 @@ package kit
 import "strings"
 
 const (
-	modeBSS = "bss"
-	modePro = "pro"
+	modeBSS  = "bss"
+	modePro  = "pro"
+	modePro2 = "pro2"
 )
 
 func normalizeMode(mode string) string {
 	switch strings.ToLower(strings.TrimSpace(mode)) {
 	case modeBSS:
 		return modeBSS
+	case modePro2:
+		return modePro2
 	default:
 		return modePro
 	}
@@ -29,6 +32,12 @@ func CurrentMode() string {
 
 func IsBSSMode() bool {
 	return CurrentMode() == modeBSS
+}
+
+// IsPro2Mode reports whether the engine is running in the pro2 mode, which
+// starts as a clone of pro but is free to diverge in future work.
+func IsPro2Mode() bool {
+	return CurrentMode() == modePro2
 }
 
 func IsBSSInitialPage() bool {

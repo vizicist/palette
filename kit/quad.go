@@ -172,6 +172,8 @@ func (quad *Quad) Start() {
 
 	theCursorManager.AddCursorHandler("Quad", theQuad, "A", "B", "C", "D")
 
+	ensureQuadDefaultTheme()
+
 	_ = quad.addPatch("A")
 	_ = quad.addPatch("B")
 	_ = quad.addPatch("C")
@@ -401,19 +403,19 @@ func (quad *Quad) Load(category string, filename string) error {
 	// loading a patch with something, we want to
 	// then save the entire quad
 	err = nil
-	switch category {
-	case "global":
+	switch {
+	case category == "global":
 		// No need to save _Current if we're loading it.
 		if filename != "_Current" {
 			err = SaveCurrentGlobalParams()
 		}
-	case "quad":
-		if filename != "_Current" {
-			err = quad.saveQuad("_Current")
-		}
-	case "patch", "sound", "visual", "effect", "misc":
-		// If we're loading a patch (or something inside a patch, like sound, visual, etc),
-		// we save the entire quad, since that's our real persistent state
+	case IsQuadCategory(category), category == "patch", category == "sound",
+		category == "visual", category == "effect", category == "misc":
+		// If we're loading a quad (including a themed quad directory) or a
+		// patch (or something inside a patch, like sound, visual, etc), we
+		// save the entire quad, since that's our real persistent state. The
+		// live _Current always lives in the base quad directory regardless of
+		// which theme the named preset came from.
 		if filename != "_Current" {
 			err = quad.saveQuad("_Current")
 		}
@@ -432,12 +434,20 @@ func (quad *Quad) save(category string, filename string) (err error) {
 
 	LogOfType("saved", "Quad.save", "category", category, "filename", filename)
 
-	switch category {
-	case "global":
+	switch {
+	case category == "global":
 		LogWarn("quad.save: shouldn't be saving global?")
 		err = fmt.Errorf("quad.save: global shouldn't be handled here")
-	case "quad":
-		err = quad.saveQuad(filename)
+	case IsQuadCategory(category):
+		// A quad preset is always saved as the real file in the master quad
+		// directory (the complete set), and a link to it is saved in the
+		// current theme.
+		if err = quad.saveQuadToDir(quadCategoryBase, filename); err != nil {
+			break
+		}
+		if isQuadThemeCategory(category) {
+			err = writeQuadThemeLink(category, filename)
+		}
 	default:
 		err = fmt.Errorf("quad.save: unhandled save category %s", category)
 	}
@@ -447,16 +457,24 @@ func (quad *Quad) save(category string, filename string) (err error) {
 	return err
 }
 
+// saveQuad writes the live quad state into the base quad directory. This is
+// used for the theme-independent _Current working state.
 func (quad *Quad) saveQuad(quadName string) error {
+	return quad.saveQuadToDir(quadCategoryBase, quadName)
+}
 
-	category := "quad"
+// saveQuadToDir writes the live quad state as a real preset file into the given
+// quad category directory. In practice this is always the master quad directory
+// (named presets and _Current); theme directories only ever hold links.
+func (quad *Quad) saveQuadToDir(category string, quadName string) error {
+
 	path, err := WritableSavedFilePath(category, quadName, ".json")
 	if err != nil {
 		LogIfError(err)
 		return err
 	}
 
-	LogOfType("saved", "Quad.saveQuad", "quad", quadName)
+	LogOfType("saved", "Quad.saveQuad", "category", category, "quad", quadName)
 
 	sortedPatchNames := []string{}
 	for _, patch := range quad.patch {

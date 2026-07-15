@@ -13,5 +13,6 @@ export function routeLabel(route) {
 }
 
 export function initialPageDefaultRoute(initialPage) {
-    return initialPage === 'pro' ? Routes.bidule : Routes.samples;
+    // bss defaults to sample playback; pro and pro2 default to Bidule.
+    return initialPage === 'bss' ? Routes.samples : Routes.bidule;
 }

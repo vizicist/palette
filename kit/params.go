@@ -314,6 +314,12 @@ func LoadBootParamValues() (*ParamValues, error) {
 }
 
 func LoadParamsMapOfCategory(category string, filename string) (ParamsMap, error) {
+	// A quad theme directory holds link files pointing at the master quad
+	// preset; resolve to the real master file before loading.
+	category, filename, err := resolveQuadPreset(category, filename)
+	if err != nil {
+		return nil, err
+	}
 	path, err := ReadableSavedFilePath(category, filename, ".json")
 	if err != nil {
 		LogIfError(err)

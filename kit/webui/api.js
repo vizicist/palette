@@ -41,9 +41,12 @@ export const API = {
     getParamRands(category) { return this.call('saved.paramrands', { category }); },
     getParamEnums() { return this.call('saved.paramenums'); },
     removeSaved(category, filename) { return this.call('saved.remove', { category, filename }); },
+    renameSaved(category, filename, newname) { return this.call('saved.rename', { category, filename, newname }); },
+    moveSaved(category, filename, targetcategory) { return this.call('saved.move', { category, filename, targetcategory }); },
+    copySaved(category, filename, targetcategory) { return this.call('saved.copy', { category, filename, targetcategory }); },
     loadGlobal(filename) { return this.call('global.load', { category: 'global', filename }); },
     saveGlobal(filename) { return this.call('global.save', { filename }); },
-    loadQuad(filename) { return this.call('quad.load', { category: 'quad', filename }); },
+    loadQuad(category, filename) { return this.call('quad.load', { category, filename }); },
     saveQuad(category, filename) { return this.call('quad.save', { category, filename }); },
     loadPatch(patch, category, filename) {
         return this.call('patch.load', { patch, category, filename });

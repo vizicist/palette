@@ -22,7 +22,7 @@ export function fitAppTitle() {
 }
 
 export function applyInitialPageMode() {
-    document.body.classList.remove('initial-pro', 'initial-bss');
+    document.body.classList.remove('initial-pro', 'initial-bss', 'initial-pro2');
     document.body.classList.add(`initial-${UIState.initialPage}`);
     for (const patch of patchNames) {
         updatePalettePadRoute(patch, initialPageDefaultRoute(UIState.initialPage));

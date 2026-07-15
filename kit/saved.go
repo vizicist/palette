@@ -13,6 +13,18 @@ func SavedDir() string {
 	return "saved"
 }
 
+// quadCategoryBase is the saved category/directory for the Default theme's
+// quad presets. Other pro2 themes use "quad_<theme>" sibling directories.
+const quadCategoryBase = "quad"
+
+// IsQuadCategory reports whether a saved category holds quad-format presets.
+// The base "quad" directory is the Default theme; each additional pro2 theme
+// uses a "quad_<theme>" directory (e.g. quad_chill). All of them store the same
+// quad-format files, so they share the quad load/save code paths.
+func IsQuadCategory(category string) bool {
+	return category == quadCategoryBase || strings.HasPrefix(category, quadCategoryBase+"_")
+}
+
 func SavedNameSplit(saved string) (string, string) {
 	words := strings.SplitN(saved, ".", 2)
 	if len(words) == 1 {
@@ -209,6 +221,96 @@ func WritableSavedFilePath(category string, filename string, suffix string) (str
 		return "", err
 	}
 	return path, nil
+}
+
+// RenameSavedFile renames a saved preset within the same category directory.
+// It fails if a preset with the new name already exists so nothing is
+// clobbered.
+func RenameSavedFile(category string, oldname string, newname string) error {
+	src, err := ReadableSavedFilePath(category, oldname, ".json")
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
+	dst, err := WritableSavedFilePath(category, newname, ".json")
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
+	if src == dst {
+		return nil
+	}
+	if PathExists(dst) {
+		return fmt.Errorf("a preset named %q already exists", newname)
+	}
+	if err := os.Rename(src, dst); err != nil {
+		LogIfError(err)
+		return err
+	}
+	LogInfo("RenameSavedFile", "category", category, "oldname", oldname, "newname", newname)
+	return nil
+}
+
+// MoveSavedFile moves a saved preset from one category directory to another,
+// keeping the same filename. It fails if the destination already exists so
+// nothing is clobbered. This is used to move quad presets between pro2 themes.
+func MoveSavedFile(srcCategory string, filename string, dstCategory string) error {
+	src, err := ReadableSavedFilePath(srcCategory, filename, ".json")
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
+	dst, err := WritableSavedFilePath(dstCategory, filename, ".json")
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
+	if src == dst {
+		return nil
+	}
+	if PathExists(dst) {
+		return fmt.Errorf("a preset named %q already exists in %q", filename, dstCategory)
+	}
+	if err := os.Rename(src, dst); err != nil {
+		LogIfError(err)
+		return err
+	}
+	LogInfo("MoveSavedFile", "srcCategory", srcCategory, "filename", filename, "dstCategory", dstCategory)
+	return nil
+}
+
+// CopySavedFile copies a saved preset from one category directory to another,
+// keeping the same filename and leaving the original in place. It fails if the
+// destination already exists so nothing is clobbered. This is used to copy quad
+// presets between pro2 themes.
+func CopySavedFile(srcCategory string, filename string, dstCategory string) error {
+	src, err := ReadableSavedFilePath(srcCategory, filename, ".json")
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
+	dst, err := WritableSavedFilePath(dstCategory, filename, ".json")
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
+	if src == dst {
+		return fmt.Errorf("cannot copy a preset onto itself")
+	}
+	if PathExists(dst) {
+		return fmt.Errorf("a preset named %q already exists in %q", filename, dstCategory)
+	}
+	data, err := os.ReadFile(src)
+	if err != nil {
+		LogIfError(err)
+		return err
+	}
+	if err := os.WriteFile(dst, data, 0644); err != nil {
+		LogIfError(err)
+		return err
+	}
+	LogInfo("CopySavedFile", "srcCategory", srcCategory, "filename", filename, "dstCategory", dstCategory)
+	return nil
 }
 
 func RemoveSavedFile(category string, filename string) error {

@@ -13,12 +13,40 @@ export const patchSigils = {
 
 export function normalizeInitialPage(page) {
     const value = String(page || '').trim().toLowerCase();
-    return ['pro', 'bss'].includes(value) ? value : 'pro';
+    return ['pro', 'bss', 'pro2'].includes(value) ? value : 'pro';
+}
+
+// themes lists the pro2 quad themes. Each curated theme is a `quad_*` directory
+// of link files pointing at the real presets in the master `quad` directory; a
+// theme is a curated subset of those presets. Add a theme here to expose it in
+// the Theme Selector.
+//
+// The "All" theme is special: it is backed by the master `quad` directory
+// itself, so it always shows every preset (including ones not linked into any
+// curated theme). It is only shown in advanced mode (`advancedOnly`) and cannot
+// be a copy/move destination (`masterView`) since its contents are automatic.
+export const themes = [
+    { name: 'Default', dir: 'quad_default' },
+    { name: 'Chill', dir: 'quad_chill' },
+    { name: 'Melodic', dir: 'quad_melodic' },
+    { name: 'Rhythmic', dir: 'quad_rhythmic' },
+    { name: 'All', dir: 'quad', advancedOnly: true, masterView: true }
+];
+
+export const defaultThemeDir = themes[0].dir;
+
+export function themeForDir(dir) {
+    return themes.find(theme => theme.dir === dir) || null;
+}
+
+export function isThemeDir(dir) {
+    return themes.some(theme => theme.dir === dir);
 }
 
 export const UIState = {
     currentPatch: '*',
     currentCategory: 'quad',
+    currentTheme: defaultThemeDir,
     advancedMode: false,
     lastSinglePatch: 'A',
     showingParams: false,
@@ -49,7 +77,12 @@ export const UIState = {
 
     presetKey() {
         const patch = this.currentCategory === 'global' ? '*' : this.currentPatch;
-        return `${this.currentCategory}:${patch}`;
+        // Quad selections are tracked per theme so switching themes shows the
+        // right highlighted preset (and none if that theme has no selection).
+        const category = this.currentCategory === 'quad'
+            ? `quad@${this.currentTheme}`
+            : this.currentCategory;
+        return `${category}:${patch}`;
     },
 
     setInitialPage(page) {
@@ -62,6 +95,18 @@ export const UIState = {
 
     setAdvancedMode(enabled) {
         this.advancedMode = !!enabled;
+    },
+
+    setTheme(dir) {
+        this.currentTheme = isThemeDir(dir) ? dir : defaultThemeDir;
+    },
+
+    // savedCategory maps a UI category to the saved directory to read/write
+    // preset files from. Quad presets live in the current theme's directory;
+    // every other category is theme-independent. Parameter definitions/inits
+    // are NOT preset files, so they must keep using the bare category name.
+    savedCategory(category) {
+        return category === 'quad' ? this.currentTheme : category;
     },
 
     resetNormalPresetView() {

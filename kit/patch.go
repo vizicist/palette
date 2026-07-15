@@ -503,7 +503,7 @@ func (patch *Patch) Load(category string, paramsMap ParamsMap) error {
 
 func (patch *Patch) load(category string, paramsMap ParamsMap, preservedRoute string, preserveRoute bool) error {
 
-	if category == "quad" {
+	if IsQuadCategory(category) {
 		// this will only load things to this one patch
 		err := patch.SetPatchValuesFromQuadMap(paramsMap)
 		if err != nil {

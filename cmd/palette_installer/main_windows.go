@@ -287,6 +287,12 @@ func extractPayload(zr *zip.Reader, root string) ([]string, []string, error) {
 		if copyErr != nil || inErr != nil || outErr != nil {
 			return nil, nil, fmt.Errorf("extract payload file %q", name)
 		}
+		if installerbundle.IsPresetPath(name) {
+			// Stamp the staged preset with the bundled modification time so
+			// that, once installed, a later user edit is detectable and a
+			// reinstall of the same version does not look "newer" than itself.
+			_ = os.Chtimes(destination, entry.Modified, entry.Modified)
+		}
 		files = append(files, filepath.ToSlash(name))
 		for dir := filepath.ToSlash(filepath.Dir(filepath.FromSlash(name))); dir != "."; dir = filepath.ToSlash(filepath.Dir(filepath.FromSlash(dir))) {
 			dirSet[dir] = true
@@ -308,6 +314,15 @@ func extractPayload(zr *zip.Reader, root string) ([]string, []string, error) {
 		if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 			return nil, nil, fmt.Errorf("create install directory: %w", err)
 		}
+		if installerbundle.IsPresetPath(name) {
+			keep, err := installedPresetIsNewer(destination, source)
+			if err != nil {
+				return nil, nil, fmt.Errorf("compare installed preset %q: %w", name, err)
+			}
+			if keep {
+				continue // preserve the user's more recently modified preset
+			}
+		}
 		if err := os.Remove(destination); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, nil, fmt.Errorf("replace installed file %q: %w", name, err)
 		}
@@ -317,6 +332,28 @@ func extractPayload(zr *zip.Reader, root string) ([]string, []string, error) {
 	}
 	sort.Strings(files)
 	return files, dirs, nil
+}
+
+// installedPresetIsNewer reports whether an already-installed preset at dest was
+// modified more recently than the bundled version staged at source. When true,
+// the installer keeps the user's copy instead of overwriting it. A missing
+// destination (fresh install) or a directory is never "newer".
+func installedPresetIsNewer(dest, source string) (bool, error) {
+	destInfo, err := os.Stat(dest)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false, nil
+		}
+		return false, err
+	}
+	if destInfo.IsDir() {
+		return false, nil
+	}
+	sourceInfo, err := os.Stat(source)
+	if err != nil {
+		return false, err
+	}
+	return destInfo.ModTime().After(sourceInfo.ModTime()), nil
 }
 
 func copyStub(installer *os.File, size int64, destination string) error {
