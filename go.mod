@@ -14,10 +14,9 @@ require (
 	github.com/nats-io/nats-server/v2 v2.11.15
 	github.com/nats-io/nats.go v1.49.0
 	github.com/pkg/profile v1.7.0
-	github.com/reugn/go-quartz v0.9.0
 	gitlab.com/gomidi/midi/v2 v2.3.14
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.51.0
+	golang.org/x/crypto v0.52.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
 
