@@ -78,7 +78,11 @@ while IFS= read -r line || [ -n "$line" ]; do
 
     echo "Processing $hostname ($location)..."
 
-    # Loop through each day
+    # Loop through each day.  If a palette is offline and has a long historical
+    # gap, do not spend an entire hourly launchd run requesting every old missing
+    # day; after a few old "no responders" misses, skip forward to the normal
+    # recent refresh window.  Recent days are still always requested.
+    consecutive_old_no_responders=0
     current_date="$START_DATE"
     while [[ "$current_date" < "$END_DATE" ]] || [[ "$current_date" == "$END_DATE" ]]; do
         outfile="$outdir/${current_date}.json"
@@ -100,6 +104,11 @@ while IFS= read -r line || [ -n "$line" ]; do
         if ! palette_hub request_log "$hostname" "start=$day_start" "end=$day_end" > "$tmpfile" 2>&1; then
             echo "    -> ERROR: palette_hub command failed"
             sed 's/^/       /' "$tmpfile" | head -5
+            if [[ "$current_date" < "$REFRESH_CUTOFF" ]] && grep -q 'no responders available' "$tmpfile"; then
+                consecutive_old_no_responders=$((consecutive_old_no_responders + 1))
+            else
+                consecutive_old_no_responders=0
+            fi
             rm -f "$tmpfile"
             if [ -f "$outfile" ] && head -1 "$outfile" | grep -q '^Error:'; then
                 rm -f "$outfile"
@@ -107,12 +116,18 @@ while IFS= read -r line || [ -n "$line" ]; do
         elif grep -q '^Error:' "$tmpfile"; then
             echo "    -> ERROR: palette_hub returned an error"
             sed 's/^/       /' "$tmpfile" | head -5
+            if [[ "$current_date" < "$REFRESH_CUTOFF" ]] && grep -q 'no responders available' "$tmpfile"; then
+                consecutive_old_no_responders=$((consecutive_old_no_responders + 1))
+            else
+                consecutive_old_no_responders=0
+            fi
             rm -f "$tmpfile"
             if [ -f "$outfile" ] && head -1 "$outfile" | grep -q '^Error:'; then
                 rm -f "$outfile"
             fi
         else
             mv "$tmpfile" "$outfile"
+            consecutive_old_no_responders=0
             # Check if we got any data
             if [ -s "$outfile" ]; then
                 lines=$(wc -l < "$outfile")
@@ -120,6 +135,13 @@ while IFS= read -r line || [ -n "$line" ]; do
             else
                 echo "    -> no entries"
             fi
+        fi
+
+        if [[ "$current_date" < "$REFRESH_CUTOFF" ]] && [ "$consecutive_old_no_responders" -ge 3 ]; then
+            echo "    -> skipping old missing days for $hostname until $REFRESH_CUTOFF after $consecutive_old_no_responders no-responder replies"
+            current_date="$REFRESH_CUTOFF"
+            consecutive_old_no_responders=0
+            continue
         fi
 
         # Next day
