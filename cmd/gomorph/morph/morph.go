@@ -1,9 +1,8 @@
-// Package morph is a pure-Go driver for the Sensel Morph. It speaks the Morph's
-// USB CDC-ACM serial protocol directly (no LibSensel native library), so it
-// builds and runs unchanged on Windows, macOS and Linux/Raspberry Pi.
-//
-// The public API mirrors github.com/vizicist/gomorph/morph so this is a
-// drop-in, cgo-free replacement.
+// Package morph is a thin, gomorph-compatible wrapper around the pure-Go
+// github.com/vizicist/palette/sensel driver. It enumerates Morphs, opens them,
+// and emits normalized cursor events — matching the public API of the original
+// github.com/vizicist/gomorph/morph package so this stays a drop-in, cgo-free
+// replacement.
 package morph
 
 import (
@@ -11,6 +10,8 @@ import (
 	"log"
 	"sort"
 	"time"
+
+	"github.com/vizicist/palette/sensel"
 )
 
 // DebugMorph enables verbose per-contact logging.
@@ -19,11 +20,11 @@ var DebugMorph bool
 // MaxForce is the force value that maps to Z = 1.0. Matches gomorph.
 var MaxForce float32 = 1500.0
 
-// Contact state values (match SenselContactState in sensel.h).
+// Contact state values (kept for API compatibility with the original package).
 const (
-	CursorDown = 1 // CONTACT_START
-	CursorDrag = 2 // CONTACT_MOVE
-	CursorUp   = 3 // CONTACT_END
+	CursorDown = sensel.ContactStart
+	CursorDrag = sensel.ContactMove
+	CursorUp   = sensel.ContactEnd
 )
 
 // CursorDeviceEvent is a single cursor event emitted by a Morph.
@@ -53,48 +54,43 @@ type OneMorph struct {
 	FwVersionRelease uint8
 	DeviceID         int
 
-	dev *senselDevice
+	dev *sensel.Device
 }
 
 // Init enumerates Morphs, opens each one matching serialFilter ("*" for all),
 // configures it for contact scanning and returns the opened Morphs.
 func Init(serialFilter string) ([]OneMorph, error) {
-	ports, err := listMorphPorts()
+	ports, err := sensel.ListPorts()
 	if err != nil {
 		return nil, fmt.Errorf("enumerating serial ports: %w", err)
 	}
-	// Stable ordering so idx values are deterministic across runs.
 	sort.Slice(ports, func(i, j int) bool { return ports[i].Name < ports[j].Name })
 
 	morphs := make([]OneMorph, 0, len(ports))
 	idx := uint8(0)
 	for _, p := range ports {
-		dev, err := openSensel(p.Name)
+		dev, err := sensel.Open(p.Name)
 		if err != nil {
 			log.Printf("gomorph: could not open %s: %v", p.Name, err)
 			continue
 		}
-		// Prefer the firmware serial (e.g. "SM01164910472"), matching palette /
-		// morphs.json. Fall back to the USB iSerial, then the port name.
-		serial := dev.serialNum
+		serial := dev.SerialNum
 		if serial == "" {
 			serial = p.SerialNumber
 		}
 		if serial == "" {
 			serial = p.Name
 		}
-		// The -serial filter matches the firmware serial, so it can only be
-		// applied after opening the device.
 		if serialFilter != "*" && serial != serialFilter {
 			if DebugMorph {
 				log.Printf("gomorph: skipping serial=%s (port %s)", serial, p.Name)
 			}
-			dev.close()
+			dev.Close()
 			continue
 		}
-		if err := dev.setupAndStart(); err != nil {
+		if err := startDevice(dev); err != nil {
 			log.Printf("gomorph: setup/start on %s failed: %v", p.Name, err)
-			dev.close()
+			dev.Close()
 			continue
 		}
 		morphs = append(morphs, newOneMorph(idx, serial, dev))
@@ -107,37 +103,53 @@ func Init(serialFilter string) ([]OneMorph, error) {
 }
 
 // InitPort opens a single Morph at an explicit device path (e.g. "COM7" or
-// "/dev/cu.usbmodem1234"), bypassing enumeration. Useful as a fallback when
-// automatic discovery misbehaves, or to target one specific device.
+// "/dev/cu.usbmodem1234"), bypassing enumeration.
 func InitPort(portName string) ([]OneMorph, error) {
-	dev, err := openSensel(portName)
+	dev, err := sensel.Open(portName)
 	if err != nil {
 		return nil, fmt.Errorf("opening %s: %w", portName, err)
 	}
-	if err := dev.setupAndStart(); err != nil {
-		dev.close()
+	if err := startDevice(dev); err != nil {
+		dev.Close()
 		return nil, fmt.Errorf("setup/start on %s: %w", portName, err)
 	}
-	serial := dev.serialNum
+	serial := dev.SerialNum
 	if serial == "" {
 		serial = portName
 	}
 	return []OneMorph{newOneMorph(0, serial, dev)}, nil
 }
 
-// newOneMorph builds a OneMorph from an opened device.
-func newOneMorph(idx uint8, serial string, dev *senselDevice) OneMorph {
+// startDevice configures a device for contact scanning (matching the original
+// gomorph setup: contacts only, synchronous scanning, LEDs off).
+func startDevice(dev *sensel.Device) error {
+	if err := dev.DisableTimeouts(); err != nil {
+		return err
+	}
+	if err := dev.SetFrameContentContacts(); err != nil {
+		return err
+	}
+	if err := dev.StartScanning(); err != nil {
+		return err
+	}
+	if err := dev.TurnOffLEDs(); err != nil {
+		log.Printf("gomorph: turning off LEDs: %v", err) // non-fatal
+	}
+	return nil
+}
+
+func newOneMorph(idx uint8, serial string, dev *sensel.Device) OneMorph {
 	return OneMorph{
 		Idx:              idx,
 		Opened:           true,
 		SerialNum:        serial,
-		Width:            dev.widthMM,
-		Height:           dev.heightMM,
-		FwVersionMajor:   dev.fwMajor,
-		FwVersionMinor:   dev.fwMinor,
-		FwVersionBuild:   dev.fwBuild,
-		FwVersionRelease: dev.fwRelease,
-		DeviceID:         int(dev.deviceID),
+		Width:            dev.Width,
+		Height:           dev.Height,
+		FwVersionMajor:   dev.FwMajor,
+		FwVersionMinor:   dev.FwMinor,
+		FwVersionBuild:   dev.FwBuild,
+		FwVersionRelease: dev.FwRelease,
+		DeviceID:         int(dev.DeviceID),
 		dev:              dev,
 	}
 }
@@ -159,7 +171,7 @@ func Start(morphs []OneMorph, callback CursorDeviceCallbackFunc, forceFactor flo
 }
 
 func (m *OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor float32) error {
-	contacts, err := m.dev.readOneFrame()
+	contacts, err := m.dev.ReadFrame()
 	if err != nil {
 		return err
 	}
@@ -182,7 +194,6 @@ func (m *OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 		case CursorUp:
 			ddu = "up"
 		default:
-			// CONTACT_INVALID or unknown: ignore.
 			continue
 		}
 
@@ -193,8 +204,6 @@ func (m *OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 
 		// Match OpenGL / Freeframe coordinate space.
 		yNorm = 1.0 - yNorm
-
-		// Clamp to [0,1].
 		if yNorm < 0.0 {
 			yNorm = 0.0
 		} else if yNorm > 1.0 {

@@ -1,58 +1,83 @@
-package morph
-
-// Pure-Go implementation of the Sensel Morph serial (CDC-ACM) protocol.
+// Package sensel is a pure-Go driver for the Sensel Morph. It speaks the
+// Morph's USB CDC-ACM serial register protocol directly, so it needs no
+// LibSensel native library and no cgo. It builds and runs on Windows, macOS
+// and Linux/Raspberry Pi.
 //
-// This is a from-scratch reimplementation of the register/frame protocol used
-// by Sensel's MIT-licensed SDK (github.com/sensel/sensel-api). It talks to the
-// Morph's virtual serial port directly, so it needs no LibSensel DLL/.so/.a and
-// works identically on Windows (COMx), macOS (/dev/cu.usbmodem*) and Linux /
-// Raspberry Pi (/dev/ttyACM*).
+// Protocol (verified byte-for-byte against firmware 0.19 build 298):
 //
-// Protocol summary (verified byte-for-byte against firmware 0.19 build 298):
-//   Register read  TX (3B): [0x81, reg, size]              (0x81 = board 0x01 | read-bit 0x80)
-//                  RX     : ack(1)=PT_READ_ACK reg(1) size(2 LE) payload(size) checksum(1)
-//   Register write TX     : [0x01, reg, size] payload checksum(1)
-//                  RX     : ack(1)=PT_WRITE_ACK reg_echo(1)
-//   Frame read (SYNC) TX  : [0x81, 0x26, 0x00]
-//                  RX     : ack(1)=PT_RVS_ACK reg(1) header(1) size(2 LE) payload(size) checksum(1)
-//   checksum = sum(bytes) & 0xFF
+//	Register read  TX (3B): [0x81, reg, size]              (0x81 = board 0x01 | read-bit 0x80)
+//	               RX     : ack(1)=PT_READ_ACK reg(1) size(2 LE) payload(size) checksum(1)
+//	Register write TX     : [0x01, reg, size] payload checksum(1)
+//	               RX     : ack(1)=PT_WRITE_ACK reg_echo(1)
+//	Var-size read  TX (3B): [0x81, reg, 0x00]
+//	               RX     : ack(3) size(2 LE) payload(size) checksum(1)
+//	Frame read     TX (3B): [0x81, 0x26, 0x00]
+//	               RX     : ack(1)=PT_RVS_ACK reg(1) header(1) size(2 LE) payload(size) checksum(1)
+//	checksum = sum(bytes) & 0xFF
+package sensel
 
 import (
 	"encoding/binary"
 	"fmt"
-	"log"
 	"time"
 
 	"go.bug.st/serial"
 )
 
-// Sensel register addresses (from sensel_register_map.h).
+// Contact state values (match SenselContactState in the Sensel SDK).
 const (
-	regMagic                = 0x00
-	regFwVersionProtocol    = 0x06
-	regDeviceSerialNumber   = 0x0F
-	regSensorNumCols        = 0x10
-	regSensorNumRows        = 0x12
-	regSensorActiveWidthUM  = 0x14
-	regSensorActiveHeightUM = 0x18
-	regFrameContentControl  = 0x24
-	regScanEnabled          = 0x25
-	regScanReadFrame        = 0x26
-	regFrameContentSupported = 0x28
-	regContactsMaxCount     = 0x40
-	regUnitShiftDims        = 0xA0
-	regUnitShiftForce       = 0xA1
-	regUnitShiftArea        = 0xA2
-	regUnitShiftAngle       = 0xA3
-	regLedBrightness        = 0x80
-	regLedBrightnessSize    = 0x81
-	regLedBrightnessMax     = 0x82
-	regLedCount             = 0x84
-	regDeviceOpen           = 0xD0
-	regSoftReset            = 0xE0
+	ContactInvalid = 0
+	ContactStart   = 1 // finger down
+	ContactMove    = 2 // finger drag
+	ContactEnd     = 3 // finger up
 )
 
-// Protocol packet-type (ack) values and command bits (from sensel_register.h).
+// Scan detail levels (match SenselScanDetail in the Sensel SDK).
+const (
+	ScanDetailHigh   = 0
+	ScanDetailMedium = 1
+	ScanDetailLow    = 2
+)
+
+// Contact is one parsed touch in physical units.
+type Contact struct {
+	ID    uint8
+	State uint8   // ContactStart / ContactMove / ContactEnd
+	X     float32 // mm
+	Y     float32 // mm
+	Force float32 // grams
+	Area  float32 // sensor elements
+}
+
+// Sensel register addresses (from sensel_register_map.h).
+const (
+	regMagic                 = 0x00
+	regFwVersionProtocol     = 0x06
+	regDeviceSerialNumber    = 0x0F
+	regSensorNumCols         = 0x10
+	regSensorNumRows         = 0x12
+	regSensorActiveWidthUM   = 0x14
+	regSensorActiveHeightUM  = 0x18
+	regScanFrameRate         = 0x20
+	regScanDetailControl     = 0x23
+	regFrameContentControl   = 0x24
+	regScanEnabled           = 0x25
+	regScanReadFrame         = 0x26
+	regFrameContentSupported = 0x28
+	regContactsMaxCount      = 0x40
+	regUnitShiftDims         = 0xA0
+	regUnitShiftForce        = 0xA1
+	regUnitShiftArea         = 0xA2
+	regUnitShiftAngle        = 0xA3
+	regLedBrightness         = 0x80
+	regLedBrightnessSize     = 0x81
+	regLedBrightnessMax      = 0x82
+	regLedCount              = 0x84
+	regDeviceOpen            = 0xD0
+	regSoftReset             = 0xE0
+)
+
+// Protocol packet-type (ack) values and command bits.
 const (
 	boardAddr = 0x01
 	readFlag  = 0x80
@@ -66,7 +91,7 @@ const (
 	maxVsPacket         = 512
 )
 
-// Frame + contact content masks (from sensel.h).
+// Frame + contact content masks.
 const (
 	frameContentContactsMask = 0x04
 
@@ -82,42 +107,29 @@ const (
 	contactPeakSendSize        = 6
 )
 
-// SenselScanMode enum value used to enable synchronous scanning.
-const scanModeSync = 1
+const scanModeSync = 1 // SenselScanMode value to enable synchronous scanning
 
-// senselContact holds one parsed contact in physical units (mm / grams).
-type senselContact struct {
-	ID    uint8
-	State uint8
-	X     float32 // mm
-	Y     float32 // mm
-	Force float32 // grams
-	Area  float32 // sensor elements
-}
+// Device is an open Morph on a serial port.
+type Device struct {
+	// Public device information (populated by Open).
+	SerialNum string  // firmware serial (e.g. "SM01174213529"), from reg 0x0F
+	Width     float32 // active-area width in mm
+	Height    float32 // active-area height in mm
+	FwMajor   uint8
+	FwMinor   uint8
+	FwBuild   uint16
+	FwRelease uint8
+	DeviceID  uint16
 
-// senselDevice is an open Morph on a serial port.
-type senselDevice struct {
 	port        serial.Port
 	name        string
 	readTimeout time.Duration
 
-	serialNum string // device firmware serial (e.g. "SM01164910472"), from reg 0x0F
-
-	// firmware info
-	fwProtocol uint8
-	fwMajor    uint8
-	fwMinor    uint8
-	fwBuild    uint16
-	fwRelease  uint8
-	deviceID   uint16
-	deviceRev  uint8
-
-	// sensor info / scaling
+	fwProtocol  uint8
+	deviceRev   uint8
 	maxContacts uint8
 	numRows     uint16
 	numCols     uint16
-	widthMM     float32
-	heightMM    float32
 	dimsScale   float32
 	forceScale  float32
 	areaScale   float32
@@ -125,26 +137,27 @@ type senselDevice struct {
 
 	supportedContent uint8
 
-	// LED info
 	numLeds          uint8
 	maxLedBrightness uint16
 	ledRegSize       uint8
 }
 
-// openSensel opens the serial port, verifies the device is a Morph, soft-resets
-// it, and reads all sensor/firmware info. It mirrors senselOpenDeviceByComPort.
-func openSensel(name string) (*senselDevice, error) {
+// Open opens the serial port at portName (e.g. "COM7", "/dev/ttyACM0",
+// "/dev/cu.usbmodemXXXX"), verifies the device is a Morph, reads its serial and
+// sensor info, and soft-resets it to a known state. It does not start scanning;
+// call the Set*/Start methods for that.
+func Open(portName string) (*Device, error) {
 	mode := &serial.Mode{
 		BaudRate: 115200,
 		DataBits: 8,
 		Parity:   serial.NoParity,
 		StopBits: serial.OneStopBit,
 	}
-	port, err := serial.Open(name, mode)
+	port, err := serial.Open(portName, mode)
 	if err != nil {
 		return nil, err
 	}
-	d := &senselDevice{port: port, name: name, readTimeout: 500 * time.Millisecond, ledRegSize: 1}
+	d := &Device{port: port, name: portName, readTimeout: 500 * time.Millisecond, ledRegSize: 1}
 	if err := port.SetReadTimeout(d.readTimeout); err != nil {
 		port.Close()
 		return nil, err
@@ -154,47 +167,139 @@ func openSensel(name string) (*senselDevice, error) {
 	_ = port.SetRTS(false)
 	_ = port.ResetInputBuffer()
 
-	// Confirm this really is a Morph before doing anything to it.
 	magic, err := d.readReg(regMagic, 6)
 	if err != nil {
 		port.Close()
-		return nil, fmt.Errorf("reading magic on %s: %w", name, err)
+		return nil, fmt.Errorf("reading magic on %s: %w", portName, err)
 	}
 	if string(magic) != "S3NS31" {
 		port.Close()
-		return nil, fmt.Errorf("%s is not a Sensel device (magic=%q)", name, magic)
+		return nil, fmt.Errorf("%s is not a Sensel device (magic=%q)", portName, magic)
 	}
 
-	// Read the firmware serial number (e.g. "SM01164910472"). This is the same
-	// identifier LibSensel/palette report (and that morphs.json keys on), NOT the
-	// USB descriptor iSerial. Best-effort: on failure the caller falls back.
+	// The firmware serial (reg 0x0F) is the identifier LibSensel/palette report
+	// and that morphs.json keys on — NOT the USB descriptor iSerial.
 	if s, err := d.readDeviceSerial(); err == nil {
-		d.serialNum = s
+		d.SerialNum = s
 	}
 
-	// Soft reset to a known register state, then re-read everything.
 	if err := d.writeReg(regSoftReset, []byte{1}); err != nil {
 		port.Close()
-		return nil, fmt.Errorf("soft reset on %s: %w", name, err)
+		return nil, fmt.Errorf("soft reset on %s: %w", portName, err)
 	}
 	time.Sleep(200 * time.Millisecond)
 	_ = port.ResetInputBuffer()
 
 	if err := d.initHandle(); err != nil {
 		port.Close()
-		return nil, fmt.Errorf("init %s: %w", name, err)
+		return nil, fmt.Errorf("init %s: %w", portName, err)
 	}
 	return d, nil
 }
 
-func (d *senselDevice) close() {
+// Close closes the serial port.
+func (d *Device) Close() {
 	if d.port != nil {
 		d.port.Close()
 	}
 }
 
-// writeAll writes the whole buffer, looping over short writes.
-func (d *senselDevice) writeAll(buf []byte) error {
+// DisableTimeouts writes the "device open" register (0xD0 = 255), which
+// disables the device's internal comm timeouts.
+func (d *Device) DisableTimeouts() error {
+	if err := d.writeReg(regDeviceOpen, []byte{255}); err != nil {
+		return fmt.Errorf("device open: %w", err)
+	}
+	return nil
+}
+
+// SetFrameContentContacts configures the device to report contacts only.
+func (d *Device) SetFrameContentContacts() error {
+	if err := d.writeReg(regFrameContentControl, []byte{frameContentContactsMask}); err != nil {
+		return fmt.Errorf("set frame content: %w", err)
+	}
+	return nil
+}
+
+// SetScanDetail sets the scan resolution (ScanDetailHigh/Medium/Low).
+func (d *Device) SetScanDetail(detail byte) error {
+	if err := d.writeReg(regScanDetailControl, []byte{detail}); err != nil {
+		return fmt.Errorf("set scan detail: %w", err)
+	}
+	return nil
+}
+
+// SetMaxFrameRate caps the device's report rate (frames per second).
+func (d *Device) SetMaxFrameRate(fps uint16) error {
+	b := make([]byte, 2)
+	binary.LittleEndian.PutUint16(b, fps)
+	if err := d.writeReg(regScanFrameRate, b); err != nil {
+		return fmt.Errorf("set max frame rate: %w", err)
+	}
+	return nil
+}
+
+// StartScanning enables synchronous scanning. After this, use ReadFrame.
+func (d *Device) StartScanning() error {
+	if err := d.writeReg(regScanEnabled, []byte{scanModeSync}); err != nil {
+		return fmt.Errorf("start scanning: %w", err)
+	}
+	return nil
+}
+
+// TurnOffLEDs sets every LED to zero brightness (best-effort; a Morph may
+// report zero LEDs, in which case this is a no-op). Returns any error so the
+// caller can decide whether to treat it as fatal.
+func (d *Device) TurnOffLEDs() error {
+	if d.numLeds == 0 {
+		return nil
+	}
+	rs := int(d.ledRegSize)
+	if rs < 1 {
+		rs = 1
+	}
+	buf := make([]byte, int(d.numLeds)*rs) // all zero = off
+	return d.writeRegVS(regLedBrightness, buf)
+}
+
+// ReadFrame requests and parses a single frame (synchronous, unbuffered mode),
+// returning its contacts in physical units.
+func (d *Device) ReadFrame() ([]Contact, error) {
+	if err := d.writeAll([]byte{boardAddr | readFlag, regScanReadFrame, 0}); err != nil {
+		return nil, err
+	}
+	ack := make([]byte, 1)
+	if err := d.readFull(ack); err != nil {
+		return nil, err
+	}
+	if ack[0] != ptRvsAck {
+		return nil, fmt.Errorf("readFrame: unexpected ack %d", ack[0])
+	}
+	fh := make([]byte, 4) // reg(1) header(1) payload_size(2 LE)
+	if err := d.readFull(fh); err != nil {
+		return nil, err
+	}
+	payloadSize := int(binary.LittleEndian.Uint16(fh[2:4]))
+	buf := make([]byte, payloadSize+1) // payload + checksum
+	if err := d.readFull(buf); err != nil {
+		return nil, err
+	}
+	data := buf[:payloadSize]
+	var sum byte
+	for _, b := range data {
+		sum += b
+	}
+	if sum != buf[payloadSize] {
+		return nil, fmt.Errorf("readFrame: checksum mismatch")
+	}
+	return d.parseFrame(data)
+}
+
+// -------------------------------------------------------------------------
+// Low-level serial + register access
+// -------------------------------------------------------------------------
+
+func (d *Device) writeAll(buf []byte) error {
 	for len(buf) > 0 {
 		n, err := d.port.Write(buf)
 		if err != nil {
@@ -205,8 +310,7 @@ func (d *senselDevice) writeAll(buf []byte) error {
 	return nil
 }
 
-// readFull reads exactly len(buf) bytes, erroring on a read timeout.
-func (d *senselDevice) readFull(buf []byte) error {
+func (d *Device) readFull(buf []byte) error {
 	total := 0
 	for total < len(buf) {
 		n, err := d.port.Read(buf[total:])
@@ -221,8 +325,7 @@ func (d *senselDevice) readFull(buf []byte) error {
 	return nil
 }
 
-// readReg implements the fixed-size register read (_senselReadReg, SYNC mode).
-func (d *senselDevice) readReg(reg byte, size int) ([]byte, error) {
+func (d *Device) readReg(reg byte, size int) ([]byte, error) {
 	if err := d.writeAll([]byte{boardAddr | readFlag, reg, byte(size)}); err != nil {
 		return nil, err
 	}
@@ -259,8 +362,7 @@ func (d *senselDevice) readReg(reg byte, size int) ([]byte, error) {
 	return buf, nil
 }
 
-// writeReg implements the fixed-size register write (_senselWriteReg).
-func (d *senselDevice) writeReg(reg byte, data []byte) error {
+func (d *Device) writeReg(reg byte, data []byte) error {
 	if err := d.writeAll([]byte{boardAddr, reg, byte(len(data))}); err != nil {
 		return err
 	}
@@ -284,16 +386,14 @@ func (d *senselDevice) writeReg(reg byte, data []byte) error {
 	return nil
 }
 
-// writeRegVS implements the variable-size register write (_senselWriteRegVS),
-// used for the LED brightness array.
-func (d *senselDevice) writeRegVS(reg byte, data []byte) error {
+func (d *Device) writeRegVS(reg byte, data []byte) error {
 	hdr := make([]byte, 9)
 	hdr[0] = boardAddr
 	hdr[1] = reg
-	hdr[2] = 0 // size (unused for VS)
+	hdr[2] = 0
 	hdr[3] = defaultVsHeaderSize
 	binary.LittleEndian.PutUint32(hdr[4:8], uint32(len(data)))
-	hdr[8] = hdr[4] + hdr[5] + hdr[6] + hdr[7] // checksum over the vs_size bytes
+	hdr[8] = hdr[4] + hdr[5] + hdr[6] + hdr[7]
 	if err := d.writeAll(hdr); err != nil {
 		return err
 	}
@@ -329,13 +429,11 @@ func (d *senselDevice) writeRegVS(reg byte, data []byte) error {
 	return nil
 }
 
-// readRegVS implements the variable-size register read (_senselReadRegVS).
-// TX: [0x81, reg, 0]. RX: ack(3) size(2 LE) payload(size) checksum(1).
-func (d *senselDevice) readRegVS(reg byte, maxSize int) ([]byte, error) {
+func (d *Device) readRegVS(reg byte, maxSize int) ([]byte, error) {
 	if err := d.writeAll([]byte{boardAddr | readFlag, reg, 0}); err != nil {
 		return nil, err
 	}
-	ack := make([]byte, 3) // ack/reg/header — not individually validated by the SDK
+	ack := make([]byte, 3)
 	if err := d.readFull(ack); err != nil {
 		return nil, err
 	}
@@ -360,15 +458,12 @@ func (d *senselDevice) readRegVS(reg byte, maxSize int) ([]byte, error) {
 		sum += b
 	}
 	if sum != ck[0] {
-		return nil, fmt.Errorf("readRegVS 0x%02X: checksum mismatch (got 0x%02X, computed 0x%02X)", reg, ck[0], sum)
+		return nil, fmt.Errorf("readRegVS 0x%02X: checksum mismatch", reg)
 	}
 	return buf, nil
 }
 
-// readDeviceSerial reads the firmware serial string from register 0x0F.
-// The firmware pads the field with 0xFF (only ~13 chars valid), matching the
-// SDK which converts 0xFF->0 and null-terminates.
-func (d *senselDevice) readDeviceSerial() (string, error) {
+func (d *Device) readDeviceSerial() (string, error) {
 	raw, err := d.readRegVS(regDeviceSerialNumber, 64)
 	if err != nil {
 		return "", err
@@ -390,18 +485,17 @@ func scaleFromShift(b byte) float32 {
 	return float32(uint32(1) << uint(b))
 }
 
-// initHandle reads firmware, sensor and LED info (mirrors _senselInitHandle).
-func (d *senselDevice) initHandle() error {
+func (d *Device) initHandle() error {
 	fw, err := d.readReg(regFwVersionProtocol, 9)
 	if err != nil {
 		return err
 	}
 	d.fwProtocol = fw[0]
-	d.fwMajor = fw[1]
-	d.fwMinor = fw[2]
-	d.fwBuild = binary.LittleEndian.Uint16(fw[3:5])
-	d.fwRelease = fw[5]
-	d.deviceID = binary.LittleEndian.Uint16(fw[6:8])
+	d.FwMajor = fw[1]
+	d.FwMinor = fw[2]
+	d.FwBuild = binary.LittleEndian.Uint16(fw[3:5])
+	d.FwRelease = fw[5]
+	d.DeviceID = binary.LittleEndian.Uint16(fw[6:8])
 	d.deviceRev = fw[8]
 
 	if b, err := d.readReg(regFrameContentSupported, 1); err != nil {
@@ -449,12 +543,12 @@ func (d *senselDevice) initHandle() error {
 	if b, err := d.readReg(regSensorActiveWidthUM, 4); err != nil {
 		return err
 	} else {
-		d.widthMM = float32(binary.LittleEndian.Uint32(b)) / 1000.0
+		d.Width = float32(binary.LittleEndian.Uint32(b)) / 1000.0
 	}
 	if b, err := d.readReg(regSensorActiveHeightUM, 4); err != nil {
 		return err
 	} else {
-		d.heightMM = float32(binary.LittleEndian.Uint32(b)) / 1000.0
+		d.Height = float32(binary.LittleEndian.Uint32(b)) / 1000.0
 	}
 
 	// LED info is best-effort (a Morph may report zero LEDs).
@@ -470,78 +564,7 @@ func (d *senselDevice) initHandle() error {
 	return nil
 }
 
-// setupAndStart configures the device for contact scanning and starts it.
-// Mirrors the SenselSetupAndStart used by gomorph.
-func (d *senselDevice) setupAndStart() error {
-	// Disable device timeouts (register 0xD0).
-	if err := d.writeReg(regDeviceOpen, []byte{255}); err != nil {
-		return fmt.Errorf("device open: %w", err)
-	}
-	// Report contacts only.
-	if err := d.writeReg(regFrameContentControl, []byte{frameContentContactsMask}); err != nil {
-		return fmt.Errorf("set frame content: %w", err)
-	}
-	// Start synchronous scanning.
-	if err := d.writeReg(regScanEnabled, []byte{scanModeSync}); err != nil {
-		return fmt.Errorf("start scanning: %w", err)
-	}
-	// Turn LEDs off (best-effort; a single VS write sets the whole array).
-	d.turnOffLEDs()
-	return nil
-}
-
-func (d *senselDevice) turnOffLEDs() {
-	if d.numLeds == 0 {
-		return
-	}
-	rs := int(d.ledRegSize)
-	if rs < 1 {
-		rs = 1
-	}
-	buf := make([]byte, int(d.numLeds)*rs) // all zero = off
-	if err := d.writeRegVS(regLedBrightness, buf); err != nil {
-		log.Printf("gomorph: turnOffLEDs on %s: %v", d.name, err)
-	}
-}
-
-// readOneFrame requests and parses a single frame (SYNC, unbuffered mode).
-// Returns the parsed contacts (physical units).
-func (d *senselDevice) readOneFrame() ([]senselContact, error) {
-	// Request a frame: read SCAN_READ_FRAME with size 0.
-	if err := d.writeAll([]byte{boardAddr | readFlag, regScanReadFrame, 0}); err != nil {
-		return nil, err
-	}
-	ack := make([]byte, 1)
-	if err := d.readFull(ack); err != nil {
-		return nil, err
-	}
-	if ack[0] != ptRvsAck {
-		return nil, fmt.Errorf("readFrame: unexpected ack %d", ack[0])
-	}
-	// Frame header: reg(1) header(1) payload_size(2 LE).
-	fh := make([]byte, 4)
-	if err := d.readFull(fh); err != nil {
-		return nil, err
-	}
-	payloadSize := int(binary.LittleEndian.Uint16(fh[2:4]))
-	buf := make([]byte, payloadSize+1) // payload + checksum
-	if err := d.readFull(buf); err != nil {
-		return nil, err
-	}
-	data := buf[:payloadSize]
-	var sum byte
-	for _, b := range data {
-		sum += b
-	}
-	if sum != buf[payloadSize] {
-		return nil, fmt.Errorf("readFrame: checksum mismatch")
-	}
-	return d.parseFrame(data)
-}
-
-// parseFrame decodes one frame payload (mirrors _senselParseFrame +
-// _senselParseContactFrame for contact content only).
-func (d *senselDevice) parseFrame(data []byte) ([]senselContact, error) {
+func (d *Device) parseFrame(data []byte) ([]Contact, error) {
 	// Frame header: content_bit_mask(1) rolling_counter(1) timestamp(4).
 	if len(data) < 6 {
 		return nil, fmt.Errorf("frame too short (%d bytes)", len(data))
@@ -559,12 +582,12 @@ func (d *senselDevice) parseFrame(data []byte) ([]senselContact, error) {
 	n := int(data[off+1])
 	off += 2
 
-	contacts := make([]senselContact, 0, n)
+	contacts := make([]Contact, 0, n)
 	for i := 0; i < n; i++ {
 		if len(data) < off+contactDefaultSendSize {
 			return nil, fmt.Errorf("contact %d truncated", i)
 		}
-		c := senselContact{
+		c := Contact{
 			ID:    data[off+0],
 			State: data[off+1],
 			X:     float32(binary.LittleEndian.Uint16(data[off+2:off+4])) / d.dimsScale,
@@ -573,7 +596,6 @@ func (d *senselDevice) parseFrame(data []byte) ([]senselContact, error) {
 			Area:  float32(binary.LittleEndian.Uint16(data[off+8:off+10])) / d.areaScale,
 		}
 		off += contactDefaultSendSize
-		// Skip any optional per-contact fields the device included.
 		if contactMask&contactMaskEllipse != 0 {
 			off += contactEllipseSendSize
 		}
