@@ -100,6 +100,8 @@ cmd/palette_hub/palette_hub.exe
 cmd/palette/palette
 cmd/palette_natsmon/palette_natsmon
 cmd/palette_monitor/palette_monitor
+cmd/gomorph/gomorph.exe
+cmd/gomorph/gomorph
 .claude/settings.local.json
 .claude/worktrees/
 mmtt_kinect/src/opencv/build/
