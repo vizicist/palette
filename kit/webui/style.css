@@ -1678,6 +1678,21 @@ body.initial-pro2 #preset-grid.grid-mode {
     text-overflow: ellipsis;
 }
 
+/* Shown next to a param name in all-patches (*) mode when the four patches
+   have different values; hover for the per-patch breakdown. */
+.param-mixed {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 5px;
+    font-size: 10px;
+    line-height: 16px;
+    border-radius: 3px;
+    background: #a70;
+    color: #fff;
+    cursor: help;
+    vertical-align: middle;
+}
+
 .param-controls {
     display: flex;
     flex: 0 1 auto;

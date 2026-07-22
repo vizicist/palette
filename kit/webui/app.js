@@ -206,6 +206,29 @@ async function setCurrentParam(paramName, valueStr) {
     }
 }
 
+// parseParamLines parses the "name=value\n" format returned by the
+// getparams APIs into a plain name->value object.
+function parseParamLines(str) {
+    const map = {};
+    for (const line of str.split('\n')) {
+        const eqIdx = line.indexOf('=');
+        if (eqIdx > 0) {
+            map[line.substring(0, eqIdx)] = line.substring(eqIdx + 1);
+        }
+    }
+    return map;
+}
+
+// clearMixedBadge removes a row's "mixed" badge after a successful set:
+// in all-patches mode a set fans out to every patch, so the values agree
+// again from that point on.
+function clearMixedBadge(row) {
+    const badge = row.querySelector('.param-mixed');
+    if (badge) {
+        badge.remove();
+    }
+}
+
 // escapeHtml makes a server-derived string safe to interpolate into HTML
 // markup or attribute values (param names/values, preset names, errors).
 function escapeHtml(value) {
@@ -728,11 +751,27 @@ async function loadParams() {
 
         // Get parameter values - use different API for global vs patch categories
         let paramsStr;
+        // In all-patches mode, maps param name -> "A: v  B: v ..." for params
+        // where the four patches disagree; null otherwise. Rendered as a
+        // "mixed" badge so the displayed value (patch A's) can't silently
+        // hide a different value on another patch.
+        let mixedValues = null;
         if (UIState.currentCategory === 'global') {
             paramsStr = await API.getGlobalParams('global.');
+        } else if (UIState.currentPatch === '*') {
+            const all = await Promise.all(
+                patchNames.map(p => API.getPatchParams(p, UIState.currentCategory)));
+            paramsStr = all[0];
+            const perPatch = all.map(parseParamLines);
+            mixedValues = {};
+            for (const name of Object.keys(perPatch[0])) {
+                if (perPatch.some(m => m[name] !== perPatch[0][name])) {
+                    mixedValues[name] = patchNames
+                        .map((p, i) => `${p}: ${perPatch[i][name]}`).join('   ');
+                }
+            }
         } else {
-            const patchToQuery = UIState.currentPatch === '*' ? 'A' : UIState.currentPatch;
-            paramsStr = await API.getPatchParams(patchToQuery, UIState.currentCategory);
+            paramsStr = await API.getPatchParams(UIState.currentPatch, UIState.currentCategory);
         }
 
         if (token !== gridLoadToken) return; // a newer load owns the grid
@@ -791,6 +830,13 @@ async function loadParams() {
             if (isMainEffectBool) rowClass += ' effect-main-row';
             html += `<div class="${rowClass}" data-param="${escapeHtml(p.name)}">`;
 
+            // In all-patches mode, flag params whose values differ between
+            // patches; the tooltip shows each patch's value.
+            let mixedBadge = '';
+            if (mixedValues && mixedValues[p.name] !== undefined) {
+                mixedBadge = `<span class="param-mixed" title="${escapeHtml(mixedValues[p.name])}">mixed</span>`;
+            }
+
             if (isMainEffectBool) {
                 // Main effect toggle: single wide button with +/- and name
                 const isEnabled = p.value === 'true';
@@ -798,12 +844,12 @@ async function loadParams() {
                 const symbol = isEnabled ? '-' : '+';
                 html += `<button class="param-ctrl effect-toggle ${btnClass}" data-action="toggle">`;
                 html += `<span class="effect-symbol">${symbol}</span>`;
-                html += `<span class="effect-label">${escapeHtml(p.name)}</span>`;
+                html += `<span class="effect-label">${escapeHtml(p.name)}${mixedBadge}</span>`;
                 html += `</button>`;
                 html += `<span class="param-value" style="display:none">${escapeHtml(p.value)}</span>`;
                 html += `<span class="param-controls"></span>`;
             } else {
-                html += `<span class="param-name">${escapeHtml(p.name)}</span>`;
+                html += `<span class="param-name">${escapeHtml(p.name)}${mixedBadge}</span>`;
                 // Use slider for numeric params in effect sub-params, visual, sound, misc
                 const isFloat = isNumeric && p.value.includes('.');
                 const isInt = isNumeric && !p.value.includes('.');
@@ -938,6 +984,7 @@ function setupParamControls() {
             try {
                 await setCurrentParam(paramName, valueStr);
                 valueEl.textContent = valueStr;
+                clearMixedBadge(row);
 
                 // Update bool toggle button label and class
                 if (action === 'toggle' && btn.classList.contains('bool-toggle')) {
@@ -978,6 +1025,7 @@ function setupParamControls() {
 
             try {
                 await setCurrentParam(paramName, valueStr);
+                clearMixedBadge(row);
             } catch (err) {
                 console.error('Failed to set param:', err);
                 showToast(`Failed to set ${paramName}`);
@@ -998,6 +1046,7 @@ function setupParamControls() {
 
             try {
                 await setCurrentParam(paramName, valueStr);
+                clearMixedBadge(row);
             } catch (err) {
                 console.error('Failed to set param:', err);
                 showToast(`Failed to set ${paramName}`);
@@ -1027,6 +1076,7 @@ function setupParamControls() {
                     // success, so a failed set doesn't show an unsaved value.
                     valueEl.textContent = valueStr;
                     input.dataset.original = valueStr;
+                    clearMixedBadge(row);
                     // Brief visual feedback - flash the input
                     input.style.backgroundColor = '#4a4';
                     setTimeout(() => { input.style.backgroundColor = ''; }, 200);
