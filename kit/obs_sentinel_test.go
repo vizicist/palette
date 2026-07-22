@@ -4,15 +4,33 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
 
-func TestDeleteObsSentinelRemovesStaleDirectory(t *testing.T) {
-	appData := t.TempDir()
-	t.Setenv("APPDATA", appData)
+// setFakeObsConfigRoot points ObsConfigDir at a temp directory on whichever
+// OS the test is running, and returns that directory.
+func setFakeObsConfigRoot(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	switch runtime.GOOS {
+	case "darwin":
+		t.Setenv("HOME", root)
+		return filepath.Join(root, "Library", "Application Support")
+	case "windows":
+		t.Setenv("APPDATA", root)
+		return root
+	default:
+		t.Setenv("XDG_CONFIG_HOME", root)
+		return root
+	}
+}
 
-	sentinelPath := filepath.Join(appData, "obs-studio", ".sentinel")
+func TestDeleteObsSentinelRemovesStaleDirectory(t *testing.T) {
+	configRoot := setFakeObsConfigRoot(t)
+
+	sentinelPath := filepath.Join(configRoot, "obs-studio", ".sentinel")
 	if err := os.MkdirAll(sentinelPath, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -29,18 +47,24 @@ func TestDeleteObsSentinelRemovesStaleDirectory(t *testing.T) {
 }
 
 func TestDeleteObsSentinelAllowsAlreadyAbsentDirectory(t *testing.T) {
-	t.Setenv("APPDATA", t.TempDir())
+	setFakeObsConfigRoot(t)
 
 	if err := deleteObsSentinel(); err != nil {
 		t.Fatalf("deleteObsSentinel() error = %v", err)
 	}
 }
 
-func TestDeleteObsSentinelRequiresAppData(t *testing.T) {
-	t.Setenv("APPDATA", "")
+func TestDeleteObsSentinelRequiresConfigDir(t *testing.T) {
+	switch runtime.GOOS {
+	case "windows":
+		t.Setenv("APPDATA", "")
+	default:
+		t.Setenv("XDG_CONFIG_HOME", "")
+		t.Setenv("HOME", "")
+	}
 
 	if err := deleteObsSentinel(); err == nil {
-		t.Fatal("deleteObsSentinel() error = nil, want APPDATA error")
+		t.Fatal("deleteObsSentinel() error = nil, want missing-config-dir error")
 	}
 }
 

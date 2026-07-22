@@ -92,11 +92,15 @@ var MonitorExe = executableName("palette_monitor")
 var EngineExe = executableName("palette_engine")
 var GuiExe = executableName("chrome")
 var ChatExe = executableName("palette_chat")
-var BiduleExe = executableName("bidule")
+
+// Bidule and OBS name their macOS binaries differently than their Windows
+// ones ("Bidule P64" inside a versioned bundle, "OBS" rather than "obs64"),
+// so the installed app is consulted before falling back to a default.
+var BiduleExe = appExeName("bidule", "Bidule", BiduleCandidatePaths())
 var ResolumeExe = executableName("Avenue")
 
 var MmttExe = executableName("mmtt_kinect")
-var ObsExe = executableName("obs64")
+var ObsExe = appExeName("obs64", "OBS", ObsCandidatePaths())
 var SamplesplitterExe = executableName("samplesplitter")
 
 func processAllowedByMode(process string) bool {

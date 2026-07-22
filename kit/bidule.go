@@ -49,8 +49,15 @@ func (b *Bidule) ProcessInfo() *ProcessInfo {
 		return EmptyProcessInfo()
 	}
 	if !FileExists(bidulePath) {
-		LogWarn("No bidule found, looking for", "path", bidulePath)
-		return EmptyProcessInfo()
+		// The configured default is a Windows path, so fall back to the
+		// usual install locations for this OS before giving up.
+		found := firstExistingPath(BiduleCandidatePaths())
+		if found == "" {
+			LogWarn("No bidule found, looking for", "path", bidulePath)
+			return EmptyProcessInfo()
+		}
+		LogInfo("Bidule found at its default install location", "path", found)
+		bidulePath = found
 	}
 	exe := filepath.Base(bidulePath)
 

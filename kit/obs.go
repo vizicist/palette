@@ -47,8 +47,15 @@ func ObsProcessInfo() *ProcessInfo {
 	fullpath, err := GetParam("global.obspath")
 	LogIfError(err)
 	if fullpath != "" && !FileExists(fullpath) {
-		LogWarn("No OBS found, looking for", "path", fullpath)
-		return EmptyProcessInfo()
+		// The configured default is a Windows path, so fall back to the
+		// usual install locations for this OS before giving up.
+		found := firstExistingPath(ObsCandidatePaths())
+		if found == "" {
+			LogWarn("No OBS found, looking for", "path", fullpath)
+			return EmptyProcessInfo()
+		}
+		LogInfo("OBS found at its default install location", "path", found)
+		fullpath = found
 	}
 
 	exe := filepath.Base(fullpath)
@@ -64,12 +71,13 @@ func ObsProcessInfo() *ProcessInfo {
 // starting OBS, we prevent the "safe mode" dialog from appearing.
 // This is the workaround for OBS 32.0.0+ where --disable-shutdown-check was removed.
 func deleteObsSentinel() error {
-	// OBS config is in %APPDATA%\obs-studio on Windows
-	appData := os.Getenv("APPDATA")
-	if appData == "" {
-		return fmt.Errorf("cannot locate OBS sentinel: APPDATA is not set")
+	// OBS config lives in %APPDATA%\obs-studio on Windows and
+	// ~/Library/Application Support/obs-studio on macOS.
+	configDir := ObsConfigDir()
+	if configDir == "" {
+		return fmt.Errorf("cannot locate OBS sentinel: no OBS config directory for this system")
 	}
-	sentinelPath := filepath.Join(appData, "obs-studio", ".sentinel")
+	sentinelPath := filepath.Join(configDir, ".sentinel")
 	if err := os.RemoveAll(sentinelPath); err != nil {
 		return fmt.Errorf("remove OBS sentinel %q: %w", sentinelPath, err)
 	}
