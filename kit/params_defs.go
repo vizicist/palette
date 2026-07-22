@@ -464,15 +464,9 @@ func RandomValueForParam(def ParamDef) string {
 // ParamRandomValuesForCategory returns a JSON object mapping param names to random values.
 // Only includes params that have randmin/randmax specified in their definition.
 func ParamRandomValuesForCategory(category string) (string, error) {
-	randMap := make(map[string]string)
-	for name, def := range ParamDefs {
-		if def.Category == category || category == "*" {
-			randVal := RandomValueForParam(def)
-			if randVal != "" {
-				randMap[name] = randVal
-			}
-		}
-	}
+	// Candidates are drawn from the plain rand distribution, then one is
+	// chosen using the learned Like/Avoid feedback (see randfeedback.go).
+	randMap := PickRandomParamsForCategory(category)
 	jsonBytes, err := json.Marshal(randMap)
 	if err != nil {
 		return "", fmt.Errorf("ParamRandomValuesForCategory: %w", err)

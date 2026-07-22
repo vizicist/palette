@@ -347,6 +347,22 @@ func (patch *Patch) API(api string, apiargs map[string]string) (string, error) {
 		}
 		return patch.params.GetWithPrefix(category)
 
+	case "avoid", "like":
+		// Record the patch's current params for a category as a negative
+		// or positive example for the learned Rand feature.
+		category, ok := apiargs["category"]
+		if !ok {
+			return "", fmt.Errorf("Patch.API: missing category argument")
+		}
+		values := map[string]string{}
+		prefix := category + "."
+		for _, paramName := range patch.ParamNames() {
+			if strings.HasPrefix(paramName, prefix) {
+				values[paramName] = patch.Get(paramName)
+			}
+		}
+		return "", AddRandFeedback(category, api, values)
+
 	case "clear":
 		patch.loopClear()
 		patch.clearGraphics()
