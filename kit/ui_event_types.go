@@ -9,19 +9,19 @@ const (
 )
 
 type EngineStatusSnapshot struct {
-	Uptime              float64           `json:"uptime"`
-	AttractMode         bool              `json:"attractmode"`
-	OBSRunning          bool              `json:"obsrunning"`
-	NATSConnected       bool              `json:"natsconnected"`
-	NATSLocalRunning    bool              `json:"natslocalrunning"`
-	NATSLocalURL        string            `json:"natslocalurl"`
-	NATSWebsocket       string            `json:"natswebsocket"`
-	Hostname            string            `json:"hostname"`
-	Presets             map[string]string `json:"presets"`
-	Mode                string            `json:"mode"`
-	GuideDefaultLevel   string            `json:"guidefaultlevel"`
-	AttractAllowGUI     bool              `json:"attractallowgui"`
-	Patches             map[string]string `json:"patches,omitempty"`
+	Uptime            float64           `json:"uptime"`
+	AttractMode       bool              `json:"attractmode"`
+	OBSRunning        bool              `json:"obsrunning"`
+	NATSConnected     bool              `json:"natsconnected"`
+	NATSLocalRunning  bool              `json:"natslocalrunning"`
+	NATSLocalURL      string            `json:"natslocalurl"`
+	NATSWebsocket     string            `json:"natswebsocket"`
+	Hostname          string            `json:"hostname"`
+	Presets           map[string]string `json:"presets"`
+	Mode              string            `json:"mode"`
+	GuideDefaultLevel string            `json:"guidefaultlevel"`
+	AttractAllowGUI   bool              `json:"attractallowgui"`
+	Patches           map[string]string `json:"patches,omitempty"`
 }
 
 type OBSRecordUISnapshot struct {

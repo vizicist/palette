@@ -11,18 +11,18 @@ func uiSnapshot() UISnapshot {
 
 func uiStatusSnapshot() EngineStatusSnapshot {
 	snapshot := EngineStatusSnapshot{
-		Uptime:              Uptime(),
-		AttractMode:         false,
-		OBSRunning:          ObsIsRunning(),
-		NATSConnected:       NatsIsConnected(),
-		NATSLocalRunning:    EmbeddedNATSRunning(),
-		NATSLocalURL:        EmbeddedNATSURL(),
-		NATSWebsocket:       EmbeddedNATSWebsocketURL(),
-		Hostname:            Hostname(),
-		Presets:             currentPresetSelectionSnapshot(),
-		Mode:                CurrentMode(),
-		GuideDefaultLevel:   GetParamWithDefault("global.guidefaultlevel", "0"),
-		AttractAllowGUI:     IsTrueValue(GetParamWithDefault("global.attractallowgui", "false")),
+		Uptime:            Uptime(),
+		AttractMode:       false,
+		OBSRunning:        ObsIsRunning(),
+		NATSConnected:     NatsIsConnected(),
+		NATSLocalRunning:  EmbeddedNATSRunning(),
+		NATSLocalURL:      EmbeddedNATSURL(),
+		NATSWebsocket:     EmbeddedNATSWebsocketURL(),
+		Hostname:          Hostname(),
+		Presets:           currentPresetSelectionSnapshot(),
+		Mode:              CurrentMode(),
+		GuideDefaultLevel: GetParamWithDefault("global.guidefaultlevel", "0"),
+		AttractAllowGUI:   IsTrueValue(GetParamWithDefault("global.attractallowgui", "false")),
 	}
 	if theAttractManager != nil {
 		snapshot.AttractMode = theAttractManager.AttractModeIsOn()
