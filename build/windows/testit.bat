@@ -11,7 +11,6 @@ node "%PALETTE_SOURCE%\build\webui_smoke_test.mjs" %*
 if errorlevel 1 exit /b %ERRORLEVEL%
 
 echo ================ Go kit tests
-set "PATH=%PALETTE_SOURCE%\SenselLib\x64;%PATH%"
 pushd "%PALETTE_SOURCE%"
 rem Keep regression tests scoped to runtime packages. Do not include cmd/miditest;
 rem it is a manual hardware/MIDI diagnostic command, not a regression target.

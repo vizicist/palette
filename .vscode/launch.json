@@ -12,7 +12,7 @@
             "mode": "auto",
             "program": "C:/Users/Space/github/palette/cmd/palette/palette.go",
             "env": {
-                "Path": "${env:Path};C:/Users/Space/github/palette;c:/Users/space/github/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};C:/Users/Space/github/palette;"             },
             "args": ["--nats", "spacepalette34", "get","global.guisize"]
         },
        {
@@ -22,7 +22,7 @@
             "mode": "auto",
             "program": "C:/Users/Space/github/palette/cmd/palette_engine/palette_engine.go",
             "env": {
-                "Path": "${env:Path};C:/Users/Space/github/palette;c:/Users/space/github/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};C:/Users/Space/github/palette;"             },
             "args": ["engineonly"]
         },
        {
@@ -32,7 +32,7 @@
             "mode": "auto",
             "program": "C:/Users/Space/github/palette/cmd/palette_engine/palette_engine.go",
             "env": {
-                "Path": "${env:Path};C:/Users/Space/github/palette;c:/Users/space/github/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};C:/Users/Space/github/palette;"             },
             "args": []
         },
        {
@@ -42,7 +42,7 @@
             "mode": "auto",
             "program": "C:/Users/Space/github/palettecmd/palette_hub/palette_hub.go",
             "env": {
-                "Path": "${env:Path};C:/Users/Space/github/palette;c:/Users/space/github/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};C:/Users/Space/github/palette;"             },
             "args": ["request_log","spacepalette33"]
         },
        {
@@ -134,7 +134,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/palette_remote/palette_remote.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};"             },
             "args": []
         },
         {
@@ -165,7 +165,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/fyne_demo/fyne_demo.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};"             },
             "args": []
         },
        {
@@ -266,7 +266,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/chillian/chillian.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};"             },
             "args": []
         },
         {
@@ -332,7 +332,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};"             },
             "args": ["sendlogs"]
         },
         {
@@ -342,7 +342,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/erae/erae.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/space/github/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};"             },
             "args": []
         }
     ]

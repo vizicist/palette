@@ -11,7 +11,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/erae/erae.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};"             },
             "args": []
         },
        {
@@ -21,7 +21,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/palette_engine/palette_engine.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};"             },
             "args": []
         },
         {
@@ -38,7 +38,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/chillian/chillian.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};"             },
             "args": []
         },
         {
@@ -111,7 +111,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/palette/palette.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};"             },
             "args": ["sendlogs"]
         },
         {
@@ -121,7 +121,7 @@
             "mode": "auto",
             "program": "${env:PALETTE_SOURCE}/cmd/erae/erae.go",
             "env": {
-                "Path": "${env:Path};${workspaceFolder};c:/Users/me/Documents/github/vizicist/palette/SenselLib/x64;"             },
+                "Path": "${env:Path};${workspaceFolder};"             },
             "args": []
         }
     ]

@@ -176,8 +176,6 @@ copy remove_dailyreboot.bat %bin% >nul
 popd
 
 echo ================ Copying windows-specific things
-copy %PALETTE_SOURCE%\SenselLib\x64\LibSensel.dll %bin% >nul
-copy %PALETTE_SOURCE%\SenselLib\x64\LibSenselDecompress.dll %bin% >nul
 rem copy %PALETTE_SOURCE%\depthlib\build\x64\Release\depthlib.dll %bin% >nul
 copy vc15\bin\depthai-core.dll %bin% >nul
 copy vc15\bin\opencv_world454.dll %bin% >nul

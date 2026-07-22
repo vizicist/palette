@@ -38,7 +38,6 @@ In the list below, the === instructions are only appropriate for machines that w
  PALETTE=%LOCALAPPDATA%\Programs\Palette
  PALETTE_SOURCE=%USERPROFILE%\Github\palette
 ```
-Not sure whether %USERPROFILE%\Github\palette\SenselLib\x64 is needed, it depends on how you execute things during development.
 
 - Install Go version 1.19 or later from https://golang.org/dl/
 
