@@ -62,6 +62,11 @@ export const API = {
     getPatchParams(patch, category) {
         return this.call('patch.getparams', { patch, category });
     },
+    // Record the patch's current params for a category as feedback for the
+    // learned Rand feature; verdict is 'like' or 'avoid'.
+    sendParamFeedback(patch, category, verdict) {
+        return this.call('patch.' + verdict, { patch, category });
+    },
     setPatchParam(patch, name, value) {
         return this.call('patch.set', { patch, name, value });
     },

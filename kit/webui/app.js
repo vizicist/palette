@@ -940,11 +940,21 @@ async function loadParams() {
     }
 }
 
+// Categories whose Rand results can be trained with Like/Avoid feedback.
+const feedbackCategories = ['misc', 'sound', 'visual', 'effect'];
+
 function paramHeaderHtml({ includeInitRand }) {
     let html = '<div class="param-header">';
     if (includeInitRand) {
         html += '<button class="param-header-btn" id="btn-param-init">Init</button>';
         html += '<button class="param-header-btn" id="btn-param-rand">Rand</button>';
+    }
+    if (includeInitRand && feedbackCategories.includes(UIState.currentCategory)) {
+        // Like/Avoid record the current param set as training feedback for
+        // the Rand button (see kit/randfeedback.go); each category learns
+        // independently.
+        html += '<button class="param-header-btn feedback-like" id="btn-param-like">Like</button>';
+        html += '<button class="param-header-btn feedback-avoid" id="btn-param-avoid">Avoid</button>';
     }
     html += '<button class="param-header-btn" id="btn-param-save">Save As</button>';
     html += '<button class="param-header-btn danger" id="btn-param-remove">Remove</button>';
@@ -996,13 +1006,7 @@ function setupParamControls() {
 
                 // Refresh list if toggling an effect boolean (affects sub-param visibility)
                 if (UIState.currentCategory === 'effect' && action === 'toggle' && !paramName.includes(':')) {
-                    // Save scroll position before refresh
-                    const paramList = document.querySelector('.param-list');
-                    const scrollTop = paramList ? paramList.scrollTop : 0;
-                    await loadParams();
-                    // Restore scroll position after refresh
-                    const newParamList = document.querySelector('.param-list');
-                    if (newParamList) newParamList.scrollTop = scrollTop;
+                    await reloadParamsPreservingScroll();
                 }
             } catch (err) {
                 console.error('Failed to set param:', err);
@@ -1090,7 +1094,42 @@ function setupParamControls() {
     });
 }
 
+// reloadParamsPreservingScroll refreshes the params display without losing
+// the user's place in the list.
+async function reloadParamsPreservingScroll() {
+    const paramList = document.querySelector('.param-list');
+    const scrollTop = paramList ? paramList.scrollTop : 0;
+    await loadParams();
+    const newParamList = document.querySelector('.param-list');
+    if (newParamList) newParamList.scrollTop = scrollTop;
+}
+
+// sendParamFeedback records the currently-displayed param set as a
+// like/avoid training example for the Rand feature. In all-patches mode
+// the patches share the same values after a Rand, so patch A stands in
+// for the set.
+async function sendParamFeedback(verdict) {
+    const patchToUse = UIState.currentPatch === '*' ? 'A' : UIState.currentPatch;
+    try {
+        await API.sendParamFeedback(patchToUse, UIState.currentCategory, verdict);
+        showToast(`Recorded "${verdict}" for ${UIState.currentCategory} params`);
+    } catch (err) {
+        console.error('Failed to record feedback:', err);
+        showToast(`Failed to record ${verdict}`);
+    }
+}
+
 function setupParamHeaderButtons() {
+    // Like/Avoid buttons - train the Rand feature on the current params
+    const likeBtn = document.getElementById('btn-param-like');
+    if (likeBtn) {
+        likeBtn.addEventListener('click', () => sendParamFeedback('like'));
+    }
+    const avoidBtn = document.getElementById('btn-param-avoid');
+    if (avoidBtn) {
+        avoidBtn.addEventListener('click', () => sendParamFeedback('avoid'));
+    }
+
     // Init button - set all params to default values
     const initBtn = document.getElementById('btn-param-init');
     if (initBtn) {
@@ -1108,8 +1147,8 @@ function setupParamHeaderButtons() {
                     await API.setPatchParams(UIState.currentPatch, initValues);
                 }
 
-                // Refresh the params display
-                await loadParams();
+                // Refresh the params display, staying where the user was
+                await reloadParamsPreservingScroll();
             } catch (err) {
                 console.error('Failed to init params:', err);
                 showToast('Init failed: ' + err.message);
@@ -1134,8 +1173,8 @@ function setupParamHeaderButtons() {
                     await API.setPatchParams(UIState.currentPatch, randValues);
                 }
 
-                // Refresh the params display
-                await loadParams();
+                // Refresh the params display, staying where the user was
+                await reloadParamsPreservingScroll();
             } catch (err) {
                 console.error('Failed to randomize params:', err);
                 showToast('Rand failed: ' + err.message);
@@ -1414,12 +1453,18 @@ function setupCategoryTabs() {
 
 function setupPatchSelector() {
     document.querySelectorAll('#patch-selector .patch-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             const patch = btn.dataset.patch;
 
             UIState.selectPatch(patch);
             updatePatchButtons();
             updatePresetButtons();
+
+            // The params view shows the selected patch's values (and, in
+            // * mode, the mixed badges), so a patch change must reload it.
+            if (UIState.showingParams) {
+                await reloadParamsPreservingScroll();
+            }
         });
     });
 }

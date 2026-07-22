@@ -1438,6 +1438,25 @@ body.initial-pro2 #preset-grid.grid-mode {
     background: #5a2222;
 }
 
+/* Like/Avoid train the Rand feature (kit/randfeedback.go) */
+.param-header-btn.feedback-like {
+    color: #b3ffb3;
+    border: 1px solid #336633;
+}
+
+.param-header-btn.feedback-like:hover {
+    background: #225a22;
+}
+
+.param-header-btn.feedback-avoid {
+    color: #ffd9a0;
+    border: 1px solid #665533;
+}
+
+.param-header-btn.feedback-avoid:hover {
+    background: #5a4a22;
+}
+
 .keyboard-modal {
     position: fixed;
     inset: 0;
