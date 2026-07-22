@@ -103,6 +103,11 @@ func localPaletteRoot() string {
 	// Prefer the executable location over cwd so an installed binary launched
 	// from a source checkout still uses the installed app data.
 	if currentExe, err := os.Executable(); err == nil {
+		// os.Executable doesn't resolve symlinks, so a binary invoked through
+		// something like ~/bin/palette_engine would miss the install root.
+		if resolved, err := filepath.EvalSymlinks(currentExe); err == nil {
+			currentExe = resolved
+		}
 		if root := findPaletteRoot(filepath.Dir(currentExe)); root != "" {
 			return root
 		}
