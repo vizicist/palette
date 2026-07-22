@@ -1,20 +1,35 @@
 #include "PaletteAll.h"
+#include "PolygonFill.h"
 #include "SvgSprite.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
 
-// Minimal SVG-path loader for shapes produced by potrace (and similar
-// simple tools). Parses the <svg viewBox>, the outer <g transform>, and
-// the "d" attribute of every <path>, then flattens cubic/quadratic
-// Beziers into line segments. The result is normalized into the unit
-// square used by the other Sprite subclasses and drawn via
-// PaletteDrawer::drawLine.
+#ifndef _WIN32
+#include <sys/stat.h>
+#endif
 
-std::map< std::string, ParsedSvg > SpriteSVG::_cache;
+// Minimal SVG-path loader for shapes produced by potrace, icon sets, and
+// similar simple sources. Parses the <svg viewBox>, the outer
+// <g transform> (translate/scale only), and the "d" attribute of every
+// <path> element; other elements (<rect>, <circle>, <line>, <polygon>)
+// and per-path transforms are NOT handled. Path commands supported are
+// M L H V C S Q T A Z, with curves and arcs flattened into line
+// segments. The result is normalized into the unit square used by the
+// other Sprite subclasses.
+
+std::map< std::string, SpriteSVG::CacheEntry > SpriteSVG::_cache;
+std::vector< std::unique_ptr< ParsedSvg > > SpriteSVG::_retired;
+
+// How often tryLoad is willing to stat a shape file to see if it changed.
+// Below this interval a cached shape is returned with no filesystem access
+// at all, so editing an SVG shows up within about a second without adding
+// syscalls to the per-sprite path.
+static const int SVG_RECHECK_MS = 1000;
 
 // Target radius in sprite-local space. The built-in SpriteCircle draws a
 // 0.125-radius ellipse (Sprite.cpp:546) and SpriteSquare uses 0.125 half-
@@ -101,6 +116,21 @@ struct PathCursor {
 		return s[ i++ ];
 	}
 
+	// Arc flags are a single 0/1 digit and may be run together with the
+	// following number ("a1 1 0 011 0" = flags 0,1 then x=1), so they can't
+	// go through readNumber.
+	bool readFlag( bool& out ) {
+		skipSep();
+		if( i >= s.size() )
+			return false;
+		char c = s[ i ];
+		if( c != '0' && c != '1' )
+			return false;
+		++i;
+		out = ( c == '1' );
+		return true;
+	}
+
 	bool readNumber( float& out ) {
 		skipSep();
 		if( i >= s.size() )
@@ -156,6 +186,81 @@ void flattenQuadratic( const glm::vec2& p0, const glm::vec2& p1, const glm::vec2
 		float b2 = t * t;
 		out.push_back( p0 * b0 + p1 * b1 + p2 * b2 );
 	}
+}
+
+// Elliptical arc, using the W3C endpoint-to-center conversion (SVG spec
+// appendix B.2.4), then sampled at a rate proportional to the swept angle.
+void flattenArc( const glm::vec2& p0, float rx, float ry, float xrotDeg, bool largeArc, bool sweep, const glm::vec2& p1, std::vector< glm::vec2 >& out ) {
+
+	rx = std::fabs( rx );
+	ry = std::fabs( ry );
+	// Degenerate radii mean a straight line, per the spec.
+	if( rx < 1e-6f || ry < 1e-6f || ( p0.x == p1.x && p0.y == p1.y ) ) {
+		out.push_back( p1 );
+		return;
+	}
+
+	float phi  = xrotDeg * (float)M_PI / 180.0f;
+	float cphi = cosf( phi );
+	float sphi = sinf( phi );
+
+	// Midpoint form in the ellipse's rotated frame.
+	glm::vec2 d( ( p0.x - p1.x ) * 0.5f, ( p0.y - p1.y ) * 0.5f );
+	glm::vec2 pp( cphi * d.x + sphi * d.y, -sphi * d.x + cphi * d.y );
+
+	// Scale radii up if the endpoints are too far apart for them.
+	float lam = ( pp.x * pp.x ) / ( rx * rx ) + ( pp.y * pp.y ) / ( ry * ry );
+	if( lam > 1.0f ) {
+		float s = sqrtf( lam );
+		rx *= s;
+		ry *= s;
+	}
+
+	float rx2 = rx * rx, ry2 = ry * ry;
+	float num = rx2 * ry2 - rx2 * pp.y * pp.y - ry2 * pp.x * pp.x;
+	float den = rx2 * pp.y * pp.y + ry2 * pp.x * pp.x;
+	float rad = ( den > 0.0f && num > 0.0f ) ? num / den : 0.0f;
+	float coef = sqrtf( rad );
+	if( largeArc == sweep )
+		coef = -coef;
+	glm::vec2 cp( coef * rx * pp.y / ry, -coef * ry * pp.x / rx );
+	glm::vec2 center( cphi * cp.x - sphi * cp.y + ( p0.x + p1.x ) * 0.5f,
+					  sphi * cp.x + cphi * cp.y + ( p0.y + p1.y ) * 0.5f );
+
+	// Signed angle from u to v.
+	auto ang = []( float ux, float uy, float vx, float vy ) {
+		float dot = ux * vx + uy * vy;
+		float len = sqrtf( ( ux * ux + uy * uy ) * ( vx * vx + vy * vy ) );
+		float cosv = len > 0.0f ? dot / len : 1.0f;
+		if( cosv > 1.0f ) cosv = 1.0f;
+		if( cosv < -1.0f ) cosv = -1.0f;
+		float a = acosf( cosv );
+		return ( ux * vy - uy * vx < 0.0f ) ? -a : a;
+	};
+
+	float ux     = ( pp.x - cp.x ) / rx;
+	float uy     = ( pp.y - cp.y ) / ry;
+	float theta1 = ang( 1.0f, 0.0f, ux, uy );
+	float dtheta = ang( ux, uy, ( -pp.x - cp.x ) / rx, ( -pp.y - cp.y ) / ry );
+	float twoPi  = 2.0f * (float)M_PI;
+	if( !sweep && dtheta > 0.0f )
+		dtheta -= twoPi;
+	else if( sweep && dtheta < 0.0f )
+		dtheta += twoPi;
+
+	// A full circle gets 2*BEZIER_STEPS samples, shorter arcs fewer.
+	int steps = (int)ceilf( std::fabs( dtheta ) / twoPi * ( 2.0f * BEZIER_STEPS ) );
+	if( steps < 2 )
+		steps = 2;
+	for( int k = 1; k <= steps; ++k ) {
+		float t = theta1 + dtheta * float( k ) / float( steps );
+		float x = rx * cosf( t );
+		float y = ry * sinf( t );
+		out.push_back( glm::vec2( center.x + cphi * x - sphi * y,
+								  center.y + sphi * x + cphi * y ) );
+	}
+	// Land exactly on the endpoint regardless of rounding.
+	out.back() = p1;
 }
 
 void parsePathData( const std::string& d, std::vector< std::vector< glm::vec2 > >& subpaths ) {
@@ -293,6 +398,21 @@ void parsePathData( const std::string& d, std::vector< std::vector< glm::vec2 > 
 			lastQuadCtl   = q;
 			haveLastQuad  = true;
 			haveLastCubic = false;
+		}
+		else if( up == 'A' ) {
+			float rx, ry, xrot, x, y;
+			bool laf, sf;
+			if( !c.readNumber( rx ) || !c.readNumber( ry ) || !c.readNumber( xrot ) )
+				break;
+			if( !c.readFlag( laf ) || !c.readFlag( sf ) )
+				break;
+			if( !c.readNumber( x ) || !c.readNumber( y ) )
+				break;
+			glm::vec2 p = rel ? cur + glm::vec2( x, y ) : glm::vec2( x, y );
+			if( path )
+				flattenArc( cur, rx, ry, xrot, laf, sf, p, *path );
+			cur           = p;
+			haveLastCubic = haveLastQuad = false;
 		}
 		else if( up == 'Z' ) {
 			if( path && !path->empty() )
@@ -462,28 +582,94 @@ bool SpriteSVG::parseFile( const std::string& path, ParsedSvg& out ) {
 			out.lineSegments.push_back( sub[ i ] );
 		}
 	}
+	// Triangles for visual.filled. Dense or degenerate outlines come back
+	// empty, and drawShape falls back to the outline for those.
+	if( !polygonfill::triangulate( out.subpaths, out.triangles ) ) {
+		NosuchDebug( "SpriteSVG: %s cannot be filled, will draw its outline instead", path.c_str() );
+	}
 	return true;
 }
 
 SpriteSVG::SpriteSVG( const ParsedSvg* data ) : _data( data ) {
 }
 
+static std::string shapeFilePath( const std::string& shapeName ) {
+	return PaletteDataPath() + "\\shapes\\" + shapeName + ".svg";
+}
+
+// Last-write time, or 0 if the file can't be examined. The Windows branch
+// has 100ns resolution; plain stat's whole seconds could miss two quick
+// saves landing inside the same second.
+static long long shapeFileMtime( const std::string& path ) {
+#ifdef _WIN32
+	WIN32_FILE_ATTRIBUTE_DATA fa;
+	if( !GetFileAttributesExA( path.c_str(), GetFileExInfoStandard, &fa ) )
+		return 0;
+	ULARGE_INTEGER u;
+	u.LowPart  = fa.ftLastWriteTime.dwLowDateTime;
+	u.HighPart = fa.ftLastWriteTime.dwHighDateTime;
+	return (long long)u.QuadPart;
+#else
+	struct stat st;
+	if( stat( path.c_str(), &st ) != 0 )
+		return 0;
+	return (long long)st.st_mtime;
+#endif
+}
+
+// Note on threading: like the original cache, this assumes tryLoad is only
+// called from the sprite-instantiation path; there is no lock here.
 SpriteSVG* SpriteSVG::tryLoad( const std::string& shapeName ) {
+
+	int now = Palette::now;
+
 	auto it = _cache.find( shapeName );
-	if( it == _cache.end() ) {
-		std::string file = PaletteDataPath() + "\\shapes\\" + shapeName + ".svg";
-		ParsedSvg parsed;
-		if( !parseFile( file, parsed ) )
-			return nullptr;
-		auto inserted = _cache.emplace( shapeName, std::move( parsed ) );
-		it            = inserted.first;
+	if( it != _cache.end() ) {
+		CacheEntry& e = it->second;
+		if( now - e.lastCheckMs >= SVG_RECHECK_MS ) {
+			e.lastCheckMs = now;
+			std::string file = shapeFilePath( shapeName );
+			long long m      = shapeFileMtime( file );
+			if( m != 0 && m != e.mtime ) {
+				std::unique_ptr< ParsedSvg > fresh( new ParsedSvg );
+				if( parseFile( file, *fresh ) ) {
+					// Sprites created before this edit still point at the
+					// old ParsedSvg; park it rather than freeing it.
+					_retired.push_back( std::move( e.parsed ) );
+					e.parsed = std::move( fresh );
+					e.mtime  = m;
+					NosuchDebug( "SpriteSVG: reloaded %s", file.c_str() );
+				}
+				// On parse failure (often a file caught mid-save) keep
+				// serving the old shape; leaving e.mtime stale makes the
+				// next interval retry until the file parses again.
+			}
+		}
+		return new SpriteSVG( e.parsed.get() );
 	}
-	return new SpriteSVG( &it->second );
+
+	std::string file = shapeFilePath( shapeName );
+	std::unique_ptr< ParsedSvg > parsed( new ParsedSvg );
+	if( !parseFile( file, *parsed ) )
+		return nullptr;
+
+	CacheEntry e;
+	e.parsed      = std::move( parsed );
+	e.mtime       = shapeFileMtime( file );
+	e.lastCheckMs = now;
+	auto inserted = _cache.emplace( shapeName, std::move( e ) );
+	return new SpriteSVG( inserted.first->second.parsed.get() );
 }
 
 void SpriteSVG::drawShape( PaletteDrawer* app, int xdir, int ydir ) {
 	if( !_data )
 		return;
+	// triangles is empty when the outline was too complex to triangulate, in
+	// which case a filled sprite falls back to its outline.
+	if( params.filled && !_data->triangles.empty() ) {
+		app->drawTriangles( params, state, _data->triangles.data(), (int)_data->triangles.size() );
+		return;
+	}
 	if( !_data->lineSegments.empty() )
 		app->drawLineSegments( params, state, _data->lineSegments.data(), (int)_data->lineSegments.size() );
 }

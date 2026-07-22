@@ -30,6 +30,8 @@ INC_DBL_PARAM(rotangspeed,-120.0f,120.0f);
 INC_BOOL_PARAM(rotauto);
 INC_DBL_PARAM(saturation,0.0f,1.0f);
 INC_STR_PARAM(shape,shape);
+INC_INT_PARAM(shapesides,1,24);
+INC_DBL_PARAM(shapedetail,0.0f,1.0f);
 INC_DBL_PARAM(sizefinal,0.0f,10.0f);
 INC_DBL_PARAM(sizeinitial,0.01f,10.0f);
 INC_DBL_PARAM(sizetime,0.01f,10.0f);

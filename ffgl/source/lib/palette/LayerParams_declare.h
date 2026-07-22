@@ -30,6 +30,8 @@ float rotangspeed;
 bool rotauto;
 float saturation;
 std::string shape;
+int shapesides;
+float shapedetail;
 float sizefinal;
 float sizeinitial;
 float sizetime;

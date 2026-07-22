@@ -272,6 +272,8 @@
 "visual.rotauto": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "visual.saturation": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.75", "randmax":"1.0", "init":"1.0", "comment":"#" },
 "visual.shape": {"valuetype":"string", "min":"shape", "max":"shape", "init":"square", "comment":"#" },
+"visual.shapesides": {"valuetype":"int", "min":"1", "max":"24", "randmin":"3", "randmax":"9", "init":"5", "comment":"# points/petals/arms/teeth, depends on shape" },
+"visual.shapedetail": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.2", "randmax":"0.8", "init":"0.5", "comment":"# secondary shape control, depends on shape" },
 "visual.sizefinal": {"valuetype":"float", "min":"0.0", "max":"10.0", "randmin":"0.0", "randmax":"3.0", "init":"0.4", "comment":"#" },
 "visual.sizeinitial": {"valuetype":"float", "min":"0.01", "max":"10.0", "randmin":"0.3", "randmax":"3.0", "init":"1.0", "comment":"#" },
 "visual.sizetime": {"valuetype":"float", "min":"0.01", "max":"10.0", "init":"2.0", "comment":"# secs" },

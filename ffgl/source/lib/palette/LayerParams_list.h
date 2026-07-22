@@ -30,6 +30,8 @@
 "rotauto",
 "saturation",
 "shape",
+"shapesides",
+"shapedetail",
 "sizefinal",
 "sizeinitial",
 "sizetime",

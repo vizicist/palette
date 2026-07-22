@@ -51,10 +51,13 @@ public:
 	void drawQuad(SpriteParams& params, SpriteState& state, float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3);
 	void drawEllipse(SpriteParams& params, SpriteState& state, float x0, float y0, float radius, float fromang=0.0f, float toang=360.0f);
 	void drawPolyline(SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count);
+	void drawPolyFan(SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count);
 	void drawLineSegments(SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count);
+	void drawTriangles(SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count, float xscale = 1.0f);
 	void drawPolygon(PointMem* p, int npoints);
 
 	float finalAspect( float aspect );
+	float shapeXScale( SpriteParams& params );
 
 	int viewportWidth() { return m_vp.width; }
 	int viewportHeight() { return m_vp.height; }

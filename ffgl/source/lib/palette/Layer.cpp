@@ -4,6 +4,7 @@
 #include <cstdlib> // for srand, rand
 
 #include "PaletteAll.h"
+#include "ShapeSprite.h"
 #include "SvgSprite.h"
 
 #define DEFINE_TYPES(t) std::vector<std::string> LayerParams_##t##Types;
@@ -242,7 +243,11 @@ Layer::makeSprite(std::string shape) {
 		//
 	}
 	else {
-		s = SpriteSVG::tryLoad(shape);
+		s = SpriteParametric::create(shape);
+		if (!s) {
+			// Anything left is looked for as an SVG file in the shapes directory.
+			s = SpriteSVG::tryLoad(shape);
+		}
 		if (!s) {
 			throw NosuchUnrecognizedTypeException();
 		}

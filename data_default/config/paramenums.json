@@ -9,7 +9,13 @@
 	"destination": [ ".", "A", "B", "C", "D" ],
 	"quantstyle": [ "none", "frets", "fixed", "pressure" ],
 	"volstyle": [ "fixed", "pressure" ],
-  "shape": [ "line", "triangle", "square", "circle" ],
+  "shape": [
+    "line", "triangle", "square", "circle",
+    "polygon", "star", "diamond", "cross", "chevron", "arrow", "heart",
+    "crescent", "squircle", "capsule", "teardrop", "gear", "pacman",
+    "rose", "spirograph", "lissajous", "spiral", "logspiral", "blob",
+    "zigzag", "wave", "burst", "concentric", "ring", "arc"
+  ],
   "morphtype": [ "quadrants", "corners", "A", "B", "C", "D" ],
   "midiinput": [ "microKEY", "microKEY2 Air", "" ],
   "stepperroute": [ "off", "bidule", "samplesplitter", "both" ],

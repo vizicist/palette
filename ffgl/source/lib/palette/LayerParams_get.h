@@ -30,6 +30,8 @@ GET_DBL_PARAM(rotangspeed);
 GET_BOOL_PARAM(rotauto);
 GET_DBL_PARAM(saturation);
 GET_STR_PARAM(shape);
+GET_INT_PARAM(shapesides);
+GET_DBL_PARAM(shapedetail);
 GET_DBL_PARAM(sizefinal);
 GET_DBL_PARAM(sizeinitial);
 GET_DBL_PARAM(sizetime);

@@ -68,6 +68,8 @@
     <ClCompile Include="..\..\source\lib\palette\PaletteUtil.cpp" />
     <ClCompile Include="..\..\source\lib\palette\Layer.cpp" />
     <ClCompile Include="..\..\source\lib\palette\Scheduler.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\PolygonFill.cpp" />
+    <ClCompile Include="..\..\source\lib\palette\ShapeSprite.cpp" />
     <ClCompile Include="..\..\source\lib\palette\Sprite.cpp" />
     <ClCompile Include="..\..\source\lib\palette\SvgSprite.cpp" />
     <ClCompile Include="..\..\source\lib\palette\TrackedCursor.cpp" />
@@ -124,6 +126,8 @@
     <ClInclude Include="..\..\source\lib\palette\Params.h" />
     <ClInclude Include="..\..\source\lib\palette\Layer.h" />
     <ClInclude Include="..\..\source\lib\palette\Scheduler.h" />
+    <ClInclude Include="..\..\source\lib\palette\PolygonFill.h" />
+    <ClInclude Include="..\..\source\lib\palette\ShapeSprite.h" />
     <ClInclude Include="..\..\source\lib\palette\Sprite.h" />
     <ClInclude Include="..\..\source\lib\palette\SvgSprite.h" />
     <ClInclude Include="..\..\source\lib\palette\TrackedCursor.h" />

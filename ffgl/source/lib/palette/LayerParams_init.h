@@ -30,6 +30,8 @@ INIT_PARAM ( rotangspeed , 0.0f );
 INIT_PARAM ( rotauto , false );
 INIT_PARAM ( saturation , 1.0f );
 INIT_PARAM ( shape , "square" );
+INIT_PARAM ( shapesides , 5 );
+INIT_PARAM ( shapedetail , 0.5f );
 INIT_PARAM ( sizefinal , 0.4f );
 INIT_PARAM ( sizeinitial , 1.0f );
 INIT_PARAM ( sizetime , 2.0f );

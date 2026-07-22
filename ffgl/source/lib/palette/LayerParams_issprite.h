@@ -30,6 +30,8 @@ IS_SPRITE_PARAM(rotangspeed);
 IS_SPRITE_PARAM(rotauto);
 IS_SPRITE_PARAM(saturation);
 IS_SPRITE_PARAM(shape);
+IS_SPRITE_PARAM(shapesides);
+IS_SPRITE_PARAM(shapedetail);
 IS_SPRITE_PARAM(sizefinal);
 IS_SPRITE_PARAM(sizeinitial);
 IS_SPRITE_PARAM(sizetime);

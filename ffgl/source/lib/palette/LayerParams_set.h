@@ -30,6 +30,8 @@ SET_DBL_PARAM(rotangspeed);
 SET_BOOL_PARAM(rotauto);
 SET_DBL_PARAM(saturation);
 SET_STR_PARAM(shape);
+SET_INT_PARAM(shapesides);
+SET_DBL_PARAM(shapedetail);
 SET_DBL_PARAM(sizefinal);
 SET_DBL_PARAM(sizeinitial);
 SET_DBL_PARAM(sizetime);

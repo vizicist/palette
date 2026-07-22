@@ -320,6 +320,19 @@ void PaletteDrawer::drawLine( SpriteParams& params, SpriteState& state, float x0
 	glDrawArrays( GL_LINES, 0, 2 );
 }
 
+// The x scaling that actually lands on screen for drawQuad, drawTriangle
+// and drawEllipse. Those routines also append a screenAspect scale to
+// m_matrix, but only after prepareToDraw() has already uploaded the matrix
+// uniform, so that scale never reaches the shader and resetMatrix() wipes
+// it before the next sprite; the only x scale in effect is the finalAspect
+// factor baked into their vertex values. Sprites that issue several draw
+// calls fold that same factor into their vertices here so they render at
+// the same width as the built-in shapes.
+float PaletteDrawer::shapeXScale( SpriteParams& params )
+{
+	return finalAspect( params.aspect );
+}
+
 void PaletteDrawer::drawPolyline( SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count )
 {
 	if( count < 2 )
@@ -329,6 +342,8 @@ void PaletteDrawer::drawPolyline( SpriteParams& params, SpriteState& state, cons
 
 	ffglex::ScopedVAOBinding vaoBinding( vaoID );
 	ffglex::ScopedVBOBinding vboBinding( vboID );
+
+	float xscale = shapeXScale( params );
 
 	// Chunk into runs that fit in the existing vertex buffer. Successive
 	// chunks repeat the last point of the previous chunk as their first,
@@ -341,7 +356,7 @@ void PaletteDrawer::drawPolyline( SpriteParams& params, SpriteState& state, cons
 		for( int k = 0; k < n; ++k )
 		{
 			float s       = float( k ) / float( n > 1 ? n - 1 : 1 );
-			vertices[ k ] = { s, 1.0f, pts[ idx + k ].x, pts[ idx + k ].y, 0.0f };
+			vertices[ k ] = { s, 1.0f, pts[ idx + k ].x * xscale, pts[ idx + k ].y, 0.0f };
 		}
 		glBufferSubData( GL_ARRAY_BUFFER, 0, n * sizeof( vertices[ 0 ] ), vertices );
 		glDrawArrays( GL_LINE_STRIP, 0, n );
@@ -349,6 +364,47 @@ void PaletteDrawer::drawPolyline( SpriteParams& params, SpriteState& state, cons
 			break;
 		idx += n - 1;
 	}
+}
+
+void PaletteDrawer::drawPolyFan( SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count )
+{
+	if( count < 3 )
+		return;
+	if( !prepareToDraw( params, state ) )
+		return;
+
+	ffglex::ScopedVAOBinding vaoBinding( vaoID );
+	ffglex::ScopedVBOBinding vboBinding( vboID );
+
+	float xscale = shapeXScale( params );
+
+	// The fan pivots on the centroid, so it only fills correctly for shapes
+	// that are star-shaped with respect to their centroid. Concave outlines
+	// go through polygonfill::triangulate and drawTriangles instead; this is
+	// for the curve families (rose, spirograph, lissajous), where fanning a
+	// self-intersecting outline from the center is the intended look.
+	glm::vec2 center( 0.0f, 0.0f );
+	for( int i = 0; i < count; ++i )
+		center += pts[ i ];
+	center /= float( count );
+
+	// Reserve room for the center vertex and the repeated first point that
+	// closes the loop; stride past points if the outline is very dense.
+	int stride = 1;
+	while( ( count + stride - 1 ) / stride + 2 > MAX_VERTICES )
+		++stride;
+
+	int n         = 0;
+	vertices[ n++ ] = { 0.5f, 1.0f, center.x * xscale, center.y, 0.0f };
+	for( int i = 0; i < count; i += stride )
+	{
+		float s         = float( i ) / float( count );
+		vertices[ n++ ] = { s, 1.0f, pts[ i ].x * xscale, pts[ i ].y, 0.0f };
+	}
+	vertices[ n++ ] = { 1.0f, 1.0f, pts[ 0 ].x * xscale, pts[ 0 ].y, 0.0f };
+
+	glBufferSubData( GL_ARRAY_BUFFER, 0, n * sizeof( vertices[ 0 ] ), vertices );
+	glDrawArrays( GL_TRIANGLE_FAN, 0, n );
 }
 
 void PaletteDrawer::drawLineSegments( SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count )
@@ -376,6 +432,37 @@ void PaletteDrawer::drawLineSegments( SpriteParams& params, SpriteState& state, 
 		}
 		glBufferSubData( GL_ARRAY_BUFFER, 0, n * sizeof( vertices[ 0 ] ), vertices );
 		glDrawArrays( GL_LINES, 0, n );
+		idx += n;
+	}
+}
+
+void PaletteDrawer::drawTriangles( SpriteParams& params, SpriteState& state, const glm::vec2* pts, int count, float xscale )
+{
+	if( count < 3 )
+		return;
+	if( !prepareToDraw( params, state ) )
+		return;
+
+	ffglex::ScopedVAOBinding vaoBinding( vaoID );
+	ffglex::ScopedVBOBinding vboBinding( vboID );
+
+	// Triangle soup, so chunks only have to stay a multiple of 3. SVG sprites
+	// pass xscale 1.0 so a filled shape lands exactly where its outline would
+	// have (drawLineSegments does no scaling either); parametric shapes pass
+	// shapeXScale so they match the other built-in shapes.
+	for( int idx = 0; idx < count; )
+	{
+		int n = std::min( count - idx, MAX_VERTICES );
+		n -= n % 3;
+		if( n < 3 )
+			break;
+		for( int k = 0; k < n; ++k )
+		{
+			float s       = float( k % 3 ) / 2.0f;
+			vertices[ k ] = { s, 1.0f, pts[ idx + k ].x * xscale, pts[ idx + k ].y, 0.0f };
+		}
+		glBufferSubData( GL_ARRAY_BUFFER, 0, n * sizeof( vertices[ 0 ] ), vertices );
+		glDrawArrays( GL_TRIANGLES, 0, n );
 		idx += n;
 	}
 }
