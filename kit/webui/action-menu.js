@@ -1,4 +1,4 @@
-// A small centered popup menu used for preset actions (Move / Rename / Delete)
+// A small centered popup menu used for preset actions (Save As / Move / Rename / Delete)
 // and their follow-up choices. showActionMenu() returns a Promise that resolves
 // with the chosen item id, or null if the menu was cancelled/dismissed.
 

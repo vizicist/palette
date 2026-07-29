@@ -1,4 +1,4 @@
-// Full-screen touch keyboard used for naming presets (Save As / Remove).
+// Full-screen touch keyboard used for naming presets (Save As / Rename).
 // showVirtualKeyboard() returns a Promise that resolves with the entered name
 // or rejects with {cancelled: true}.
 

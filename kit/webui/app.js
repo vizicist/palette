@@ -293,7 +293,7 @@ function savedPresetNamesFromList(list) {
 
 // bindPresetButton wires a preset grid button. A single click always loads the
 // preset immediately. In pro2 advanced mode a double click additionally opens
-// the preset action menu (Move / Rename / Delete); the load from the first
+// the preset action menu (Save As / Move / Rename / Delete); the load from the first
 // click is harmless, so the two gestures don't need to be kept apart.
 function bindPresetButton(btn) {
     const name = btn.dataset.name;
@@ -309,12 +309,12 @@ function presetActionsAvailable() {
     return UIState.initialPage === 'pro2' && UIState.advancedMode;
 }
 
-// presetActionItems builds the action menu for the current category. Rename and
-// Delete apply everywhere; Copy/Move (between themes) only make sense for quad.
+// presetActionItems builds the action menu for the current category. Save As,
+// Rename, and Delete apply everywhere; Copy/Move (between themes) only make sense for quad.
 // In the All view (the master), Move is omitted since a preset can't be removed
 // from All — it always shows every master preset.
 function presetActionItems() {
-    const items = [];
+    const items = [{ id: 'save-as', label: 'Save As…' }];
     if (UIState.currentCategory === 'quad' && themeDestinations().length) {
         items.push({ id: 'copy', label: 'Copy to Theme…' });
         if (!currentThemeIsMasterView()) {
@@ -340,7 +340,9 @@ function currentThemeIsMasterView() {
 
 async function handlePresetActions(name) {
     const action = await showActionMenu({ title: name, items: presetActionItems() });
-    if (action === 'copy') {
+    if (action === 'save-as') {
+        await handleSaveAs(name);
+    } else if (action === 'copy') {
         await copyPresetToTheme(name);
     } else if (action === 'move') {
         await movePresetToTheme(name);
@@ -956,8 +958,6 @@ function paramHeaderHtml({ includeInitRand }) {
         html += '<button class="param-header-btn feedback-like" id="btn-param-like">Like</button>';
         html += '<button class="param-header-btn feedback-avoid" id="btn-param-avoid">Avoid</button>';
     }
-    html += '<button class="param-header-btn" id="btn-param-save">Save As</button>';
-    html += '<button class="param-header-btn danger" id="btn-param-remove">Remove</button>';
     html += '</div>';
     return html;
 }
@@ -1182,29 +1182,16 @@ function setupParamHeaderButtons() {
         });
     }
 
-    const saveBtn = document.getElementById('btn-param-save');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async () => {
-            await handleSaveAs(saveBtn);
-        });
-    }
-
-    const removeBtn = document.getElementById('btn-param-remove');
-    if (removeBtn) {
-        removeBtn.addEventListener('click', async () => {
-            await handleRemovePreset(removeBtn);
-        });
-    }
 }
 
-async function handleSaveAs(button) {
+async function handleSaveAs(sourceName = '') {
     try {
         const presetChoices = ['patch', 'quad'].includes(UIState.currentCategory)
             ? await savedPresetNamesForCategory(UIState.currentCategory)
             : [];
         const cleanName = await showVirtualKeyboard({
             title: saveAsTitle(),
-            initialValue: '',
+            initialValue: sourceName,
             actionLabel: 'Save',
             choices: presetChoices,
             choiceLabel: `Current ${saveAsCategoryLabel()} names`,
@@ -1215,8 +1202,8 @@ async function handleSaveAs(button) {
 
         await saveCurrentParamsAs(cleanName);
         UIState.selectedPresets.set(UIState.presetKey(), cleanName);
-        button.textContent = 'Saved';
-        setTimeout(() => { button.textContent = 'Save As'; }, 900);
+        await loadPresets();
+        showToast(`Saved "${cleanName}"`);
     } catch (err) {
         if (err && err.cancelled) return;
         console.error('Save As failed:', err);
@@ -1233,33 +1220,6 @@ async function savedPresetNamesForCategory(category) {
     }
 }
 
-async function handleRemovePreset(button) {
-    try {
-        const presetChoices = await savedPresetNamesForCategory(UIState.currentCategory);
-        const cleanName = await showVirtualKeyboard({
-            title: removeTitle(),
-            initialValue: '',
-            actionLabel: 'Remove',
-            choices: presetChoices,
-            choiceLabel: `Current ${UIState.currentCategory} names`,
-            validate: presetFilenameValidationError,
-            normalize: normalizePresetFilename
-        });
-        if (!cleanName) return;
-
-        await removeCurrentPreset(cleanName);
-        if (UIState.selectedPresets.get(UIState.presetKey()) === cleanName) {
-            UIState.selectedPresets.delete(UIState.presetKey());
-        }
-        button.textContent = 'Removed';
-        setTimeout(() => { button.textContent = 'Remove'; }, 900);
-    } catch (err) {
-        if (err && err.cancelled) return;
-        console.error('Remove failed:', err);
-        showToast('Remove failed: ' + err.message);
-    }
-}
-
 function saveAsTitle() {
     if (UIState.currentCategory === 'global') return 'Save Global As';
     if (UIState.currentCategory === 'quad') return 'Save Quad As';
@@ -1270,12 +1230,6 @@ function saveAsCategoryLabel() {
     if (UIState.currentCategory === 'quad') return 'Quad';
     if (UIState.currentCategory === 'patch') return 'Patch';
     return UIState.currentCategory;
-}
-
-function removeTitle() {
-    if (UIState.currentCategory === 'global') return 'Remove Global Preset';
-    if (UIState.currentCategory === 'quad') return 'Remove Quad Preset';
-    return `Remove ${UIState.currentCategory} Preset`;
 }
 
 function normalizePresetFilename(value) {
@@ -1318,10 +1272,6 @@ async function saveCurrentParamsAs(filename) {
         const patchToSave = UIState.currentPatch === '*' ? 'A' : UIState.currentPatch;
         await API.savePatch(patchToSave, UIState.currentCategory, filename);
     }
-}
-
-async function removeCurrentPreset(filename) {
-    await API.removeSaved(UIState.savedCategory(UIState.currentCategory), filename);
 }
 
 async function loadPreset(name) {
