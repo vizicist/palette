@@ -28,6 +28,7 @@ export function normalizeInitialPage(page) {
 export const themes = [
     { name: 'Default', dir: 'quad_default' },
     { name: 'Chill', dir: 'quad_chill' },
+    { name: 'Goat', dir: 'quad_goat' },
     { name: 'Melodic', dir: 'quad_melodic' },
     { name: 'Rhythmic', dir: 'quad_rhythmic' },
     { name: 'All', dir: 'quad', advancedOnly: true, masterView: true }
