@@ -35,6 +35,13 @@ body.initial-pro2 {
     --ritual-nav-height: 0px;
 }
 
+/* goat starts as a clone of the pro2 front page; kept as its own rules so it
+   can diverge from pro2 in future work. */
+body.initial-goat {
+    --app-title-height: 0px;
+    --ritual-nav-height: 0px;
+}
+
 body.initial-bss {
     --ritual-nav-height: 0px;
 }
@@ -45,16 +52,19 @@ body.initial-pro #ritual-nav {
 }
 
 body.initial-pro2 #app-title,
-body.initial-pro2 #ritual-nav {
+body.initial-pro2 #ritual-nav,
+body.initial-goat #app-title,
+body.initial-goat #ritual-nav {
     display: none;
 }
 
-/* Theme Selector: only shown in the pro2 front page. */
+/* Theme Selector: only shown in the pro2 (and goat) front pages. */
 #theme-selector {
     display: none;
 }
 
-body.initial-pro2 #theme-selector {
+body.initial-pro2 #theme-selector,
+body.initial-goat #theme-selector {
     display: flex;
     flex: 0 0 auto;
     justify-content: center;
@@ -63,7 +73,8 @@ body.initial-pro2 #theme-selector {
     padding: 8px 10px;
 }
 
-body.initial-pro2 #theme-selector .theme-btn {
+body.initial-pro2 #theme-selector .theme-btn,
+body.initial-goat #theme-selector .theme-btn {
     background: var(--button-bg);
     color: var(--text);
     border: none;
@@ -74,7 +85,9 @@ body.initial-pro2 #theme-selector .theme-btn {
 }
 
 body.initial-pro2 #theme-selector .theme-btn:hover,
-body.initial-pro2 #theme-selector .theme-btn.active {
+body.initial-pro2 #theme-selector .theme-btn.active,
+body.initial-goat #theme-selector .theme-btn:hover,
+body.initial-goat #theme-selector .theme-btn.active {
     background: var(--highlight);
 }
 

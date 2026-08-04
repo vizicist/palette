@@ -88,6 +88,24 @@ func TestPro2ModeIsDistinctAndNotBSS(t *testing.T) {
 	}
 }
 
+func TestGoatModeIsDistinctAndNotBSS(t *testing.T) {
+	cleanup := setupModeTest(t, "goat")
+	defer cleanup()
+
+	if IsBSSInitialPage() {
+		t.Fatal("goat mode should not be treated as BSS")
+	}
+	if !IsGoatMode() {
+		t.Fatal("goat mode should be reported by IsGoatMode")
+	}
+	if IsPro2Mode() {
+		t.Fatal("goat mode should not be reported by IsPro2Mode")
+	}
+	if got := CurrentMode(); got != "goat" {
+		t.Fatalf("CurrentMode = %q, want goat", got)
+	}
+}
+
 func TestIsQuadCategory(t *testing.T) {
 	quadLike := []string{"quad", "quad_chill", "quad_melodic", "quad_rhythmic"}
 	for _, c := range quadLike {

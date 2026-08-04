@@ -6,6 +6,7 @@ const (
 	modeBSS  = "bss"
 	modePro  = "pro"
 	modePro2 = "pro2"
+	modeGoat = "goat"
 )
 
 func normalizeMode(mode string) string {
@@ -14,6 +15,8 @@ func normalizeMode(mode string) string {
 		return modeBSS
 	case modePro2:
 		return modePro2
+	case modeGoat:
+		return modeGoat
 	default:
 		return modePro
 	}
@@ -38,6 +41,12 @@ func IsBSSMode() bool {
 // starts as a clone of pro but is free to diverge in future work.
 func IsPro2Mode() bool {
 	return CurrentMode() == modePro2
+}
+
+// IsGoatMode reports whether the engine is running in the goat mode, which
+// starts as a clone of pro2 but is free to diverge in future work.
+func IsGoatMode() bool {
+	return CurrentMode() == modeGoat
 }
 
 func IsBSSInitialPage() bool {

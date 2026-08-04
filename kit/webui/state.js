@@ -13,7 +13,7 @@ export const patchSigils = {
 
 export function normalizeInitialPage(page) {
     const value = String(page || '').trim().toLowerCase();
-    return ['pro', 'bss', 'pro2'].includes(value) ? value : 'pro';
+    return ['pro', 'bss', 'pro2', 'goat'].includes(value) ? value : 'pro';
 }
 
 // themes lists the pro2 quad themes. Each curated theme is a `quad_*` directory

@@ -304,9 +304,10 @@ function bindPresetButton(btn) {
 }
 
 // presetActionsAvailable reports whether the double-click preset action menu
-// should be offered. It's a pro2 advanced-mode editing affordance.
+// should be offered. It's an advanced-mode editing affordance of the pro2
+// front page (and goat, its initial clone).
 function presetActionsAvailable() {
-    return UIState.initialPage === 'pro2' && UIState.advancedMode;
+    return (UIState.initialPage === 'pro2' || UIState.initialPage === 'goat') && UIState.advancedMode;
 }
 
 // presetActionItems builds the action menu for the current category. Save As,
