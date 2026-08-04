@@ -14,9 +14,13 @@ The icons below are from [game-icons.net](https://game-icons.net), used
 under the [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 license, from the repository
 [github.com/game-icons/icons](https://github.com/game-icons/icons).
-The only modification: the full-frame background path
-(`<path d="M0 0h512v512H0z"/>`) was removed from each file so the icon
-renders as a standalone shape.
+Two modifications, neither touching the path geometry: the full-frame
+background path (`<path d="M0 0h512v512H0z"/>`) was removed from each
+file so the icon renders as a standalone shape, and the remaining
+path's `fill` was changed from white to black so the files preview
+visibly in file managers. The engine ignores `fill` entirely (sprite
+color comes from the `visual.hue*` parameters), so it is presentation
+metadata only.
 
 Authors: **Lorc** (https://lorcblog.blogspot.com) and **Delapouite**
 (https://delapouite.com).
@@ -48,7 +52,15 @@ Authors: **Lorc** (https://lorcblog.blogspot.com) and **Delapouite**
 | wolf.svg | lorc/wolf-howl.svg | Lorc |
 | yinyang.svg | delapouite/yin-yang.svg | Delapouite |
 
+## Third-party brand artwork
+
+`dirtygoat.svg` is traced from the Dirty Goat Roadhouse logo
+(`DGR_BW_highres_onwhite.jpg` in the venue's supplied logo package). It
+is the venue's trademark, included here for Palette performances at that
+venue — not covered by this repository's license, and not for reuse
+elsewhere without their permission.
+
 ## Other shapes
 
-chaos, directive, oracle, sacred, and goat1–goat3 are project-original
-artwork (traced with potrace).
+chaos, directive, oracle, sacred, and the goat* shapes are
+project-original artwork (traced with potrace).
