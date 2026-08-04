@@ -952,11 +952,13 @@ function paramHeaderHtml({ includeInitRand }) {
         html += '<button class="param-header-btn" id="btn-param-rand">Rand</button>';
     }
     if (includeInitRand && feedbackCategories.includes(UIState.currentCategory)) {
-        // Like/Avoid record the current param set as training feedback for
-        // the Rand button (see kit/randfeedback.go); each category learns
-        // independently.
-        html += '<button class="param-header-btn feedback-like" id="btn-param-like">Like</button>';
-        html += '<button class="param-header-btn feedback-avoid" id="btn-param-avoid">Avoid</button>';
+        // Filled in by doRand as automatic evaluations complete;
+        // re-rendered from module state so params-view reloads don't
+        // lose the number.
+        const showReadout = interestReadout.category === UIState.currentCategory;
+        const readoutCls = showReadout && interestReadout.cls ? ' ' + interestReadout.cls : '';
+        const readoutText = showReadout ? escapeHtml(interestReadout.text) : '';
+        html += `<span class="interest-readout${readoutCls}" id="interest-readout">${readoutText}</span>`;
     }
     html += '</div>';
     return html;
@@ -1104,32 +1106,125 @@ async function reloadParamsPreservingScroll() {
     if (newParamList) newParamList.scrollTop = scrollTop;
 }
 
-// sendParamFeedback records the currently-displayed param set as a
-// like/avoid training example for the Rand feature. In all-patches mode
-// the patches share the same values after a Rand, so patch A stands in
-// for the set.
-async function sendParamFeedback(verdict) {
-    const patchToUse = UIState.currentPatch === '*' ? 'A' : UIState.currentPatch;
+// The interest readout tracks the automatic interestingness evaluation
+// that follows a Rand (random gestures + screen scoring, see
+// kit/interest.go) and shows the result in the params header. A newer
+// Rand supersedes an older poll.
+let interestPollGeneration = 0;
+
+// The readout's current content, kept in module state and re-rendered by
+// paramHeaderHtml, so a params-view reload doesn't wipe the number.
+let interestReadout = { text: '', cls: '', category: '' };
+
+function setInterestReadout(text, cls, category) {
+    interestReadout = { text, cls, category };
+    const el = document.getElementById('interest-readout');
+    if (el && UIState.currentCategory === category) {
+        el.textContent = text;
+        el.className = 'interest-readout' + (cls ? ' ' + cls : '');
+    }
+}
+
+// fetchInterestScore returns the latest evaluation result as an object.
+// API.call already parses JSON-shaped results; tolerate strings anyway.
+async function fetchInterestScore() {
+    const raw = await API.call('global.interest_score');
+    return (typeof raw === 'string') ? JSON.parse(raw) : (raw || {});
+}
+
+// waitForInterestResult polls until an evaluation result newer than
+// beforeTime lands, or returns null on timeout or when a newer Rand has
+// taken over.
+async function waitForInterestResult(gen, beforeTime) {
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+    for (let i = 0; i < 14; i++) {
+        await sleep(500);
+        if (gen !== interestPollGeneration) return null;
+        let result;
+        try {
+            result = await fetchInterestScore();
+        } catch (err) {
+            continue;
+        }
+        if (result.time && result.time !== beforeTime) return result;
+    }
+    return null;
+}
+
+// How many Rands to try before giving up on reaching auto-like.
+const RAND_MAX_ATTEMPTS = 10;
+
+async function applyRandValues() {
+    const randValues = await API.getParamRands(UIState.currentCategory);
+    if (UIState.currentPatch === '*') {
+        await Promise.all(patchNames.map(p => API.setPatchParams(p, randValues)));
+    } else {
+        await API.setPatchParams(UIState.currentPatch, randValues);
+    }
+}
+
+// doRand applies random values and, for screen-visible categories, waits
+// for the automatic interestingness evaluation. Anything short of an
+// auto-like verdict triggers another Rand, up to RAND_MAX_ATTEMPTS.
+// Along the way the below-threshold attempts get recorded as automatic
+// avoids, so the retries themselves train the picker. Pressing Rand
+// again supersedes a loop already in progress.
+async function doRand() {
+    const category = UIState.currentCategory;
+    const evalCategory =
+        (category === 'visual' || category === 'effect') ? category : null;
+    const gen = ++interestPollGeneration;
+
     try {
-        await API.sendParamFeedback(patchToUse, UIState.currentCategory, verdict);
-        showToast(`Recorded "${verdict}" for ${UIState.currentCategory} params`);
+        for (let attempt = 1; attempt <= RAND_MAX_ATTEMPTS; attempt++) {
+            await applyRandValues();
+
+            let beforeTime = '';
+            if (evalCategory) {
+                try {
+                    beforeTime = (await fetchInterestScore()).time || '';
+                } catch (err) { /* no previous result */ }
+                API.call('global.interest_eval', {
+                    patch: UIState.currentPatch,
+                    category: evalCategory,
+                }).catch(err => console.error('interest_eval failed:', err));
+            }
+
+            // Refresh the params display, staying where the user was
+            await reloadParamsPreservingScroll();
+            if (!evalCategory) return;
+
+            setInterestReadout(`interest: evaluating… (try ${attempt})`, '', category);
+            const result = await waitForInterestResult(gen, beforeTime);
+            if (gen !== interestPollGeneration) return; // a newer Rand took over
+            if (result === null) {
+                // No result arrived (evaluation disabled or engine too
+                // old); keep this Rand rather than looping blind.
+                setInterestReadout('', '', category);
+                return;
+            }
+            if (result.error) {
+                setInterestReadout('interest: unavailable', '', category);
+                return;
+            }
+
+            const score = Number(result.score).toFixed(2);
+            if (result.verdict === 'like') {
+                const tries = attempt > 1 ? `, try ${attempt}` : '';
+                setInterestReadout(`interest: ${score} (auto-like${tries})`, 'interest-like', category);
+                return;
+            }
+            setInterestReadout(`interest: ${score} — re-randing`,
+                result.verdict === 'avoid' ? 'interest-avoid' : '', category);
+        }
+        setInterestReadout(`interest: no auto-like in ${RAND_MAX_ATTEMPTS} tries`, '', category);
     } catch (err) {
-        console.error('Failed to record feedback:', err);
-        showToast(`Failed to record ${verdict}`);
+        console.error('Failed to randomize params:', err);
+        showToast('Rand failed: ' + err.message);
     }
 }
 
 function setupParamHeaderButtons() {
-    // Like/Avoid buttons - train the Rand feature on the current params
-    const likeBtn = document.getElementById('btn-param-like');
-    if (likeBtn) {
-        likeBtn.addEventListener('click', () => sendParamFeedback('like'));
-    }
-    const avoidBtn = document.getElementById('btn-param-avoid');
-    if (avoidBtn) {
-        avoidBtn.addEventListener('click', () => sendParamFeedback('avoid'));
-    }
-
     // Init button - set all params to default values
     const initBtn = document.getElementById('btn-param-init');
     if (initBtn) {
@@ -1156,30 +1251,11 @@ function setupParamHeaderButtons() {
         });
     }
 
-    // Rand button - randomize all params
+    // Rand button - randomize all params, re-randing until the automatic
+    // evaluation reaches auto-like (see doRand)
     const randBtn = document.getElementById('btn-param-rand');
     if (randBtn) {
-        randBtn.addEventListener('click', async () => {
-            try {
-                // Get random values for the current category
-                const randValues = await API.getParamRands(UIState.currentCategory);
-
-                // Apply all values in a single batch call per patch
-                if (UIState.currentPatch === '*') {
-                    await Promise.all(patchNames.map(p =>
-                        API.setPatchParams(p, randValues)
-                    ));
-                } else {
-                    await API.setPatchParams(UIState.currentPatch, randValues);
-                }
-
-                // Refresh the params display, staying where the user was
-                await reloadParamsPreservingScroll();
-            } catch (err) {
-                console.error('Failed to randomize params:', err);
-                showToast('Rand failed: ' + err.message);
-            }
-        });
+        randBtn.addEventListener('click', () => doRand());
     }
 
 }

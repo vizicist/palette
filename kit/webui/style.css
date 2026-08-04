@@ -1438,23 +1438,22 @@ body.initial-pro2 #preset-grid.grid-mode {
     background: #5a2222;
 }
 
-/* Like/Avoid train the Rand feature (kit/randfeedback.go) */
-.param-header-btn.feedback-like {
-    color: #b3ffb3;
-    border: 1px solid #336633;
+/* Result of the automatic interestingness evaluation after a Rand */
+.interest-readout {
+    align-self: center;
+    margin-left: 4px;
+    font-family: monospace;
+    font-size: 17px;
+    color: #7aa;
+    white-space: nowrap;
 }
 
-.param-header-btn.feedback-like:hover {
-    background: #225a22;
-}
-
-.param-header-btn.feedback-avoid {
+.interest-readout.interest-avoid {
     color: #ffd9a0;
-    border: 1px solid #665533;
 }
 
-.param-header-btn.feedback-avoid:hover {
-    background: #5a4a22;
+.interest-readout.interest-like {
+    color: #b3ffb3;
 }
 
 .keyboard-modal {
