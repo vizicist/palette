@@ -70,7 +70,18 @@ const (
 type FeedbackExample struct {
 	Verdict string            `json:"verdict"` // "avoid" or "like"
 	Time    string            `json:"time"`
+	Source  string            `json:"source,omitempty"` // "user" (default) or "auto"
 	Params  map[string]string `json:"params"`
+}
+
+// feedbackExampleWeight makes automatic examples (from the interestingness
+// evaluation) count less than deliberate button presses, so human judgment
+// stays authoritative while the machine provides volume.
+func feedbackExampleWeight(ex FeedbackExample) float64 {
+	if ex.Source == "auto" {
+		return 0.25
+	}
+	return 1.0
 }
 
 type feedbackDB struct {
@@ -122,8 +133,14 @@ func saveFeedbackDB(db *feedbackDB) error {
 }
 
 // AddRandFeedback records the given parameter set as a liked or avoided
-// example for a category.
+// example for a category, as a deliberate user action.
 func AddRandFeedback(category string, verdict string, params map[string]string) error {
+	return AddRandFeedbackSource(category, verdict, params, "user")
+}
+
+// AddRandFeedbackSource is AddRandFeedback with an explicit source:
+// "user" for button presses, "auto" for the interestingness evaluation.
+func AddRandFeedbackSource(category string, verdict string, params map[string]string, source string) error {
 	if verdict != "avoid" && verdict != "like" {
 		return fmt.Errorf("AddRandFeedback: verdict must be avoid or like, got %s", verdict)
 	}
@@ -138,6 +155,7 @@ func AddRandFeedback(category string, verdict string, params map[string]string) 
 	db.Categories[category] = append(db.Categories[category], FeedbackExample{
 		Verdict: verdict,
 		Time:    time.Now().Format(time.RFC3339),
+		Source:  source,
 		Params:  params,
 	})
 
@@ -281,6 +299,7 @@ func newFeedbackBinStats(examples []FeedbackExample, verdict string) feedbackBin
 		if ex.Verdict != verdict {
 			continue
 		}
+		w := feedbackExampleWeight(ex)
 		for name, val := range ex.Params {
 			def, hasDef := ParamDefs[name]
 			if !hasDef {
@@ -294,8 +313,8 @@ func newFeedbackBinStats(examples []FeedbackExample, verdict string) feedbackBin
 				st.counts[name] = make([]float64, nbins)
 			}
 			if bin < len(st.counts[name]) {
-				st.counts[name][bin]++
-				st.total[name]++
+				st.counts[name][bin] += w
+				st.total[name] += w
 			}
 		}
 	}
@@ -344,7 +363,7 @@ func feedbackKernelSim(candidate map[string]string, examples []FeedbackExample, 
 		if n == 0 {
 			continue
 		}
-		sim := math.Exp(-(sum / float64(n)) / feedbackKernelWidth2)
+		sim := feedbackExampleWeight(ex) * math.Exp(-(sum/float64(n))/feedbackKernelWidth2)
 		if sim > best {
 			best = sim
 		}

@@ -119,6 +119,36 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"obsrecorddelete":      globalObsRecordDelete,
 	"obssetup":             globalObsSetup,
 	"youtubeupload":        globalYouTubeUpload,
+	"interest_eval":        globalInterestEval,
+	"interest_score":       globalInterestScore,
+	"interest_monitors":    globalInterestMonitors,
+}
+
+// globalInterestMonitors lists the capturable monitors and which one an
+// interestmonitor value of -1 (auto) would pick, so a specific
+// global.interestmonitor index can be chosen on multi-monitor setups.
+func globalInterestMonitors(api string, apiargs map[string]string) (string, error) {
+	return ListCaptureMonitors()
+}
+
+// globalInterestEval starts the asynchronous interestingness evaluation of
+// the current output for a patch/category (see interest.go). Called by the
+// GUI right after Rand values are applied.
+func globalInterestEval(api string, apiargs map[string]string) (string, error) {
+	patch, ok := apiargs["patch"]
+	if !ok {
+		return "", fmt.Errorf("global.interest_eval: missing patch argument")
+	}
+	category, ok := apiargs["category"]
+	if !ok {
+		return "", fmt.Errorf("global.interest_eval: missing category argument")
+	}
+	return "", StartInterestEvaluation(patch, category)
+}
+
+// globalInterestScore returns the most recent evaluation result as JSON.
+func globalInterestScore(api string, apiargs map[string]string) (string, error) {
+	return LastInterestScoreJSON()
 }
 
 func ExecuteGlobalAPI(api string, apiargs map[string]string) (string, error) {
