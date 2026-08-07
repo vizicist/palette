@@ -212,7 +212,21 @@ func (s *Service) ReloadSigilSamples() error {
 	return nil
 }
 
-func (s *Service) LoadChannelSample(channel int, dir string) error {
+// ChannelPlayback describes how one channel turns a directory of MP3s into
+// notes. The samplesplitter uses the default mode with Loop set, carving one
+// file into splits; the sampleplayer uses WholeSplitMode without Loop, and may
+// set Rotate to pick a different file from the directory on every note.
+type ChannelPlayback struct {
+	Dir    string
+	Mode   string
+	Loop   bool
+	Rotate bool
+}
+
+// LoadChannelSample loads a channel's samples according to pb. With Rotate set,
+// every usable MP3 in the directory is analyzed and preloaded so each note can
+// play a different one; otherwise only the first usable file is loaded.
+func (s *Service) LoadChannelSample(channel int, pb ChannelPlayback) error {
 	if s == nil || s.state == nil {
 		return errors.New("samplesplitter service is not initialized")
 	}
@@ -221,6 +235,32 @@ func (s *Service) LoadChannelSample(channel int, dir string) error {
 	if s.audio != nil {
 		s.audio.StopNote(channel, -1)
 	}
+
+	dir := pb.Dir
+	// Mode has to be recorded before loading: the loaders read it back through
+	// analyzeOptionsForChannel to decide how to split each file.
+	s.state.SetChannelPlayback(channel, pb.Mode, pb.Loop)
+	s.state.SetChannelRotate(channel, pb.Rotate)
+	if pb.Rotate {
+		paths, err := s.state.LoadChannelRotation(channel, dir, s.analyzer)
+		if err != nil {
+			return err
+		}
+		if s.audio != nil {
+			if s.state.Snapshot().Compressed {
+				err = s.audio.PreloadCompressed(paths)
+			} else {
+				err = s.audio.Preload(paths)
+			}
+			if err != nil {
+				s.state.SetAudioStatus(false, err)
+				return err
+			}
+			s.state.SetAudioStatus(true, nil)
+		}
+		return nil
+	}
+
 	if err := s.state.LoadChannelDefault(channel, dir, s.analyzer); err != nil {
 		return err
 	}
@@ -320,8 +360,16 @@ func (s *Service) NoteOn(channel, note, velocity int) error {
 }
 
 func (s *Service) NoteOnVoice(channel, note, velocity int, voiceKey string) error {
+	_, err := s.NoteOnVoicePlanned(channel, note, velocity, voiceKey)
+	return err
+}
+
+// NoteOnVoicePlanned is NoteOnVoice but returns what it decided to play, so
+// callers can log which file a note actually triggered - with rotation on, the
+// file differs from note to note. The request is nil for a note-off.
+func (s *Service) NoteOnVoicePlanned(channel, note, velocity int, voiceKey string) (*PlaybackRequest, error) {
 	if s == nil || s.state == nil {
-		return errors.New("samplesplitter service is not initialized")
+		return nil, errors.New("samplesplitter service is not initialized")
 	}
 	s.state.RecordMIDIActivity()
 	if velocity <= 0 {
@@ -329,24 +377,24 @@ func (s *Service) NoteOnVoice(channel, note, velocity int, voiceKey string) erro
 		if s.audio != nil {
 			s.audio.StopNote(channel, note)
 		}
-		return nil
+		return nil, nil
 	}
 	req, err := s.state.PlanNoteOn(note, velocity, channel)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if voiceKey != "" {
 		req.VoiceKey = voiceKey
 	}
 	if s.audio == nil {
-		return errors.New("audio backend is not initialized")
+		return req, errors.New("audio backend is not initialized")
 	}
 	if err := s.audio.Play(req); err != nil {
 		s.state.SetAudioStatus(false, err)
-		return err
+		return req, err
 	}
 	s.state.SetAudioStatus(true, nil)
-	return nil
+	return req, nil
 }
 
 func (s *Service) NoteOff(channel, note int) {

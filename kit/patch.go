@@ -135,7 +135,9 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 		patch.mutex.Unlock()
 	}
 
-	if paramName == "sound.samplesplitter" || paramName == "sound.samplesplitterdir" {
+	if paramName == "sound.samplesplitter" || paramName == "sound.samplesplitterdir" ||
+		paramName == "sound.sampleplayer" || paramName == "sound.sampleplayerdir" ||
+		paramName == "sound.samplerotate" {
 		if err := SyncProSamplePlaybackServiceSamples(); err != nil {
 			LogWarn("Patch.noticeValueChange: pro samplesplitter sync failed", "patch", patch.Name(), "param", paramName, "err", err)
 		}

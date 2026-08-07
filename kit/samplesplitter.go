@@ -266,6 +266,35 @@ func ReloadSamplePlaybackServiceSamples() error {
 	return reloadErr
 }
 
+// logChannelSampleInventory lists every sample a patch can play, with each
+// file's analyzed loudness. Logging the whole set at load time means a quiet
+// sample can be spotted without having to trigger every one of them.
+func logChannelSampleInventory(patchName string, channel int, playback ss.ChannelPlayback, service *ss.Service) {
+	if service == nil || service.State() == nil {
+		return
+	}
+	inventory := service.State().ChannelSampleInventory(channel)
+	LogOfType("sampleplayback", "SamplePlayback channel loaded",
+		"patch", patchName, "sigilChannel", channel, "dir", playback.Dir,
+		"mode", samplePlaybackModeLabel(playback), "rotate", playback.Rotate,
+		"loop", playback.Loop, "samples", len(inventory))
+	for i, info := range inventory {
+		LogOfType("sampleplayback", "SamplePlayback available sample",
+			"patch", patchName, "index", i,
+			"file", filepath.Base(info.Path),
+			"maxrms", info.MaxRMS,
+			"seconds", info.Duration,
+			"splits", info.NumSplits)
+	}
+}
+
+func samplePlaybackModeLabel(playback ss.ChannelPlayback) string {
+	if playback.Mode == ss.WholeSplitMode {
+		return "sampleplayer"
+	}
+	return "samplesplitter"
+}
+
 func logSelectedSamplePlaybackFiles(context string, service *ss.Service) {
 	if service == nil || service.State() == nil {
 		return
@@ -305,8 +334,48 @@ func anyProSamplePlaybackEnabled() bool {
 	return false
 }
 
+// A patch drives sample audio through one of two things: the samplesplitter,
+// which carves a single MP3 into looping splits selected by cursor X, or the
+// sampleplayer, which plays whole MP3s one-shot and can pick a random file per
+// note. They are mutually exclusive on a patch; sampleplayer wins if both are
+// switched on, since it is the more specific choice.
 func proSamplePlaybackEnabled(patch *Patch) bool {
-	return patch != nil && !IsBSSMode() && patch.GetBool("sound.samplesplitter")
+	if patch == nil || IsBSSMode() {
+		return false
+	}
+	return patch.GetBool("sound.sampleplayer") || patch.GetBool("sound.samplesplitter")
+}
+
+func proSamplePlayerEnabled(patch *Patch) bool {
+	return patch != nil && !IsBSSMode() && patch.GetBool("sound.sampleplayer")
+}
+
+// proChannelPlaybackForPatch resolves the patch's parameters into the playback
+// settings for its channel.
+func proChannelPlaybackForPatch(patch *Patch) (ss.ChannelPlayback, error) {
+	if proSamplePlayerEnabled(patch) {
+		dir, err := proSamplePlaybackDirForPatch(patch, "sound.sampleplayerdir")
+		if err != nil {
+			return ss.ChannelPlayback{}, err
+		}
+		if patch.GetBool("sound.samplesplitter") {
+			LogWarn("both sound.sampleplayer and sound.samplesplitter are enabled, using sampleplayer",
+				"patch", patch.Name())
+		}
+		return ss.ChannelPlayback{
+			Dir:    dir,
+			Mode:   ss.WholeSplitMode,
+			Loop:   false,
+			Rotate: patch.GetBool("sound.samplerotate"),
+		}, nil
+	}
+	dir, err := proSamplePlaybackDirForPatch(patch, "sound.samplesplitterdir")
+	if err != nil {
+		return ss.ChannelPlayback{}, err
+	}
+	// Rotation is a sampleplayer behaviour; the splitter always stays on the
+	// one file it loaded.
+	return ss.ChannelPlayback{Dir: dir, Mode: "", Loop: true, Rotate: false}, nil
 }
 
 func firstProSamplePlaybackDir() (string, error) {
@@ -315,22 +384,26 @@ func firstProSamplePlaybackDir() (string, error) {
 		if !proSamplePlaybackEnabled(patch) {
 			continue
 		}
-		return proSamplePlaybackDirForPatch(patch)
+		playback, err := proChannelPlaybackForPatch(patch)
+		if err != nil {
+			return "", err
+		}
+		return playback.Dir, nil
 	}
-	return "", fmt.Errorf("no pro SampleSplitter patch is enabled")
+	return "", fmt.Errorf("no pro sample playback patch is enabled")
 }
 
-func proSamplePlaybackDirForPatch(patch *Patch) (string, error) {
+func proSamplePlaybackDirForPatch(patch *Patch, paramName string) (string, error) {
 	if patch == nil {
 		return "", fmt.Errorf("no patch")
 	}
-	name := strings.TrimSpace(patch.Get("sound.samplesplitterdir"))
+	name := strings.TrimSpace(patch.Get(paramName))
 	if name == "" {
-		return "", fmt.Errorf("sound.samplesplitterdir is empty for patch %s", patch.Name())
+		return "", fmt.Errorf("%s is empty for patch %s", paramName, patch.Name())
 	}
 	cleanName := filepath.Clean(name)
 	if filepath.IsAbs(cleanName) || cleanName == "." || cleanName == ".." || strings.HasPrefix(cleanName, ".."+string(filepath.Separator)) {
-		return "", fmt.Errorf("sound.samplesplitterdir must be a directory name under config/mp3")
+		return "", fmt.Errorf("%s must be a directory name under config/mp3", paramName)
 	}
 	return samplePlaybackConfigMP3Dir(cleanName)
 }
@@ -410,13 +483,14 @@ func syncProSamplePlaybackSamples(service *ss.Service) error {
 			service.ClearChannelSample(channel)
 			continue
 		}
-		dir, err := proSamplePlaybackDirForPatch(patch)
+		playback, err := proChannelPlaybackForPatch(patch)
 		if err != nil {
 			return err
 		}
-		if err := service.LoadChannelSample(channel, dir); err != nil {
-			return fmt.Errorf("load samplesplitter patch %s from %s: %w", patchName, dir, err)
+		if err := service.LoadChannelSample(channel, playback); err != nil {
+			return fmt.Errorf("load sample playback patch %s from %s: %w", patchName, playback.Dir, err)
 		}
+		logChannelSampleInventory(patchName, channel, playback, service)
 	}
 	return nil
 }

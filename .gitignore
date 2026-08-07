@@ -114,3 +114,4 @@ cmd/palette_hub/daily_update.launchd.err
 cmd/palette_hub/update_lasttoy.launchd.err
 cmd/obstest/obstest.exe
 release/palette_*.zip
+desktop.ini

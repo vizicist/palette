@@ -3,9 +3,14 @@ package kit
 import (
 	"fmt"
 	"math"
+	"path/filepath"
 
 	ss "github.com/vizicist/palette/pkg/samplesplitter"
 )
+
+func round4(v float64) float64 {
+	return math.Round(v*10000) / 10000
+}
 
 const (
 	samplePlaybackSampleCount       = 48
@@ -273,7 +278,24 @@ func (event *SamplePlaybackStart) Trigger() {
 	if !withSamplePlaybackService(func(service *ss.Service) {
 		LogOfType("sampleplayback", "SamplePlaybackStart.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "velocity", event.Velocity, "pitchbend", event.PitchBend, "voiceKey", event.VoiceKey)
 		service.MIDIPitchBend(event.SigilChannel, event.PitchBend)
-		if err := service.NoteOnVoice(event.SigilChannel, event.SampleSelector, event.Velocity, event.VoiceKey); err != nil {
+		req, err := service.NoteOnVoicePlanned(event.SigilChannel, event.SampleSelector, event.Velocity, event.VoiceKey)
+		// Log the file the service actually picked. With sound.samplerotate
+		// this differs per note, and maxrms tells a quiet sample from a loud
+		// one without having to open the file.
+		if req != nil {
+			LogOfType("sampleplayback", "SamplePlayback playing sample",
+				"patch", event.Patch,
+				"file", filepath.Base(req.FilePath),
+				"maxrms", req.MaxRMS,
+				"startsec", req.StartSec,
+				"endsec", req.EndSec,
+				"seconds", round4(req.EndSec-req.StartSec),
+				"splitindex", req.SplitIndex,
+				"loop", req.Loop,
+				"velocity", req.Velocity,
+				"sigilChannel", event.SigilChannel)
+		}
+		if err != nil {
 			LogWarn("SamplePlaybackStart", "err", err, "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector)
 		}
 	}) {

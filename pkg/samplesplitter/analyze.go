@@ -71,6 +71,9 @@ func (a Analyzer) AnalyzeFile(mp3Path string, opts AnalyzeOptions) (CueData, []f
 	var splits []float64
 	var wordSplits []float64
 	switch opts.Mode {
+	case WholeSplitMode:
+		// One split at 0 means PlanNoteOn's start/end land on the whole file.
+		splits = []float64{0}
 	case "silence":
 		splits = detectSplitsSilence(samples, frameRate, duration, opts.SilenceThreshold, opts.SilenceMinimum)
 	case "words":
@@ -82,6 +85,11 @@ func (a Analyzer) AnalyzeFile(mp3Path string, opts AnalyzeOptions) (CueData, []f
 	}
 
 	peakStarts := computePeakStarts(samples, frameRate, splits, duration)
+	if opts.Mode == WholeSplitMode {
+		// "Whole" means whole: don't let PeakStartEnabled seek past the
+		// beginning of the file.
+		peakStarts = []float64{0}
+	}
 	var words *int
 	if opts.Mode == "words" {
 		peakStarts = computeFirstWordPeakStarts(samples, frameRate, splits, wordSplits, duration)

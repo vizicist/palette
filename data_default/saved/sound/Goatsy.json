@@ -1,0 +1,16 @@
+{
+    "params": {
+        "sound.controllerstyle": "modulationonly",
+        "sound.pitchmax": "70",
+        "sound.pitchmin": "46",
+        "sound.pitchset": "",
+        "sound.sampleplayer": "true",
+        "sound.sampleplayerdir": "goat",
+        "sound.samplerotate": "true",
+        "sound.samplesplitter": "false",
+        "sound.samplesplitterdir": "",
+        "sound.synth": "P_04_C_08",
+        "sound.velocitymax": "94",
+        "sound.velocitymin": "68"
+    }
+}

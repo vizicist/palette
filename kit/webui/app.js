@@ -782,7 +782,7 @@ async function loadParams() {
         // Parse "name=value\n" format
         const lines = paramsStr.split('\n').filter(l => l.trim());
         if (lines.length === 0) {
-            grid.innerHTML = paramHeaderHtml({ includeInitRand: false }) +
+            grid.innerHTML = paramHeaderHtml({ includeSaveAs: true }) +
                 '<div class="param-list"><div class="loading">No parameters found</div></div>';
             setupParamHeaderButtons();
             return;
@@ -819,7 +819,7 @@ async function loadParams() {
         }
 
         // Build parameter list HTML
-        let html = paramHeaderHtml({ includeInitRand: true });
+        let html = paramHeaderHtml({ includeInitRand: true, includeSaveAs: true });
         html += '<div class="param-list">';
 
         for (const p of params) {
@@ -884,7 +884,14 @@ async function loadParams() {
                     }
 
                     if (enumValues && enumValues.length > 0) {
-                        // String param with enum - show dropdown
+                        // String param with enum - show dropdown. A current
+                        // value that isn't in the list (a preset naming a
+                        // directory that's since been removed, say) is added
+                        // so the dropdown can't display a different value
+                        // than the one actually set.
+                        if (!enumValues.includes(p.value)) {
+                            enumValues = [p.value, ...enumValues];
+                        }
                         html += `<span class="param-value" style="display:none">${escapeHtml(p.value)}</span>`;
                         html += '<span class="param-controls">';
                         html += `<select class="param-select">`;
@@ -946,11 +953,17 @@ async function loadParams() {
 // Categories whose Rand results can be trained with Like/Avoid feedback.
 const feedbackCategories = ['misc', 'sound', 'visual', 'effect'];
 
-function paramHeaderHtml({ includeInitRand }) {
+// Init/Rand only make sense where there are params to act on; Save As is
+// offered even on the categories with none (Quad, Patch), since it saves
+// the current state rather than anything shown in the list.
+function paramHeaderHtml({ includeInitRand = false, includeSaveAs = false } = {}) {
     let html = '<div class="param-header">';
     if (includeInitRand) {
         html += '<button class="param-header-btn" id="btn-param-init">Init</button>';
         html += '<button class="param-header-btn" id="btn-param-rand">Rand</button>';
+    }
+    if (includeSaveAs) {
+        html += '<button class="param-header-btn" id="btn-param-saveas">Save As</button>';
     }
     if (includeInitRand && feedbackCategories.includes(UIState.currentCategory)) {
         // Filled in by doRand as automatic evaluations complete;
@@ -1061,12 +1074,39 @@ function setupParamControls() {
         });
     });
 
-    // Text inputs for string params without enums - submit on Enter, cancel on Escape
+    // Text inputs for string params without enums - submit on Enter or on
+    // leaving the field, cancel on Escape. Committing on blur matters
+    // because every other control here saves as soon as it's touched, so a
+    // typed value that only saved on Enter looked saved but wasn't.
     document.querySelectorAll('.param-text').forEach(input => {
-        input.addEventListener('keydown', async (e) => {
+        const commit = async (force) => {
+            const valueStr = input.value;
+            // Escape restores data-original before blurring, so an unchanged
+            // value means there is nothing to save.
+            if (!force && valueStr === input.dataset.original) return;
+
             const row = input.closest('.param-row');
             const valueEl = row.querySelector('.param-value');
+            const paramName = row.dataset.param;
 
+            try {
+                await setCurrentParam(paramName, valueStr);
+                // Update the displayed value and data-original only on
+                // success, so a failed set doesn't show an unsaved value.
+                valueEl.textContent = valueStr;
+                input.dataset.original = valueStr;
+                clearMixedBadge(row);
+                // Brief visual feedback - flash the input
+                input.style.backgroundColor = '#4a4';
+                setTimeout(() => { input.style.backgroundColor = ''; }, 200);
+            } catch (err) {
+                console.error('Failed to set param:', err);
+                input.style.backgroundColor = '#a44';
+                setTimeout(() => { input.style.backgroundColor = ''; }, 200);
+            }
+        };
+
+        input.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 // Restore original value from data attribute
                 e.preventDefault();
@@ -1074,26 +1114,11 @@ function setupParamControls() {
                 input.blur();
             } else if (e.key === 'Enter') {
                 e.preventDefault();
-                const paramName = row.dataset.param;
-                const valueStr = input.value;
-
-                try {
-                    await setCurrentParam(paramName, valueStr);
-                    // Update the displayed value and data-original only on
-                    // success, so a failed set doesn't show an unsaved value.
-                    valueEl.textContent = valueStr;
-                    input.dataset.original = valueStr;
-                    clearMixedBadge(row);
-                    // Brief visual feedback - flash the input
-                    input.style.backgroundColor = '#4a4';
-                    setTimeout(() => { input.style.backgroundColor = ''; }, 200);
-                } catch (err) {
-                    console.error('Failed to set param:', err);
-                    input.style.backgroundColor = '#a44';
-                    setTimeout(() => { input.style.backgroundColor = ''; }, 200);
-                }
+                commit(true);
             }
         });
+
+        input.addEventListener('blur', () => commit(false));
     });
 }
 
@@ -1259,6 +1284,12 @@ function setupParamHeaderButtons() {
         randBtn.addEventListener('click', () => doRand());
     }
 
+    // Save As button - save the current params as a new preset, the same
+    // action the double-click preset menu offers.
+    const saveAsBtn = document.getElementById('btn-param-saveas');
+    if (saveAsBtn) {
+        saveAsBtn.addEventListener('click', () => handleSaveAs());
+    }
 }
 
 async function handleSaveAs(sourceName = '') {

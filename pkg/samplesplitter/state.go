@@ -22,12 +22,25 @@ type SampleState struct {
 type State struct {
 	mu sync.RWMutex
 
-	Config            Config
-	CurrentFile       string
-	CueData           *CueData
-	Waveform          []float64
-	SigilSamples      map[string]SampleState
-	ChannelSamples    map[int]SampleState
+	Config         Config
+	CurrentFile    string
+	CueData        *CueData
+	Waveform       []float64
+	SigilSamples   map[string]SampleState
+	ChannelSamples map[int]SampleState
+	// ChannelRotation holds every analyzed sample in a channel's directory,
+	// populated only when that channel has rotation enabled. PlanNoteOn picks
+	// one at random per note instead of always using ChannelSamples.
+	ChannelRotation map[int][]SampleState
+	ChannelRotate   map[int]bool
+	// ChannelMode and ChannelLoop are per-channel because the samplesplitter
+	// and the sampleplayer can be active on different patches at once: the
+	// splitter carves a file into looping splits, the player plays whole
+	// files one-shot.
+	ChannelMode       map[int]string
+	ChannelLoop       map[int]bool
+	rotateLast        map[int]int
+	rotateRNG         *rand.Rand
 	MIDIPort          string
 	MIDIError         string
 	MIDIActivityCount int64
@@ -55,6 +68,9 @@ type PlaybackRequest struct {
 	SplitIndex     int     `json:"split_index"`
 	StartSec       float64 `json:"start_sec"`
 	EndSec         float64 `json:"end_sec"`
+	// MaxRMS is the analyzed loudness of the source file, carried through so
+	// callers can tell a quiet sample from a loud one without re-analyzing.
+	MaxRMS         float64 `json:"max_rms"`
 	PitchSemitones float64 `json:"pitch_semitones"`
 	PitchRatio     float64 `json:"pitch_ratio"`
 	Loop           bool    `json:"loop"`
@@ -94,11 +110,16 @@ type SelectedSampleFile struct {
 
 func NewState(config Config) *State {
 	return &State{
-		Config:         config,
-		SigilSamples:   make(map[string]SampleState),
-		ChannelSamples: make(map[int]SampleState),
-		PitchBendSemis: make(map[int]float64),
-		AudioError:     "audio playback is not implemented in the Go port yet",
+		Config:          config,
+		SigilSamples:    make(map[string]SampleState),
+		ChannelSamples:  make(map[int]SampleState),
+		ChannelRotation: make(map[int][]SampleState),
+		ChannelRotate:   make(map[int]bool),
+		ChannelMode:     make(map[int]string),
+		ChannelLoop:     make(map[int]bool),
+		rotateLast:      make(map[int]int),
+		PitchBendSemis:  make(map[int]float64),
+		AudioError:      "audio playback is not implemented in the Go port yet",
 	}
 }
 
@@ -334,6 +355,11 @@ func (s *State) PlanNoteOn(note, velocity, channel int) (*PlaybackRequest, error
 	defer s.mu.Unlock()
 
 	sample := s.sampleForChannelLocked(channel)
+	if s.ChannelRotate[channel] {
+		if picked, ok := s.randomRotationSampleLocked(channel); ok {
+			sample = picked
+		}
+	}
 	if sample.CueData == nil || sample.CurrentFile == "" {
 		return nil, fmt.Errorf("no sample loaded for MIDI channel %d", channel)
 	}
@@ -376,9 +402,10 @@ func (s *State) PlanNoteOn(note, velocity, channel int) (*PlaybackRequest, error
 		SplitIndex:     splitIndex,
 		StartSec:       round4(start),
 		EndSec:         round4(end),
+		MaxRMS:         sample.CueData.MaxRMS,
 		PitchSemitones: round4(semitones),
 		PitchRatio:     round4(math.Pow(2.0, semitones/12.0)),
-		Loop:           true,
+		Loop:           s.channelLoopLocked(channel),
 		Compressed:     s.Config.Compressed,
 	}
 	s.LastPlayback = request
@@ -469,17 +496,212 @@ func (s *State) ClearChannelSample(channel int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.ChannelSamples, channel)
+	delete(s.ChannelRotation, channel)
+	delete(s.ChannelRotate, channel)
+	delete(s.ChannelMode, channel)
+	delete(s.ChannelLoop, channel)
+	delete(s.rotateLast, channel)
+}
+
+// SetChannelPlayback records how a channel turns an MP3 into notes: mode is
+// the analyze mode used when loading, loop is whether a triggered note repeats
+// while it is held. The samplesplitter loops its splits; the sampleplayer
+// plays a whole file once.
+func (s *State) SetChannelPlayback(channel int, mode string, loop bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.ChannelMode == nil {
+		s.ChannelMode = make(map[int]string)
+	}
+	if s.ChannelLoop == nil {
+		s.ChannelLoop = make(map[int]bool)
+	}
+	s.ChannelMode[channel] = mode
+	s.ChannelLoop[channel] = loop
+}
+
+// channelLoopLocked reports whether notes on this channel loop. Channels with
+// no recorded setting keep the historical behaviour of looping.
+func (s *State) channelLoopLocked(channel int) bool {
+	if loop, ok := s.ChannelLoop[channel]; ok {
+		return loop
+	}
+	return true
+}
+
+// analyzeOptionsForChannel is defaultAnalyzeOptions with the channel's mode
+// applied, so one patch can be splitting while another plays whole files.
+func (s *State) analyzeOptionsForChannel(channel int) AnalyzeOptions {
+	opts := s.defaultAnalyzeOptions()
+	s.mu.RLock()
+	mode := s.ChannelMode[channel]
+	s.mu.RUnlock()
+	if mode != "" {
+		opts.Mode = mode
+	}
+	return opts
+}
+
+// minimumDurationForChannel returns the shortest MP3 the channel will accept.
+// The configured minimum exists so the splitter isn't handed a file too short
+// to carve into words; the sampleplayer plays files whole, and short one-shots
+// are exactly what it is for, so it has no minimum.
+func (s *State) minimumDurationForChannel(channel int) float64 {
+	s.mu.RLock()
+	mode := s.ChannelMode[channel]
+	minimum := s.Config.MinimumMP3DurationSeconds
+	s.mu.RUnlock()
+	if mode == WholeSplitMode {
+		return 0
+	}
+	return minimum
+}
+
+// SetChannelRotate turns per-note random sample selection on or off for a
+// channel. Turning it off drops the analyzed rotation set, so the channel
+// falls back to the single sample loaded by LoadChannelDefault.
+func (s *State) SetChannelRotate(channel int, rotate bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.ChannelRotate == nil {
+		s.ChannelRotate = make(map[int]bool)
+	}
+	s.ChannelRotate[channel] = rotate
+	if !rotate {
+		delete(s.ChannelRotation, channel)
+		delete(s.rotateLast, channel)
+	}
+}
+
+// LoadChannelRotation analyzes every usable MP3 in dir and keeps them all, so
+// PlanNoteOn can pick a different one for each note. It returns the paths that
+// need preloading. Files that fail analysis are skipped rather than failing
+// the whole load - one bad MP3 shouldn't silence the directory.
+func (s *State) LoadChannelRotation(channel int, dir string, analyzer Analyzer) ([]string, error) {
+	return s.loadChannelRotation(channel, dir, analyzer.AnalyzeFile)
+}
+
+func (s *State) loadChannelRotation(channel int, dir string, analyze analyzeMP3Func) ([]string, error) {
+	files, err := ListMP3FilesWithMinimumDuration(dir, s.minimumDurationForChannel(channel))
+	if err != nil {
+		return nil, err
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("no usable MP3 files in %s", dir)
+	}
+
+	opts := s.analyzeOptionsForChannel(channel)
+	samples := make([]SampleState, 0, len(files))
+	paths := make([]string, 0, len(files))
+	var lastErr error
+	for _, mp3 := range files {
+		cue, waveform, err := analyze(mp3.Path, opts)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		samples = append(samples, SampleState{
+			Sigil:       fmt.Sprintf("channel-%d", channel),
+			CurrentFile: mp3.Path,
+			CueData:     &cue,
+			Waveform:    waveform,
+		})
+		paths = append(paths, mp3.Path)
+	}
+	if len(samples) == 0 {
+		if lastErr != nil {
+			return nil, fmt.Errorf("no analyzable MP3 files in %s: %w", dir, lastErr)
+		}
+		return nil, fmt.Errorf("no analyzable MP3 files in %s", dir)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.ChannelRotation == nil {
+		s.ChannelRotation = make(map[int][]SampleState)
+	}
+	if s.ChannelSamples == nil {
+		s.ChannelSamples = make(map[int]SampleState)
+	}
+	s.ChannelRotation[channel] = samples
+	delete(s.rotateLast, channel)
+	// Keep ChannelSamples populated so anything reading the channel's current
+	// sample (status, waveform display) still sees something sensible.
+	s.ChannelSamples[channel] = samples[0]
+	return paths, nil
+}
+
+// ChannelSampleInfo describes one sample a channel can play, for logging.
+type ChannelSampleInfo struct {
+	Path      string
+	MaxRMS    float64
+	Duration  float64
+	NumSplits int
+}
+
+// ChannelSampleInventory lists every sample the channel can currently play:
+// the whole rotation set when rotation is on, otherwise the single loaded
+// sample. MaxRMS makes it obvious which files are quiet.
+func (s *State) ChannelSampleInventory(channel int) []ChannelSampleInfo {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	samples := s.ChannelRotation[channel]
+	if len(samples) == 0 {
+		if sample, ok := s.ChannelSamples[channel]; ok {
+			samples = []SampleState{sample}
+		}
+	}
+	infos := make([]ChannelSampleInfo, 0, len(samples))
+	for _, sample := range samples {
+		info := ChannelSampleInfo{Path: sample.CurrentFile}
+		if sample.CueData != nil {
+			info.MaxRMS = sample.CueData.MaxRMS
+			info.Duration = sample.CueData.Duration
+			info.NumSplits = sample.CueData.NumSplits
+		}
+		infos = append(infos, info)
+	}
+	return infos
+}
+
+// randomRotationSampleLocked picks a random sample from the channel's rotation
+// set, avoiding an immediate repeat when there is more than one to choose from.
+// Callers must hold s.mu.
+func (s *State) randomRotationSampleLocked(channel int) (SampleState, bool) {
+	candidates := s.ChannelRotation[channel]
+	if len(candidates) == 0 {
+		return SampleState{}, false
+	}
+	if len(candidates) == 1 {
+		return candidates[0], true
+	}
+	if s.rotateRNG == nil {
+		s.rotateRNG = rand.New(rand.NewSource(time.Now().UnixNano()))
+	}
+	if s.rotateLast == nil {
+		s.rotateLast = make(map[int]int)
+	}
+	last, seen := s.rotateLast[channel]
+	index := s.rotateRNG.Intn(len(candidates))
+	if seen && index == last {
+		// Shift to a neighbour rather than re-rolling, which keeps the
+		// selection uniform over the remaining candidates.
+		index = (index + 1 + s.rotateRNG.Intn(len(candidates)-1)) % len(candidates)
+	}
+	s.rotateLast[channel] = index
+	return candidates[index], true
 }
 
 func (s *State) LoadChannelDefault(channel int, dir string, analyzer Analyzer) error {
-	files, err := ListMP3FilesWithMinimumDuration(dir, s.Config.MinimumMP3DurationSeconds)
+	files, err := ListMP3FilesWithMinimumDuration(dir, s.minimumDurationForChannel(channel))
 	if err != nil {
 		return err
 	}
 	if len(files) == 0 {
 		return fmt.Errorf("no usable MP3 files in %s", dir)
 	}
-	mp3, cue, waveform, err := analyzeFirstUsableMP3(files, analyzer.AnalyzeFile, s.defaultAnalyzeOptions())
+	mp3, cue, waveform, err := analyzeFirstUsableMP3(files, analyzer.AnalyzeFile, s.analyzeOptionsForChannel(channel))
 	sample := SampleState{Sigil: fmt.Sprintf("channel-%d", channel), CurrentFile: mp3.Path}
 	if err != nil {
 		sample.Error = err.Error()

@@ -123,6 +123,7 @@ func LoadParamEnums() error {
 	loadSynthEnums()
 	loadPitchSetEnums()
 	loadShapeEnums()
+	loadSamplesplitterDirEnums()
 
 	return nil
 }
@@ -170,6 +171,39 @@ func loadShapeEnums() {
 		return
 	}
 	ParamEnums["shape"] = shapeNames
+}
+
+func loadSamplesplitterDirEnums() {
+	dirNames, err := samplesplitterDirNamesFromDir(filepath.Join(ConfigDir(), "mp3"))
+	if err != nil {
+		LogWarn("loadSamplesplitterDirEnums: unable to read config/mp3", "err", err)
+	}
+	ParamEnums["mp3dir"] = dirNames
+}
+
+// samplesplitterDirNamesFromDir lists the subdirectories of config/mp3, which
+// are the only valid values for sound.samplesplitterdir and
+// sound.sampleplayerdir. The leading empty string keeps "unset" selectable,
+// matching the parameters' init value. On error the empty choice is still
+// returned, so the dropdown never renders with the current value missing.
+func samplesplitterDirNamesFromDir(mp3Dir string) ([]string, error) {
+	names := []string{""}
+
+	entries, err := os.ReadDir(mp3Dir)
+	if err != nil {
+		return names, err
+	}
+
+	var dirNames []string
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		dirNames = append(dirNames, entry.Name())
+	}
+	sort.Strings(dirNames)
+
+	return append(names, dirNames...), nil
 }
 
 func shapeNamesFromDir(base []string, shapesDir string) ([]string, error) {

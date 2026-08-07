@@ -62,6 +62,7 @@ LayerParams_InitializeTypes() {
 	LayerParams_modeTypes.push_back("pro");
 	LayerParams_modeTypes.push_back("bss");
 	LayerParams_modeTypes.push_back("pro2");
+	LayerParams_modeTypes.push_back("goat");
 
 	LayerParams_guisizeTypes.push_back("small");
 	LayerParams_guisizeTypes.push_back("medium");

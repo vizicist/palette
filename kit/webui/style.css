@@ -1260,6 +1260,10 @@ body.initial-pro2 #preset-grid.grid-mode {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+body.initial-goat #preset-grid.grid-mode {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .preset-btn {
     background: var(--button-bg);
     color: var(--text);
@@ -1423,6 +1427,7 @@ body.initial-pro2 #preset-grid.grid-mode {
 /* Parameter list view */
 .param-header {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     padding: 12px 15px;
     border-bottom: 1px solid #444;
