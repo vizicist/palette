@@ -1497,6 +1497,10 @@ function setupCategoryTabs() {
                 // Different category - switch to it, show presets
                 document.querySelectorAll('#category-tabs .tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
+                // Switching categories is navigation, not performance, so drop
+                // anything still sounding. A cursor whose "up" never arrived
+                // leaves a note hanging otherwise.
+                await allNotesOff();
             }
             UIState.toggleCategory(clickedCategory);
 
@@ -1535,6 +1539,16 @@ function setupAttractOverlay() {
         e.preventDefault();
         exitAttractMode();
     }, { passive: false });
+}
+
+// allNotesOff silences every patch without the heavier resets silenceAll does,
+// so it is cheap enough to fire on ordinary navigation.
+async function allNotesOff() {
+    try {
+        await API.call('quad.ANO');
+    } catch (e) {
+        console.error('Failed to clear notes:', e);
+    }
 }
 
 async function silenceAll() {

@@ -98,7 +98,18 @@ func (am *AttractManager) SetAttractMode(onoff bool) {
 		LogWarn("setAttractMode already in mode", "onoff", onoff)
 		return // already in that mode
 	}
-	// Throttle it a bit
+	// Turning attract mode off is always someone asking for it - a hand on the
+	// pads, or the API - so it happens immediately. Throttling it would leave
+	// the attract screen up while the pads are being played, because every
+	// cursor event also resets lastAttractModeChange as the idle timer: while
+	// a finger keeps moving, the throttle window never elapses.
+	//
+	// Turning it on is automatic and idle-driven, so that stays throttled to
+	// keep it from flapping.
+	if !onoff {
+		am.setAttractMode(false)
+		return
+	}
 	secondsSince := time.Since(am.lastAttractModeChange).Seconds()
 	if secondsSince > 1.0 {
 		am.setAttractMode(onoff)
@@ -118,16 +129,22 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 			patch.clearGraphics()
 			patch.loopClear()
 		}
-		if !onoff {
-			for _, patch := range theQuad.patch {
-				patch.Synth().SendANO()
-			}
-		}
+		// Silence in both directions, across every route rather than just the
+		// MIDI synths. Leaving attract matters because it drives the pads with
+		// generated gestures and can leave a voice sounding; entering it
+		// matters because a note left hanging as someone walks away would
+		// otherwise play on underneath the attract screen.
+		theQuad.allNotesOff()
 	}
 
 	go TheBidule().Reset()
 
 	am.lastAttractModeChange = time.Now()
+
+	// Tell the GUI, so the attract screen appears and disappears with the
+	// mode. Without this only the API path notified, so attract mode turned
+	// off by playing the pads left the attract screen showing.
+	NotifyStatusChanged()
 }
 
 func (am *AttractManager) checkAttract() {

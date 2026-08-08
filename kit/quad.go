@@ -78,9 +78,7 @@ func (quad *Quad) API(api string, apiargs map[string]string) (result string, err
 		return "", fmt.Errorf("event no longer handled in Quadpro.API")
 
 	case "ANO":
-		for _, patch := range quad.patch {
-			patch.Synth().SendANO()
-		}
+		quad.allNotesOff()
 		return "", nil
 
 	case "echo":
@@ -203,6 +201,17 @@ func (quad *Quad) PatchForCursorEvent(ce CursorEvent) (patch *Patch, button stri
 		button = source
 	}
 	return patch, button
+}
+
+// allNotesOff silences every patch, whichever way it is making sound. A patch
+// routed to the sample player never touches a MIDI synth, so sending ANO alone
+// would leave a hung sample voice playing forever - nothing else stops one
+// except a route change.
+func (quad *Quad) allNotesOff() {
+	for _, patch := range quad.patch {
+		patch.Synth().SendANO()
+		stopSamplePlaybackForPatch(patch.Name(), "ANO")
+	}
 }
 
 func (quad *Quad) onCursorEvent(state ActiveCursor) error {

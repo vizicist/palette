@@ -444,6 +444,11 @@ func (event *SamplePlaybackPitch) Trigger() {
 	}
 }
 
+// stopSamplePlaybackForPatch is indirected through a variable so tests can
+// check that the silence paths actually reach sample playback - a hung sample
+// voice is invisible to a MIDI all-notes-off.
+var stopSamplePlaybackForPatch = stopSamplePlaybackChannelForPatch
+
 func stopSamplePlaybackChannelForPatch(patch string, reason string) bool {
 	sigilChannel := SamplePlaybackChannelForPatch(patch)
 	stopped := withSamplePlaybackService(func(service *ss.Service) {
