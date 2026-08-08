@@ -206,6 +206,9 @@ func samplesplitterDirNamesFromDir(mp3Dir string) ([]string, error) {
 	return append(names, dirNames...), nil
 }
 
+// shapeNamesFromDir returns the built-in shape names plus one per SVG in
+// shapesDir, deduplicated case-insensitively and sorted so the GUI's shape
+// list reads alphabetically rather than built-ins-then-files.
 func shapeNamesFromDir(base []string, shapesDir string) ([]string, error) {
 	names := make([]string, 0, len(base))
 	seen := make(map[string]bool, len(base))
@@ -223,6 +226,7 @@ func shapeNamesFromDir(base []string, shapesDir string) ([]string, error) {
 
 	entries, err := os.ReadDir(shapesDir)
 	if err != nil {
+		sortShapeNames(names)
 		return names, err
 	}
 
@@ -241,6 +245,8 @@ func shapeNamesFromDir(base []string, shapesDir string) ([]string, error) {
 		}
 		svgNames = append(svgNames, name)
 	}
+	// Sorted before deduplicating, so which spelling wins when two files
+	// differ only in case doesn't depend on directory order.
 	sort.Strings(svgNames)
 
 	for _, name := range svgNames {
@@ -251,7 +257,22 @@ func shapeNamesFromDir(base []string, shapesDir string) ([]string, error) {
 		seen[key] = true
 		names = append(names, name)
 	}
+
+	sortShapeNames(names)
 	return names, nil
+}
+
+// sortShapeNames orders shape names for display: case-insensitive, since that
+// is how they are deduplicated, with the raw name breaking ties so the result
+// is stable.
+func sortShapeNames(names []string) {
+	sort.Slice(names, func(i, j int) bool {
+		a, b := strings.ToLower(names[i]), strings.ToLower(names[j])
+		if a != b {
+			return a < b
+		}
+		return names[i] < names[j]
+	})
 }
 
 // LoadParamDefs initializes the list of parameters
