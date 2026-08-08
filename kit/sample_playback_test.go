@@ -32,17 +32,31 @@ func TestSamplePlaybackVelocityUsesSamplePlaybackVolume(t *testing.T) {
 	if err := GlobalParams.SetParamWithString("global.sampleplaybackvolume", "0.5"); err != nil {
 		t.Fatalf("SetParamWithString err = %v", err)
 	}
-	got := samplePlaybackVelocityFromPressure(nil, 1.0)
-	if got != 64 {
+	if got := scaleSamplePlaybackVelocity(127); got != 64 {
 		t.Fatalf("velocity = %d, want 64", got)
 	}
 
 	if err := GlobalParams.SetParamWithString("global.sampleplaybackvolume", "2.0"); err != nil {
 		t.Fatalf("SetParamWithString err = %v", err)
 	}
-	got = samplePlaybackVelocityFromPressure(nil, 1.0)
-	if got != 127 {
+	if got := scaleSamplePlaybackVelocity(127); got != 127 {
 		t.Fatalf("velocity = %d, want capped 127", got)
+	}
+
+	if err := GlobalParams.SetParamWithString("global.sampleplaybackvolume", "0.0"); err != nil {
+		t.Fatalf("SetParamWithString err = %v", err)
+	}
+	if got := scaleSamplePlaybackVelocity(127); got != 0 {
+		t.Fatalf("velocity = %d, want 0 at zero volume", got)
+	}
+
+	// The pressure-derived velocity is now the unscaled input to the above;
+	// the volume is applied once, in SamplePlaybackStart.Trigger.
+	if err := GlobalParams.SetParamWithString("global.sampleplaybackvolume", "0.5"); err != nil {
+		t.Fatalf("SetParamWithString err = %v", err)
+	}
+	if got := samplePlaybackVelocityFromPressure(nil, 1.0); got != 127 {
+		t.Fatalf("pressure velocity = %d, want 127 unscaled", got)
 	}
 }
 

@@ -383,9 +383,13 @@ func (event *SamplePlaybackStart) Trigger() {
 		return
 	}
 	if !withSamplePlaybackService(func(service *ss.Service) {
-		LogOfType("sampleplayback", "SamplePlaybackStart.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "velocity", event.Velocity, "pitchbend", event.PitchBend, "voiceKey", event.VoiceKey)
+		// Apply the master volume here rather than where the event is built:
+		// this is the one point every route passes through, so no caller can
+		// forget it, and a volume change takes effect on the very next note.
+		velocity := scaleSamplePlaybackVelocity(event.Velocity)
+		LogOfType("sampleplayback", "SamplePlaybackStart.Trigger", "patch", event.Patch, "sigilChannel", event.SigilChannel, "sampleSelector", event.SampleSelector, "velocity", velocity, "rawvelocity", event.Velocity, "pitchbend", event.PitchBend, "voiceKey", event.VoiceKey)
 		service.MIDIPitchBend(event.SigilChannel, event.PitchBend)
-		req, err := service.NoteOnVoicePlanned(event.SigilChannel, event.SampleSelector, event.Velocity, event.VoiceKey)
+		req, err := service.NoteOnVoicePlanned(event.SigilChannel, event.SampleSelector, velocity, event.VoiceKey)
 		// Log the file the service actually picked. With sound.samplerotate
 		// this differs per note, and maxrms tells a quiet sample from a loud
 		// one without having to open the file.
@@ -467,14 +471,28 @@ func samplePlaybackVelocityFromPressure(patch *Patch, pressure float64) uint8 {
 	globalPressure := globalPressureShape(pressure, "sound")
 	scaledPressure := globalPressure.Scaled
 	velocity := int(pressureToVelocity(scaledPressure, minSamplePlaybackVelocity, 127))
-	velocity = int(math.Round(float64(velocity) * samplePlaybackVolume()))
 	if velocity > 127 {
 		velocity = 127
 	}
 	if velocity < 0 {
 		velocity = 0
 	}
+	// The master volume is applied in SamplePlaybackStart.Trigger, so it
+	// covers every route rather than only this one.
 	return uint8(velocity)
+}
+
+// scaleSamplePlaybackVelocity applies global.sampleplaybackvolume to a note
+// velocity, clamped to the MIDI range.
+func scaleSamplePlaybackVelocity(velocity int) int {
+	scaled := int(math.Round(float64(velocity) * samplePlaybackVolume()))
+	if scaled > 127 {
+		return 127
+	}
+	if scaled < 0 {
+		return 0
+	}
+	return scaled
 }
 
 func samplePlaybackVolume() float64 {
