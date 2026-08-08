@@ -439,6 +439,52 @@ func samplePlaybackConfigMP3Dir(name string) (string, error) {
 	return dir, nil
 }
 
+// Loading a preset re-applies every parameter and then broadcasts them all
+// through noticeValueChange, so a single quad load asks for a sample-playback
+// resync once per sample parameter per patch - twenty times over. Suspending
+// collapses that into one resync when the load finishes.
+var samplePlaybackSync struct {
+	mutex     sync.Mutex
+	suspended int
+	pending   bool
+}
+
+// SuspendSamplePlaybackSync defers resyncs until the returned function runs,
+// at which point one resync happens if anything asked for it. Safe to nest.
+func SuspendSamplePlaybackSync() func() {
+	samplePlaybackSync.mutex.Lock()
+	samplePlaybackSync.suspended++
+	samplePlaybackSync.mutex.Unlock()
+
+	return func() {
+		samplePlaybackSync.mutex.Lock()
+		samplePlaybackSync.suspended--
+		flush := samplePlaybackSync.suspended == 0 && samplePlaybackSync.pending
+		if flush {
+			samplePlaybackSync.pending = false
+		}
+		samplePlaybackSync.mutex.Unlock()
+		if flush {
+			if err := SyncProSamplePlaybackServiceSamples(); err != nil {
+				LogWarn("deferred pro samplesplitter sync failed", "err", err)
+			}
+		}
+	}
+}
+
+// RequestSamplePlaybackSync resyncs now, or records that one is needed if
+// resyncs are currently suspended.
+func RequestSamplePlaybackSync() error {
+	samplePlaybackSync.mutex.Lock()
+	if samplePlaybackSync.suspended > 0 {
+		samplePlaybackSync.pending = true
+		samplePlaybackSync.mutex.Unlock()
+		return nil
+	}
+	samplePlaybackSync.mutex.Unlock()
+	return SyncProSamplePlaybackServiceSamples()
+}
+
 func SyncProSamplePlaybackServiceSamples() error {
 	if IsBSSMode() {
 		return nil

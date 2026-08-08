@@ -138,7 +138,7 @@ func (patch *Patch) noticeValueChange(paramName string, paramValue string) {
 	if paramName == "sound.samplesplitter" || paramName == "sound.samplesplitterdir" ||
 		paramName == "sound.sampleplayer" || paramName == "sound.sampleplayerdir" ||
 		paramName == "sound.samplerotate" {
-		if err := SyncProSamplePlaybackServiceSamples(); err != nil {
+		if err := RequestSamplePlaybackSync(); err != nil {
 			LogWarn("Patch.noticeValueChange: pro samplesplitter sync failed", "patch", patch.Name(), "param", paramName, "err", err)
 		}
 	}
@@ -520,6 +520,9 @@ func (patch *Patch) Load(category string, paramsMap ParamsMap) error {
 }
 
 func (patch *Patch) load(category string, paramsMap ParamsMap, preservedRoute string, preserveRoute bool) error {
+
+	// One resync at the end of the load rather than one per sample parameter.
+	defer SuspendSamplePlaybackSync()()
 
 	if IsQuadCategory(category) {
 		// this will only load things to this one patch

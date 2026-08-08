@@ -367,6 +367,10 @@ func (quad *Quad) loadQuadRand(category string) (string, error) {
 
 func (quad *Quad) Load(category string, filename string) error {
 
+	// Hold off sample-playback resyncs until all four patches are loaded, so
+	// the whole quad costs one resync instead of one per patch per parameter.
+	defer SuspendSamplePlaybackSync()()
+
 	paramsMap, err := LoadParamsMapOfCategory(category, filename)
 	if err != nil {
 		LogIfError(err)

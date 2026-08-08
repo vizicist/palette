@@ -25,12 +25,19 @@ type Service struct {
 	mu       sync.Mutex
 	config   Config
 	analyzer Analyzer
+	cache    *analysisCache
 	state    *State
 	audio    *AudioManager
 	midi     *MIDIManager
 	server   *http.Server
 	listener net.Listener
 	started  bool
+}
+
+// analyze returns the analyzer's AnalyzeFile with caching in front of it, so
+// re-loading a directory doesn't re-run ffmpeg over files that haven't changed.
+func (s *Service) analyze() analyzeMP3Func {
+	return s.cache.wrap(s.analyzer.AnalyzeFile)
 }
 
 func NewService(options ServiceOptions) (*Service, error) {
@@ -59,6 +66,7 @@ func NewService(options ServiceOptions) (*Service, error) {
 	svc := &Service{
 		config:   config,
 		analyzer: analyzer,
+		cache:    newAnalysisCache(),
 		state:    state,
 	}
 
@@ -237,12 +245,19 @@ func (s *Service) LoadChannelSample(channel int, pb ChannelPlayback) error {
 	}
 
 	dir := pb.Dir
+	// Loading a preset re-applies every parameter, so this is called many times
+	// with settings that haven't actually changed. Doing nothing in that case is
+	// what keeps preset switching fast.
+	if s.state.ChannelLoadedWith(channel, dir, pb.Mode, pb.Loop, pb.Rotate) {
+		return nil
+	}
 	// Mode has to be recorded before loading: the loaders read it back through
 	// analyzeOptionsForChannel to decide how to split each file.
 	s.state.SetChannelPlayback(channel, pb.Mode, pb.Loop)
 	s.state.SetChannelRotate(channel, pb.Rotate)
+	s.state.SetChannelDir(channel, dir)
 	if pb.Rotate {
-		paths, err := s.state.LoadChannelRotation(channel, dir, s.analyzer)
+		paths, err := s.state.loadChannelRotation(channel, dir, s.analyze())
 		if err != nil {
 			return err
 		}
@@ -261,7 +276,7 @@ func (s *Service) LoadChannelSample(channel int, pb ChannelPlayback) error {
 		return nil
 	}
 
-	if err := s.state.LoadChannelDefault(channel, dir, s.analyzer); err != nil {
+	if err := s.state.loadChannelDefault(channel, dir, s.analyze()); err != nil {
 		return err
 	}
 	if s.audio != nil {

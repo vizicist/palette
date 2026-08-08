@@ -37,8 +37,11 @@ type State struct {
 	// and the sampleplayer can be active on different patches at once: the
 	// splitter carves a file into looping splits, the player plays whole
 	// files one-shot.
-	ChannelMode       map[int]string
-	ChannelLoop       map[int]bool
+	ChannelMode map[int]string
+	ChannelLoop map[int]bool
+	// ChannelDir is the directory the channel's samples were loaded from,
+	// used to tell a real settings change from a repeated reload request.
+	ChannelDir        map[int]string
 	rotateLast        map[int]int
 	rotateRNG         *rand.Rand
 	MIDIPort          string
@@ -117,6 +120,7 @@ func NewState(config Config) *State {
 		ChannelRotate:   make(map[int]bool),
 		ChannelMode:     make(map[int]string),
 		ChannelLoop:     make(map[int]bool),
+		ChannelDir:      make(map[int]string),
 		rotateLast:      make(map[int]int),
 		PitchBendSemis:  make(map[int]float64),
 		AudioError:      "audio playback is not implemented in the Go port yet",
@@ -500,7 +504,41 @@ func (s *State) ClearChannelSample(channel int) {
 	delete(s.ChannelRotate, channel)
 	delete(s.ChannelMode, channel)
 	delete(s.ChannelLoop, channel)
+	delete(s.ChannelDir, channel)
 	delete(s.rotateLast, channel)
+}
+
+// ChannelLoadedWith reports whether the channel already holds samples loaded
+// with exactly these settings. Loading a preset re-applies every parameter, so
+// the same channel gets asked to reload many times over; without this check
+// each of those re-runs ffmpeg across the whole directory.
+func (s *State) ChannelLoadedWith(channel int, dir, mode string, loop, rotate bool) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.ChannelDir[channel] != dir ||
+		s.ChannelMode[channel] != mode ||
+		s.ChannelLoop[channel] != loop ||
+		s.ChannelRotate[channel] != rotate {
+		return false
+	}
+	// Settings match, but only skip if something is actually loaded.
+	if rotate {
+		return len(s.ChannelRotation[channel]) > 0
+	}
+	sample, ok := s.ChannelSamples[channel]
+	return ok && sample.CurrentFile != "" && sample.CueData != nil
+}
+
+// SetChannelDir records the directory a channel's samples came from, so
+// ChannelLoadedWith can tell a genuine change from a repeat request.
+func (s *State) SetChannelDir(channel int, dir string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.ChannelDir == nil {
+		s.ChannelDir = make(map[int]string)
+	}
+	s.ChannelDir[channel] = dir
 }
 
 // SetChannelPlayback records how a channel turns an MP3 into notes: mode is
@@ -694,6 +732,10 @@ func (s *State) randomRotationSampleLocked(channel int) (SampleState, bool) {
 }
 
 func (s *State) LoadChannelDefault(channel int, dir string, analyzer Analyzer) error {
+	return s.loadChannelDefault(channel, dir, analyzer.AnalyzeFile)
+}
+
+func (s *State) loadChannelDefault(channel int, dir string, analyze analyzeMP3Func) error {
 	files, err := ListMP3FilesWithMinimumDuration(dir, s.minimumDurationForChannel(channel))
 	if err != nil {
 		return err
@@ -701,7 +743,7 @@ func (s *State) LoadChannelDefault(channel int, dir string, analyzer Analyzer) e
 	if len(files) == 0 {
 		return fmt.Errorf("no usable MP3 files in %s", dir)
 	}
-	mp3, cue, waveform, err := analyzeFirstUsableMP3(files, analyzer.AnalyzeFile, s.analyzeOptionsForChannel(channel))
+	mp3, cue, waveform, err := analyzeFirstUsableMP3(files, analyze, s.analyzeOptionsForChannel(channel))
 	sample := SampleState{Sigil: fmt.Sprintf("channel-%d", channel), CurrentFile: mp3.Path}
 	if err != nil {
 		sample.Error = err.Error()
