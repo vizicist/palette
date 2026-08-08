@@ -17,6 +17,14 @@ const (
 	minSamplePlaybackVelocity       = 76
 	defaultSamplePlaybackQuantBeats = 0
 	defaultSamplePlaybackVolume     = 1.0
+
+	// Vertical-axis speed control. The defaults reproduce the original
+	// hardcoded behaviour: the full +/-12 semitone span, normal speed at the
+	// middle of the pad, no quantizing.
+	defaultSamplePlaybackSpeedRange     = 1.0
+	defaultSamplePlaybackSpeedCenter    = 0.5
+	defaultSamplePlaybackSpeedDivisions = 0
+	maxSamplePlaybackSpeedDivisions     = 64
 )
 
 type SamplePlaybackDomain struct {
@@ -207,9 +215,108 @@ func (d SamplePlaybackDomain) pitchBendValue(ce CursorEvent) int {
 	return samplePlaybackPitchBendFromCursor(ce)
 }
 
+// samplePlaybackPitchBendFromCursor maps the pad's vertical axis to playback
+// speed. The service turns the returned 14-bit bend into +/-12 semitones, so
+// the widest setting spans half speed at the bottom to double speed at the top.
+//
+// Three globals shape the response:
+//
+//	speedrange     fraction of that span to use; below 1 keeps everything
+//	               nearer normal speed
+//	speedcenter    the height that plays at normal speed; raising it hands
+//	               more of the pad to slower-than-normal speeds
+//	speeddivisions snap the axis to this many evenly spaced speeds;
+//	               0 or 1 leaves it continuous
 func samplePlaybackPitchBendFromCursor(ce CursorEvent) int {
-	p := boundValueZeroToOne(ce.Pos.Y)
-	return int(math.Round(p * 16383.0))
+	y := boundValueZeroToOne(ce.Pos.Y)
+	y = quantizeSamplePlaybackSpeed(y, samplePlaybackSpeedDivisions())
+	offset := samplePlaybackSpeedOffset(y, samplePlaybackSpeedCenter())
+	offset *= samplePlaybackSpeedRange()
+
+	// The 14-bit bend range isn't symmetric about its center: 8192 steps below,
+	// 8191 above. Scaling each side by its own span keeps the extremes at
+	// exactly 0 and 16383.
+	scale := float64(16383 - MidiPitchBendCenter)
+	if offset < 0 {
+		scale = float64(MidiPitchBendCenter)
+	}
+	bend := int(math.Round(float64(MidiPitchBendCenter) + offset*scale))
+	if bend < 0 {
+		return 0
+	}
+	if bend > 16383 {
+		return 16383
+	}
+	return bend
+}
+
+// samplePlaybackSpeedOffset converts a pad height into a signed -1..1 offset
+// around the center. Each side of the center is scaled independently, so
+// moving the center doesn't cut off one end of the speed range - it just gives
+// that end more or less of the pad to travel over.
+func samplePlaybackSpeedOffset(y float64, center float64) float64 {
+	switch {
+	case center <= 0:
+		// Normal speed at the very bottom: the whole pad speeds up.
+		return y
+	case center >= 1:
+		// Normal speed at the very top: the whole pad slows down.
+		return y - 1
+	case y >= center:
+		return (y - center) / (1 - center)
+	default:
+		return (y - center) / center
+	}
+}
+
+// quantizeSamplePlaybackSpeed snaps a pad height to one of n evenly spaced
+// values spanning the whole axis, so both extremes stay reachable. Fewer than
+// two divisions means no quantizing.
+func quantizeSamplePlaybackSpeed(y float64, n int) float64 {
+	if n < 2 {
+		return y
+	}
+	idx := int(y * float64(n))
+	if idx > n-1 {
+		idx = n - 1
+	}
+	if idx < 0 {
+		idx = 0
+	}
+	return float64(idx) / float64(n-1)
+}
+
+func samplePlaybackSpeedRange() float64 {
+	value, err := getSamplePlaybackFloatParam("global.sampleplaybackspeedrange", defaultSamplePlaybackSpeedRange)
+	if err != nil {
+		LogIfError(err)
+	}
+	return boundValueZeroToOne(value)
+}
+
+func samplePlaybackSpeedCenter() float64 {
+	value, err := getSamplePlaybackFloatParam("global.sampleplaybackspeedcenter", defaultSamplePlaybackSpeedCenter)
+	if err != nil {
+		LogIfError(err)
+	}
+	return boundValueZeroToOne(value)
+}
+
+func samplePlaybackSpeedDivisions() int {
+	if GlobalParams == nil {
+		return defaultSamplePlaybackSpeedDivisions
+	}
+	value, err := GetParamInt("global.sampleplaybackspeeddivisions")
+	if err != nil {
+		return defaultSamplePlaybackSpeedDivisions
+	}
+	if value < 0 {
+		return 0
+	}
+	if value > maxSamplePlaybackSpeedDivisions {
+		return maxSamplePlaybackSpeedDivisions
+	}
+	return value
 }
 
 func (d SamplePlaybackDomain) patchName() string {
