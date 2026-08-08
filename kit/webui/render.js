@@ -21,9 +21,29 @@ export function fitAppTitle() {
     title.style.setProperty('--app-title-scale', scale.toFixed(3));
 }
 
+// Attract screens per mode. Modes without an entry use the default image
+// already in the markup.
+const attractImages = {
+    goat: { src: 'goat_attractscreen.png', alt: 'Dirty Goat Roadhouse' }
+};
+const defaultAttractImage = { src: 'sppro_attractscreen.png', alt: 'Space Palette Pro' };
+
+function applyAttractImage(mode) {
+    const img = document.querySelector('#attract-overlay .attract-image');
+    if (!img) return;
+    const { src, alt } = attractImages[mode] || defaultAttractImage;
+    // Only touch src when it changes, so switching modes doesn't make the
+    // browser re-fetch and flash the image.
+    if (!img.getAttribute('src').endsWith(src)) {
+        img.setAttribute('src', src);
+    }
+    img.setAttribute('alt', alt);
+}
+
 export function applyInitialPageMode() {
     document.body.classList.remove('initial-pro', 'initial-bss', 'initial-pro2', 'initial-goat');
     document.body.classList.add(`initial-${UIState.initialPage}`);
+    applyAttractImage(UIState.initialPage);
     for (const patch of patchNames) {
         updatePalettePadRoute(patch, initialPageDefaultRoute(UIState.initialPage));
     }
