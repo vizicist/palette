@@ -29,6 +29,20 @@ xcopy /e /y %PALETTE_SOURCE%\%datadir%\* %ship%\%datadir% >nul
 rm -f %ship%\%datadir%\saved\global\_Current.json
 rm -f %ship%\%datadir%\saved\global\_Boot.json
 
+rem Attract-mode videos are a per-installation extra. The installer creates the
+rem directory and its README, so the feature is discoverable and the engine has
+rem somewhere to look, but it never ships the videos themselves: they are
+rem hundreds of megabytes and whatever suits one venue rarely suits another.
+rem The xcopy above brought along whatever videos this build machine happens to
+rem have, so the directory is rebuilt here containing only the README.
+rem An installed directory holding just the README does not turn the feature on;
+rem the engine plays videos only when it finds actual video files.
+rm -fr %ship%\%datadir%\config\attractmode_videos
+if exist "%PALETTE_SOURCE%\%datadir%\config\attractmode_videos\README.md" (
+	mkdir "%ship%\%datadir%\config\attractmode_videos"
+	copy "%PALETTE_SOURCE%\%datadir%\config\attractmode_videos\README.md" "%ship%\%datadir%\config\attractmode_videos" >nul
+)
+
 echo ================ Creating installer for %datadir%
 
 set "installer_output=%PALETTE_SOURCE%\release\palette_%version%_%datadir%.exe"

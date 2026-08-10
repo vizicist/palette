@@ -565,6 +565,19 @@ func applyAttractGlobalParam(name string, value string) bool {
 	case "global.attractenabled":
 		theAttractManager.SetAttractEnabled(IsTrueValue(value))
 		return true
+	case "global.attractvideos":
+		// Take effect while attract mode is already running, so the videos can
+		// be brought up or taken down mid-show without waiting for the next
+		// attract cycle. Start talks to Resolume over HTTP, so it goes to a
+		// goroutine rather than blocking the API call.
+		if theAttractManager.AttractModeIsOn() {
+			if IsTrueValue(value) {
+				go TheAttractVideoPlayer().Start()
+			} else {
+				go TheAttractVideoPlayer().Stop()
+			}
+		}
+		return true
 	case "global.attractidlesecs":
 		var i int64
 		if GetInt(value, &i) {

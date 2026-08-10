@@ -139,6 +139,15 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 
 	go TheBidule().Reset()
 
+	// Attract videos, on installations that have them, play on the Resolume
+	// output for as long as attract mode lasts. Both calls reach Resolume over
+	// the network, so they run off the tick like the Bidule reset above.
+	if onoff {
+		go TheAttractVideoPlayer().Start()
+	} else {
+		go TheAttractVideoPlayer().Stop()
+	}
+
 	am.lastAttractModeChange = time.Now()
 
 	// Tell the GUI, so the attract screen appears and disappears with the
@@ -181,6 +190,10 @@ func (am *AttractManager) doAttractAction() {
 	if !am.attractEnabled || !am.AttractModeIsOn() {
 		return
 	}
+	// Move to the next video when the current one has played through. This only
+	// sends OSC, so it is cheap enough to check on every attract tick.
+	TheAttractVideoPlayer().Advance()
+
 	now := time.Now()
 	dt := now.Sub(am.lastAttractGestureTime).Seconds()
 
