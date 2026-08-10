@@ -2,9 +2,13 @@ package kit
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +19,76 @@ import (
 )
 
 var resolumePort = 7000
+
+// resolumeRESTTimeout is per request. Opening a clip makes Resolume read the
+// file header, which is slower than the OSC messages elsewhere in the engine.
+const resolumeRESTTimeout = 10 * time.Second
+
+var resolumeRESTClient = &http.Client{Timeout: resolumeRESTTimeout}
+
+func resolumeRESTPort() int {
+	if GlobalParams == nil {
+		return 8080
+	}
+	port, err := GetParamInt("global.resolumerestport")
+	if err != nil {
+		LogIfError(err)
+		port = 8080 // Resolume's default webserver port
+	}
+	return port
+}
+
+// resolumeREST sends one request to Resolume's REST API and returns the body of
+// a 2xx response. Anything else - including Resolume not running, or its
+// webserver being switched off - comes back as an error for the caller to
+// report once.
+//
+// The REST API exists alongside OSC because OSC can only address things the
+// composition already contains: opening a file into a clip has no OSC
+// equivalent.
+func resolumeREST(method string, apipath string, contentType string, body string) ([]byte, error) {
+
+	fullURL := fmt.Sprintf("http://%s:%d/api/v1%s", LocalAddress, resolumeRESTPort(), apipath)
+
+	var reader io.Reader
+	if body != "" {
+		reader = strings.NewReader(body)
+	}
+	req, err := http.NewRequest(method, fullURL, reader)
+	if err != nil {
+		return nil, err
+	}
+	if body != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
+
+	resp, err := resolumeRESTClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		LogIfError(resp.Body.Close())
+	}()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("resolume REST %s %s returned %s: %s",
+			method, apipath, resp.Status, strings.TrimSpace(string(data)))
+	}
+	return data, nil
+}
+
+// resolumeFileURL converts an absolute path to the file:/// URL Resolume
+// expects: forward slashes and percent-encoded special characters, even on
+// Windows, where C:\a b\c.mp4 becomes file:///C:/a%20b/c.mp4.
+func resolumeFileURL(path string) string {
+	slashed := strings.TrimPrefix(filepath.ToSlash(path), "/")
+	u := url.URL{Scheme: "file", Path: "/" + slashed}
+	return u.String()
+}
 
 type Resolume struct {
 	resolumeClient   *osc.Client
@@ -294,6 +368,151 @@ func (r *Resolume) TextLayerNum() int {
 	return layerNum
 }
 
+// Resolume serves REST calls while it is still opening a composition: the
+// window appears first, and the layers arrive over the next several seconds.
+const (
+	resolumeCompositionPollInterval = 500 * time.Millisecond
+	resolumeCompositionTimeout      = 30 * time.Second
+)
+
+// resolumeLayerCount returns how many layers the composition currently has.
+func resolumeLayerCount() (int, error) {
+
+	data, err := resolumeREST("GET", "/composition", "", "")
+	if err != nil {
+		return 0, err
+	}
+	var composition struct {
+		Layers []json.RawMessage `json:"layers"`
+	}
+	if err := json.Unmarshal(data, &composition); err != nil {
+		return 0, fmt.Errorf("unable to parse Resolume composition: %w", err)
+	}
+	return len(composition.Layers), nil
+}
+
+// waitForResolumeComposition blocks until the composition has at least
+// minLayers layers, which is how the engine tells that Resolume has finished
+// opening it.
+//
+// Acting on the first answer instead is wrong in both directions: it misses
+// layers that are about to exist - the engine logged "text layer is not in the
+// composition, numlayers=3" against a five layer composition doing exactly
+// that - and it would let the attract videos add layers to a composition that
+// is still growing, leaving too many.
+func waitForResolumeComposition(minLayers int, timeout time.Duration) (int, error) {
+
+	deadline := time.Now().Add(timeout)
+	var lastErr error
+
+	for {
+		numLayers, err := resolumeLayerCount()
+		switch {
+		case err != nil:
+			lastErr = err
+		case numLayers >= minLayers:
+			return numLayers, nil
+		default:
+			lastErr = fmt.Errorf("composition has %d layers, waiting for %d", numLayers, minLayers)
+		}
+		if time.Now().After(deadline) {
+			return 0, lastErr
+		}
+		time.Sleep(resolumeCompositionPollInterval)
+	}
+}
+
+// textLayerSplashImages maps a clip number on the text layer to the parameter
+// naming the image that belongs in it.
+//
+// Clip 1 is deliberately absent. It holds the text generator that showText
+// writes preset names into, which is a Resolume source rather than a file, and
+// whose font, size and colour are set up in the composition - rebuilding it
+// would throw that away to fix a problem it doesn't have.
+var textLayerSplashImages = map[int]string{
+	2: "global.resolumestartingupimage",
+	3: "global.resolumerebootingimage",
+	4: "global.resolumerestartingimage",
+}
+
+// textLayerSplashClips resolves those parameters to files in the config
+// directory. A parameter left empty is skipped silently, and one naming a file
+// that isn't there is skipped with a warning, so an installation that has only
+// some of the images still gets those.
+func textLayerSplashClips() map[int]string {
+
+	clips := map[int]string{}
+	if GlobalParams == nil {
+		return clips
+	}
+
+	for clipNum, paramName := range textLayerSplashImages {
+		fileName := GetParamWithDefault(paramName, "")
+		if fileName == "" {
+			continue
+		}
+		path := ConfigFilePath(fileName)
+		if !FileExists(path) {
+			LogWarn("splash image named by parameter is not in the config directory",
+				"param", paramName, "file", fileName)
+			continue
+		}
+		clips[clipNum] = path
+	}
+	return clips
+}
+
+// buildTextLayer constructs the text layer's splash clips - starting up,
+// rebooting, restarting - from this machine's config directory, the same way
+// the attract videos construct their own layer.
+//
+// The compositions ship with absolute paths baked in, and neither survives
+// being installed anywhere else: PaletteDefault.avc has a literal
+// "%LOCALAPPDATA%\Palette\..." that Resolume never expands, and
+// PaletteDefaultSP.avc points into a developer's home directory. Resolume shows
+// the media as offline and waits for someone to relocate each file by hand.
+//
+// Building the clips outright, rather than repairing whatever the composition
+// happens to contain, means it doesn't matter what state the .avc on disk is
+// in: an unsaved composition, or one saved on a different machine, comes up
+// correct anyway because the clips are opened afresh on every activation.
+func (r *Resolume) buildTextLayer() {
+
+	layerNum := r.TextLayerNum()
+
+	numLayers, err := waitForResolumeComposition(layerNum, resolumeCompositionTimeout)
+	if err != nil {
+		LogWarn("text layer not built, Resolume composition unavailable",
+			"layer", layerNum, "err", err)
+		return
+	}
+
+	clips := textLayerSplashClips()
+	if len(clips) == 0 {
+		return
+	}
+
+	clipNums := make([]int, 0, len(clips))
+	for clipNum := range clips {
+		clipNums = append(clipNums, clipNum)
+	}
+	sort.Ints(clipNums)
+
+	built := 0
+	for _, clipNum := range clipNums {
+		path := clips[clipNum]
+		openPath := fmt.Sprintf("/composition/layers/%d/clips/%d/open", layerNum, clipNum)
+		if _, err := resolumeREST("POST", openPath, "text/plain", resolumeFileURL(path)); err != nil {
+			LogWarn("unable to build splash clip",
+				"clip", clipNum, "file", filepath.Base(path), "err", err)
+			continue
+		}
+		built++
+		LogOfType("resolume", "built splash clip", "clip", clipNum, "file", filepath.Base(path))
+	}
+	LogInfo("text layer built", "layer", layerNum, "clips", built, "numlayers", numLayers)
+}
+
 func (r *Resolume) ProcessInfo() *ProcessInfo {
 	fullpath, err := GetParam("global.resolumepath")
 	LogIfError(err)
@@ -354,6 +573,12 @@ func (r *Resolume) Activate() {
 	}
 
 	time.Sleep(5 * time.Second)
+
+	// Build the splash clips from this machine's config directory before showing
+	// one, otherwise the "starting up" clip is offline media and shows nothing.
+	// This waits for Resolume to finish opening the composition.
+	r.buildTextLayer()
+
 	LogInfo("Sending showClip 2 OSC to Resolume")
 	r.showTextLayerClip(2) // show the "starting up" splash clip while waiting
 

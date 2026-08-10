@@ -83,18 +83,18 @@ func TestAttractVideoFilesFindsVideosInNameOrder(t *testing.T) {
 
 // Resolume wants file:/// URLs with forward slashes and percent-encoding, even
 // on Windows, where a drive letter has to survive the conversion.
-func TestAttractVideoFileURL(t *testing.T) {
+func TestResolumeFileURL(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "a video.mp4")
 
-	got := attractVideoFileURL(path)
+	got := resolumeFileURL(path)
 
 	if !strings.HasPrefix(got, "file:///") {
-		t.Errorf("attractVideoFileURL(%q) = %q, want a file:/// prefix", path, got)
+		t.Errorf("resolumeFileURL(%q) = %q, want a file:/// prefix", path, got)
 	}
 	if strings.Contains(got, `\`) {
-		t.Errorf("attractVideoFileURL(%q) = %q, want no backslashes", path, got)
+		t.Errorf("resolumeFileURL(%q) = %q, want no backslashes", path, got)
 	}
 	if !strings.HasSuffix(got, "/a%20video.mp4") {
-		t.Errorf("attractVideoFileURL(%q) = %q, want the space percent-encoded", path, got)
+		t.Errorf("resolumeFileURL(%q) = %q, want the space percent-encoded", path, got)
 	}
 }

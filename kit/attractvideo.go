@@ -2,9 +2,6 @@ package kit
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -49,10 +46,6 @@ var attractVideoExtensions = map[string]bool{
 // freezing on the first video forever.
 const fallbackVideoSecs = 30.0
 
-// resolumeRESTTimeout is per request. Opening a clip makes Resolume read the
-// file header, which is slower than the OSC messages elsewhere in the engine.
-const resolumeRESTTimeout = 10 * time.Second
-
 type AttractVideoPlayer struct {
 	mutex      sync.Mutex
 	files      []string  // absolute paths, sorted
@@ -79,16 +72,17 @@ func AttractVideoDir() string {
 	return filepath.Join(ConfigDir(), attractVideoDirName)
 }
 
-var resolumeRESTClient = &http.Client{Timeout: resolumeRESTTimeout}
-
 // attractVideosEnabled gates the whole feature. It defaults to true so an
 // installation that has the directory gets the videos without configuring
 // anything, and turning it off leaves the directory in place but unused - which
 // is easier than moving hundreds of megabytes out of the way for one gig.
 func attractVideosEnabled() bool {
-	// Attract mode can be driven before the parameters are loaded (and is, in
-	// tests), and a half-started engine has no business talking to Resolume.
-	if GlobalParams == nil {
+	// Playing videos needs a running engine and loaded parameters: every OSC
+	// message here goes out through theEngine, and the layer and port come from
+	// parameters. Attract mode can be driven without either - it is, in tests -
+	// and a half-started engine has no business opening clips, let alone
+	// reaching the network to do it.
+	if theEngine == nil || GlobalParams == nil {
 		return false
 	}
 	return IsTrueValue(GetParamWithDefault("global.attractvideos", "true"))
@@ -105,63 +99,6 @@ func attractVideoLayerNum() int {
 		layerNum = 6 // last resort, matching the paramdef's init
 	}
 	return layerNum
-}
-
-func resolumeRESTPort() int {
-	port, err := GetParamInt("global.resolumerestport")
-	if err != nil {
-		LogIfError(err)
-		port = 8080 // Resolume's default webserver port
-	}
-	return port
-}
-
-// resolumeREST sends one request to Resolume's REST API and returns the body of
-// a 2xx response. Anything else - including Resolume not running, or its
-// webserver being switched off - comes back as an error for the caller to
-// report once.
-func resolumeREST(method string, apipath string, contentType string, body string) ([]byte, error) {
-
-	fullURL := fmt.Sprintf("http://%s:%d/api/v1%s", LocalAddress, resolumeRESTPort(), apipath)
-
-	var reader io.Reader
-	if body != "" {
-		reader = strings.NewReader(body)
-	}
-	req, err := http.NewRequest(method, fullURL, reader)
-	if err != nil {
-		return nil, err
-	}
-	if body != "" {
-		req.Header.Set("Content-Type", contentType)
-	}
-
-	resp, err := resolumeRESTClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		LogIfError(resp.Body.Close())
-	}()
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("resolume REST %s %s returned %s: %s",
-			method, apipath, resp.Status, strings.TrimSpace(string(data)))
-	}
-	return data, nil
-}
-
-// attractVideoFileURL converts an absolute path to the file:/// URL Resolume
-// expects: forward slashes and percent-encoded special characters, even on
-// Windows, where C:\a b\c.mp4 becomes file:///C:/a%20b/c.mp4.
-func attractVideoFileURL(path string) string {
-	slashed := strings.TrimPrefix(filepath.ToSlash(path), "/")
-	u := url.URL{Scheme: "file", Path: "/" + slashed}
-	return u.String()
 }
 
 // attractVideoFiles lists the videos to play, sorted by name so the order on
@@ -197,18 +134,17 @@ func attractVideoFiles() []string {
 // patch layers and the text layer while they play.
 func (p *AttractVideoPlayer) ensureLayer(layerNum int) error {
 
-	data, err := resolumeREST("GET", "/composition", "", "")
+	// Wait for Resolume to finish opening the composition before counting what
+	// is in it. It answers REST calls while still loading, and layers added to a
+	// composition that is still growing leave more layers than the composition
+	// is meant to have. The text layer existing is the signal that the shipped
+	// composition has arrived.
+	numLayers, err := waitForResolumeComposition(TheResolume().TextLayerNum(), resolumeCompositionTimeout)
 	if err != nil {
 		return err
 	}
-	var composition struct {
-		Layers []json.RawMessage `json:"layers"`
-	}
-	if err := json.Unmarshal(data, &composition); err != nil {
-		return fmt.Errorf("unable to parse Resolume composition: %w", err)
-	}
 
-	for numLayers := len(composition.Layers); numLayers < layerNum; numLayers++ {
+	for ; numLayers < layerNum; numLayers++ {
 		if _, err := resolumeREST("POST", "/composition/layers/add", "text/plain", ""); err != nil {
 			return fmt.Errorf("unable to add Resolume layer: %w", err)
 		}
@@ -234,7 +170,7 @@ func (p *AttractVideoPlayer) loadClips(layerNum int) error {
 	for i, file := range p.files {
 		clipNum := i + 1
 		openPath := fmt.Sprintf("/composition/layers/%d/clips/%d/open", layerNum, clipNum)
-		if _, err := resolumeREST("POST", openPath, "text/plain", attractVideoFileURL(file)); err != nil {
+		if _, err := resolumeREST("POST", openPath, "text/plain", resolumeFileURL(file)); err != nil {
 			return fmt.Errorf("unable to load %s into clip %d: %w", filepath.Base(file), clipNum, err)
 		}
 		LogOfType("resolume", "loaded attract video", "clip", clipNum, "file", filepath.Base(file))
@@ -254,7 +190,7 @@ func (p *AttractVideoPlayer) loadDurations() []float64 {
 
 	fileURLs := make([]string, len(p.files))
 	for i, file := range p.files {
-		fileURLs[i] = attractVideoFileURL(file)
+		fileURLs[i] = resolumeFileURL(file)
 	}
 	body, err := json.Marshal(fileURLs)
 	if err != nil {
