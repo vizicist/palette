@@ -20,10 +20,10 @@ type AttractManager struct {
 	attractRand      *rand.Rand
 	attractRandMutex sync.Mutex
 
-	// Times of the recent touches on the pads, used to decide whether someone
-	// is really there. Only touches inside the ExitTouchSecs window are kept.
+	// Recent touches on the pads, used to decide whether someone is really
+	// there. Only touches inside the ExitTouchSecs window are kept.
 	attractTouchMutex sync.Mutex
-	attractTouchTimes []time.Time
+	attractTouches    []attractTouch
 
 	// parameters
 	GestureMinLength     float64
@@ -95,14 +95,31 @@ func NewAttractManager() *AttractManager {
 	return am
 }
 
-// noticeTouch records one touch on the pads and reports whether enough of them
-// have arrived close enough together to mean someone is really there.
+// attractTouch is one contact on the pads: the cursor GID that produced it, and
+// when that contact was first seen.
+type attractTouch struct {
+	gid  int
+	when time.Time
+}
+
+// noticeTouch records a touch on the pads from one cursor GID, and reports
+// whether enough distinct contacts have arrived close enough together to mean
+// someone is really there.
 //
 // A single touch used to be enough, which made attract mode fragile: someone
 // brushing past the pads, or one stray reading from the depth camera, would
 // drop the installation out of its attract loop and leave it sitting idle until
 // the idle timer brought it back.
-func (am *AttractManager) noticeTouch() bool {
+//
+// Counting by GID rather than by event is what makes that work. A Morph
+// re-sends "down" for a contact that is still held, and ExecuteCursorEvent
+// carries that through unchanged, so one press arrives as a stream of down
+// events rather than one: a capture of a single press showed the same GID
+// firing six of them inside a second. Counting those raw reaches any threshold
+// in a fraction of a second, which is no better than the single-touch
+// behaviour this replaces. One contact is one touch, however many events it
+// emits, so the count means what it says.
+func (am *AttractManager) noticeTouch(gid int) bool {
 
 	needed := am.ExitTouchCount
 	if needed < 1 {
@@ -116,18 +133,27 @@ func (am *AttractManager) noticeTouch() bool {
 	// within the last ExitTouchSecs" rather than a running total that a slow
 	// drip of stray input would eventually reach.
 	now := time.Now()
-	kept := am.attractTouchTimes[:0]
-	for _, touch := range am.attractTouchTimes {
-		if now.Sub(touch).Seconds() <= am.ExitTouchSecs {
-			kept = append(kept, touch)
+	alreadyCounted := false
+	kept := am.attractTouches[:0]
+	for _, touch := range am.attractTouches {
+		if now.Sub(touch.when).Seconds() > am.ExitTouchSecs {
+			continue
 		}
+		if touch.gid == gid {
+			alreadyCounted = true
+		}
+		kept = append(kept, touch)
 	}
-	am.attractTouchTimes = append(kept, now)
+	am.attractTouches = kept
 
-	if len(am.attractTouchTimes) < needed {
+	if !alreadyCounted {
+		am.attractTouches = append(am.attractTouches, attractTouch{gid: gid, when: now})
+	}
+
+	if len(am.attractTouches) < needed {
 		return false
 	}
-	am.attractTouchTimes = am.attractTouchTimes[:0]
+	am.attractTouches = am.attractTouches[:0]
 	return true
 }
 
@@ -135,7 +161,7 @@ func (am *AttractManager) noticeTouch() bool {
 // can't count towards leaving attract mode the next time it turns on.
 func (am *AttractManager) forgetTouches() {
 	am.attractTouchMutex.Lock()
-	am.attractTouchTimes = am.attractTouchTimes[:0]
+	am.attractTouches = am.attractTouches[:0]
 	am.attractTouchMutex.Unlock()
 }
 

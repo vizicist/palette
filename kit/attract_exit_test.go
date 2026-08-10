@@ -130,30 +130,51 @@ func attractManagerWithTouchThreshold(needed int, secs float64) *AttractManager 
 func TestAttractTouchThresholdNeedsSeveralTouches(t *testing.T) {
 	am := attractManagerWithTouchThreshold(3, 2.0)
 
-	if am.noticeTouch() {
+	if am.noticeTouch(1) {
 		t.Fatal("one touch ended attract mode")
 	}
-	if am.noticeTouch() {
+	if am.noticeTouch(2) {
 		t.Fatal("two touches ended attract mode")
 	}
-	if !am.noticeTouch() {
+	if !am.noticeTouch(3) {
 		t.Fatal("three touches within the window did not end attract mode")
 	}
 }
 
+// One contact held on a pad re-sends "down" - a capture of a single press
+// showed the same GID firing six of them inside a second. However many events
+// it produces, it is one touch.
+func TestAttractTouchThresholdCountsOneContactOnce(t *testing.T) {
+	am := attractManagerWithTouchThreshold(3, 2.0)
+
+	for i := 0; i < 10; i++ {
+		if am.noticeTouch(7) {
+			t.Fatalf("a single held contact ended attract mode after %d down events", i+1)
+		}
+	}
+	// Two more distinct contacts are what it takes.
+	if am.noticeTouch(15) {
+		t.Fatal("two contacts ended attract mode")
+	}
+	if !am.noticeTouch(115) {
+		t.Fatal("three distinct contacts did not end attract mode")
+	}
+}
+
 // Touches that have aged out of the window don't count, so a slow drip of stray
-// input never accumulates into an exit.
+// input never accumulates into an exit. A contact that comes back after the
+// window counts again, since by then it is a new touch.
 func TestAttractTouchThresholdForgetsOldTouches(t *testing.T) {
 	am := attractManagerWithTouchThreshold(3, 2.0)
-	am.attractTouchTimes = []time.Time{
-		time.Now().Add(-10 * time.Second),
-		time.Now().Add(-5 * time.Second),
+	am.attractTouches = []attractTouch{
+		{gid: 1, when: time.Now().Add(-10 * time.Second)},
+		{gid: 2, when: time.Now().Add(-5 * time.Second)},
 	}
 
-	if am.noticeTouch() {
+	if am.noticeTouch(3) {
 		t.Fatal("touches from outside the window counted towards leaving attract mode")
 	}
-	if got := len(am.attractTouchTimes); got != 1 {
+	if got := len(am.attractTouches); got != 1 {
 		t.Fatalf("kept %d touches, want only the one just now", got)
 	}
 }
@@ -163,11 +184,11 @@ func TestAttractTouchThresholdForgetsOldTouches(t *testing.T) {
 func TestAttractTouchThresholdResetsAfterReaching(t *testing.T) {
 	am := attractManagerWithTouchThreshold(2, 2.0)
 
-	am.noticeTouch()
-	if !am.noticeTouch() {
+	am.noticeTouch(1)
+	if !am.noticeTouch(2) {
 		t.Fatal("two touches did not reach the threshold")
 	}
-	if am.noticeTouch() {
+	if am.noticeTouch(3) {
 		t.Fatal("a single touch after the threshold ended attract mode again")
 	}
 }
@@ -177,11 +198,11 @@ func TestAttractTouchThresholdResetsAfterReaching(t *testing.T) {
 func TestAttractForgetTouches(t *testing.T) {
 	am := attractManagerWithTouchThreshold(3, 2.0)
 
-	am.noticeTouch()
-	am.noticeTouch()
+	am.noticeTouch(1)
+	am.noticeTouch(2)
 	am.forgetTouches()
 
-	if am.noticeTouch() {
+	if am.noticeTouch(3) {
 		t.Fatal("touches from before the reset still counted")
 	}
 }
@@ -191,7 +212,7 @@ func TestAttractForgetTouches(t *testing.T) {
 func TestAttractTouchThresholdUnsetCountExitsOnFirstTouch(t *testing.T) {
 	am := attractManagerWithTouchThreshold(0, 2.0)
 
-	if !am.noticeTouch() {
+	if !am.noticeTouch(1) {
 		t.Fatal("with no threshold configured, one touch should end attract mode")
 	}
 }

@@ -221,11 +221,11 @@ func (quad *Quad) onCursorEvent(state ActiveCursor) error {
 	// past the pads, or one stray reading from the depth camera, doesn't drop
 	// the installation out of its attract loop.
 	//
-	// Only "down" counts. A finger held on a pad produces a stream of "drag"
-	// events, and counting those would reach any threshold instantly, which is
-	// the behaviour this replaces.
+	// Only "down" counts, and the GID is what makes it a count of touches
+	// rather than of events: a held contact re-sends "down", so noticeTouch
+	// folds every event from one GID into a single touch.
 	if !state.Current.IsAttractGenerated() && theAttractManager.AttractModeIsOn() {
-		if state.Current.Ddu == "down" && theAttractManager.noticeTouch() {
+		if state.Current.Ddu == "down" && theAttractManager.noticeTouch(state.Current.GID) {
 			theAttractManager.SetAttractMode(false)
 		}
 	}
