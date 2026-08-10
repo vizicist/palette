@@ -66,6 +66,10 @@ export const UIState = {
     paramEnums: null,
     attractModeActive: false,
     attractAllowGui: false,
+    // Whether the Theme Selector is offered at all, from global.showthemes. When
+    // it is off the themes are not shown and the Quad presets come from the
+    // default theme's directory.
+    showThemes: true,
     helpVisible: false,
 
     wantsStepperStatus() {

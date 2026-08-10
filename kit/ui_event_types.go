@@ -21,6 +21,7 @@ type EngineStatusSnapshot struct {
 	Mode              string            `json:"mode"`
 	GuideDefaultLevel string            `json:"guidefaultlevel"`
 	AttractAllowGUI   bool              `json:"attractallowgui"`
+	ShowThemes        bool              `json:"showthemes"`
 	Patches           map[string]string `json:"patches,omitempty"`
 }
 

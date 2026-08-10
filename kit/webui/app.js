@@ -115,6 +115,7 @@ function syncInitialPageValue(page) {
 function syncStartupMode(status) {
     UIState.advancedMode = status && (status.guidefaultlevel === '1' || status.guidefaultlevel === 1);
     UIState.attractAllowGui = !!(status && status.attractallowgui);
+    UIState.showThemes = statusShowThemes(status);
     const mode = statusMode(status);
     if (mode) {
         UIState.setInitialPage(mode);
@@ -144,6 +145,35 @@ function setupThemeSelector() {
         btn.addEventListener('click', () => selectTheme(btn.dataset.theme));
     });
     updateThemeButtons();
+    applyShowThemes(false);
+}
+
+// statusShowThemes reads global.showthemes out of an engine status. A status
+// without the field is an older engine, which had no way to turn the themes off,
+// so it means "shown" rather than "hidden".
+function statusShowThemes(status) {
+    if (status && Object.prototype.hasOwnProperty.call(status, 'showthemes')) {
+        return !!status.showthemes;
+    }
+    return true;
+}
+
+// applyShowThemes hides or shows the Theme Selector. With the themes hidden
+// there is no way to pick one, so the current theme falls back to the default -
+// the same thing leaving advanced mode does with the advanced-only All theme -
+// and the Quad presets come from that theme's directory.
+function applyShowThemes(shouldLoadPresets = true) {
+    const selector = document.getElementById('theme-selector');
+    if (selector) {
+        selector.classList.toggle('hidden', !UIState.showThemes);
+    }
+    if (UIState.showThemes || UIState.currentTheme === defaultThemeDir) return;
+
+    UIState.setTheme(defaultThemeDir);
+    updateThemeButtons();
+    if (shouldLoadPresets && UIState.currentCategory === 'quad' && !UIState.showingParams) {
+        loadPresets();
+    }
 }
 
 async function selectTheme(dir) {
@@ -1594,6 +1624,15 @@ function handleUIStatus(status) {
 
     if (status && Object.prototype.hasOwnProperty.call(status, 'attractallowgui')) {
         UIState.attractAllowGui = !!status.attractallowgui;
+    }
+    // Take global.showthemes changes live, so turning it off puts the Theme
+    // Selector away and drops back to the default theme without a reload.
+    if (status && Object.prototype.hasOwnProperty.call(status, 'showthemes')) {
+        const showThemes = !!status.showthemes;
+        if (showThemes !== UIState.showThemes) {
+            UIState.showThemes = showThemes;
+            applyShowThemes();
+        }
     }
     const mode = statusMode(status);
     if (mode) {
