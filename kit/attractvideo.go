@@ -95,6 +95,10 @@ func attractVideosEnabled() bool {
 }
 
 func attractVideoLayerNum() int {
+	// Resolume startup can ask for this before the parameters are loaded.
+	if GlobalParams == nil {
+		return 6
+	}
 	layerNum, err := GetParamInt("global.attractvideolayer")
 	if err != nil {
 		LogIfError(err)
@@ -334,8 +338,19 @@ func (p *AttractVideoPlayer) Start() {
 
 	p.current = 0
 	p.playing = true
+
+	// Resolume creates layers at half opacity, which let the patch layers show
+	// through the video. Set it every time rather than once at creation: the
+	// layer may have been made on another machine, or by hand.
+	TheResolume().setLayerOpacity(layerNum, 1.0)
 	TheResolume().connectClip(layerNum, 1)
 	TheResolume().bypassLayer(layerNum, false)
+	// Solo so nothing else reaches the output at all. Opacity alone isn't
+	// enough: a video that doesn't fill the frame, or one with an alpha
+	// channel, would still let the patch layers show around or through it.
+	// Soloing last, once the layer is already up, avoids a frame of black.
+	TheResolume().soloLayer(layerNum, true)
+
 	p.nextSwitch = time.Now().Add(p.durationOf(0))
 
 	LogInfo("attract videos playing", "count", len(p.files), "layer", layerNum)
@@ -352,7 +367,12 @@ func (p *AttractVideoPlayer) Stop() {
 		return
 	}
 	p.playing = false
-	TheResolume().bypassLayer(attractVideoLayerNum(), true)
+	layerNum := attractVideoLayerNum()
+	// Un-solo first. The video is still opaque and on top, so nothing changes
+	// on screen until the layer is bypassed - one clean transition back to
+	// normal, rather than a frame of black or of blended patch graphics.
+	TheResolume().soloLayer(layerNum, false)
+	TheResolume().bypassLayer(layerNum, true)
 	LogInfo("attract videos stopped")
 }
 

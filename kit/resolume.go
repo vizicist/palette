@@ -357,6 +357,11 @@ func (r *Resolume) Activate() {
 	LogInfo("Sending showClip 2 OSC to Resolume")
 	r.showTextLayerClip(2) // show the "starting up" splash clip while waiting
 
+	// Clear a solo left behind by an engine that was killed while attract
+	// videos were playing. Without this, Resolume comes up showing only that
+	// layer, with nothing on screen to explain why.
+	r.soloLayer(attractVideoLayerNum(), false)
+
 	// Activate all layers a few times to make sure it takes
 	for i := 0; i < 12; i++ {
 		for _, patch := range PatchNames() {
@@ -389,6 +394,31 @@ func (r *Resolume) bypassLayer(layerNum int, onoff bool) {
 		v = 1
 	}
 	msg.Append(int32(v))
+	theEngine.SendOsc(r.resolumeClient, msg)
+}
+
+// soloLayer makes a layer the only one that reaches the output, and is how
+// attract videos cover the patch layers completely. Turning solo off restores
+// whatever the other layers were doing, without having to remember their
+// individual bypass states.
+func (r *Resolume) soloLayer(layerNum int, onoff bool) {
+	addr := fmt.Sprintf("/composition/layers/%d/solo", layerNum)
+	msg := osc.NewMessage(addr)
+	v := 0
+	if onoff {
+		v = 1
+	}
+	msg.Append(int32(v))
+	theEngine.SendOsc(r.resolumeClient, msg)
+}
+
+// setLayerOpacity sets a layer's video opacity, 0.0 to 1.0. Resolume creates
+// new layers at half opacity, so a layer the engine added has to be told to be
+// opaque before anything on it will cover what is underneath.
+func (r *Resolume) setLayerOpacity(layerNum int, opacity float32) {
+	addr := fmt.Sprintf("/composition/layers/%d/video/opacity", layerNum)
+	msg := osc.NewMessage(addr)
+	msg.Append(opacity)
 	theEngine.SendOsc(r.resolumeClient, msg)
 }
 
