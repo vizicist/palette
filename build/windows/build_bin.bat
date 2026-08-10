@@ -33,8 +33,15 @@ copy %PALETTE_SOURCE%\VERSION %ship% >nul
 set /p version=<../../VERSION
 
 echo ================ Upgrading Python
-python -m pip install pip | grep -v "already.*satisfied"
-pip install --use-pep517 pip python-osc requests mido | grep -v "already satisfied"
+call :find_python
+if "%PALETTE_PYTHON%" == "" (
+	echo Skipping the Python packages - no Python with a working pip was found.
+	echo The palette binaries do not need it, but the helpers in %PALETTE_SOURCE%\python do.
+	echo Set PALETTE_PYTHON_EXE to a python.exe that has pip, or run "python -m ensurepip".
+) else (
+	"%PALETTE_PYTHON%" -m pip install --upgrade pip | findstr /v /r /c:"already.*satisfied"
+	"%PALETTE_PYTHON%" -m pip install --use-pep517 python-osc requests mido | findstr /v /r /c:"already.*satisfied"
+)
 
 rem echo ================ Compiling depthlib
 rem pushd ..\..\depthlib
@@ -245,6 +252,29 @@ echo Expected gcc.exe and g++.exe under:
 echo     %MINGW64_BIN%
 echo Install MinGW-w64 there, or update build\windows\build_bin.bat if your install lives somewhere else.
 exit /b 1
+
+rem ======== Find a python.exe that has a working pip.  Whatever "python" is
+rem ======== first on the PATH may be a venv without pip, or the Microsoft
+rem ======== Store stub, so each candidate is tested before it's used.
+:find_python
+set "PALETTE_PYTHON="
+if not "%PALETTE_PYTHON_EXE%" == "" call :check_python "%PALETTE_PYTHON_EXE%"
+for /f "delims=" %%i in ('where python 2^>nul') do call :check_python "%%i"
+for /f "delims=" %%i in ('where python3 2^>nul') do call :check_python "%%i"
+for /f "delims=" %%i in ('py -3 -c "import sys; print(sys.executable)" 2^>nul') do call :check_python "%%i"
+exit /b 0
+
+:check_python
+if not "%PALETTE_PYTHON%" == "" exit /b 0
+set "PYCANDIDATE=%~1"
+if not exist "%PYCANDIDATE%" exit /b 1
+rem the WindowsApps stub opens the Microsoft Store instead of running python
+echo "%PYCANDIDATE%" | findstr /i /c:"WindowsApps" >nul
+if not errorlevel 1 exit /b 1
+"%PYCANDIDATE%" -m pip --version >nul 2>&1
+if errorlevel 1 exit /b 1
+set "PALETTE_PYTHON=%PYCANDIDATE%"
+exit /b 0
 
 :check_git_lfs
 git lfs version >nul 2>&1
