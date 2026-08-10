@@ -552,6 +552,7 @@ var attractFloatParamSetters = map[string]func(*AttractManager, float64){
 	"global.attractgesturemaxlength":     func(am *AttractManager, f float64) { am.GestureMaxLength = f },
 	"global.attractgesturezmin":          func(am *AttractManager, f float64) { am.GestureZMin = f },
 	"global.attractgesturezmax":          func(am *AttractManager, f float64) { am.GestureZMax = f },
+	"global.attractexitsecs":             func(am *AttractManager, f float64) { am.ExitTouchSecs = f },
 }
 
 func applyAttractGlobalParam(name string, value string) bool {
@@ -595,6 +596,15 @@ func applyAttractGlobalParam(name string, value string) bool {
 				i = 1
 			}
 			theAttractManager.GestureNumSteps = int(i)
+		}
+		return true
+	case "global.attractexittouches":
+		var i int64
+		if GetInt(value, &i) {
+			if i < 1 {
+				i = 1 // one touch is the least that can end attract mode
+			}
+			theAttractManager.ExitTouchCount = int(i)
 		}
 		return true
 	}
