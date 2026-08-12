@@ -24,6 +24,7 @@ func uiStatusSnapshot() EngineStatusSnapshot {
 		GuideDefaultLevel: GetParamWithDefault("global.guidefaultlevel", "0"),
 		AttractAllowGUI:   IsTrueValue(GetParamWithDefault("global.attractallowgui", "false")),
 		ShowThemes:        IsTrueValue(GetParamWithDefault("global.showthemes", "true")),
+		ShowGoatsButton:   IsTrueValue(GetParamWithDefault("global.showgoatsbutton", "true")),
 	}
 	if theAttractManager != nil {
 		snapshot.AttractMode = theAttractManager.AttractModeIsOn()

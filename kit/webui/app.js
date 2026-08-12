@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (urlParams.get('touchscreen') === '1') {
         document.body.classList.add('touchscreen-embed');
     }
+    // Registered before the NATS feed is awaited, so hover styling behaves even
+    // if the feed is slow to come up.
+    setupPointerKind();
 
     try {
         await setupUIStateFeed({
@@ -116,6 +119,7 @@ function syncStartupMode(status) {
     UIState.advancedMode = status && (status.guidefaultlevel === '1' || status.guidefaultlevel === 1);
     UIState.attractAllowGui = !!(status && status.attractallowgui);
     UIState.showThemes = statusShowThemes(status);
+    UIState.showGoatsButton = statusShowGoatsButton(status);
     const mode = statusMode(status);
     if (mode) {
         UIState.setInitialPage(mode);
@@ -125,6 +129,16 @@ function syncStartupMode(status) {
 function statusMode(status) {
     if (!status) return '';
     return status.mode || '';
+}
+
+// setupPointerKind records whether the last pointer down was a finger, so the
+// stylesheet can leave hover styling to a pointer that is able to move off
+// again. Without it, tapping a button that opens an overlay leaves that button
+// highlighted after the overlay closes.
+function setupPointerKind() {
+    window.addEventListener('pointerdown', (e) => {
+        document.body.classList.toggle('touch-input', e.pointerType === 'touch');
+    }, true);
 }
 
 function setupRitualNav() {
@@ -1460,14 +1474,51 @@ function setupControls() {
             setAdvancedMode(false);
             return;
         }
+        // Show the choices first so the press registers immediately, then stop
+        // the sound. Whoever reached for RESET wants it quiet now, not once
+        // they have picked something off the modal.
         showResetModal();
+        await stopNotesAndLoops();
     });
 
     document.getElementById('btn-help').addEventListener('click', () => {
         showHelp();
     });
 
+    document.getElementById('btn-show-goats').addEventListener('click', showGoats);
+
+    applyShowGoatsButton();
     setupRecording();
+}
+
+// showGoats drops straight into attract mode, which is what puts the videos in
+// config/attractmode_videos on the Resolume output. Attract mode normally
+// arrives on its own after global.attractidlesecs of quiet; this is the way to
+// ask for it now.
+async function showGoats() {
+    try {
+        await API.call('global.attract', { onoff: 'true' });
+    } catch (e) {
+        console.error('Failed to start attract mode:', e);
+        showToast('Failed to start attract mode');
+    }
+}
+
+// statusShowGoatsButton reads global.showgoatsbutton out of an engine status. A
+// status without the field is an older engine, which always had the button, so
+// that means shown rather than hidden.
+function statusShowGoatsButton(status) {
+    if (status && Object.prototype.hasOwnProperty.call(status, 'showgoatsbutton')) {
+        return !!status.showgoatsbutton;
+    }
+    return true;
+}
+
+function applyShowGoatsButton() {
+    const btn = document.getElementById('btn-show-goats');
+    if (btn) {
+        btn.classList.toggle('hidden', !UIState.showGoatsButton);
+    }
 }
 
 // Help overlay functionality
@@ -1581,6 +1632,26 @@ async function allNotesOff() {
     }
 }
 
+// stopNotesAndLoops silences whatever is sounding right now: looping switched
+// off and the loops cleared first, so nothing re-triggers, then all notes off
+// across the four patches.
+//
+// It deliberately stops short of the audio reset silenceAll does. That restarts
+// Bidule, which is one of the choices on the reset modal rather than something
+// to do on the way to offering them.
+async function stopNotesAndLoops() {
+    try {
+        await Promise.all(patchNames.flatMap(p => [
+            API.setPatchParam(p, 'misc.looping_on', 'false'),
+            API.call('patch.clear', { patch: p })
+        ]));
+        await API.call('quad.ANO');
+    } catch (e) {
+        console.error('Failed to stop notes and loops:', e);
+        showToast('Failed to stop notes and loops');
+    }
+}
+
 async function silenceAll() {
     try {
         for (const p of patchNames) {
@@ -1632,6 +1703,15 @@ function handleUIStatus(status) {
         if (showThemes !== UIState.showThemes) {
             UIState.showThemes = showThemes;
             applyShowThemes();
+        }
+    }
+    // Same for the Show Goats button, so turning it off takes the button away
+    // without a reload.
+    if (status && Object.prototype.hasOwnProperty.call(status, 'showgoatsbutton')) {
+        const showGoatsButton = !!status.showgoatsbutton;
+        if (showGoatsButton !== UIState.showGoatsButton) {
+            UIState.showGoatsButton = showGoatsButton;
+            applyShowGoatsButton();
         }
     }
     const mode = statusMode(status);

@@ -1410,7 +1410,13 @@ body.initial-goat #preset-grid.grid-mode {
     }
 }
 
-#controls button:hover {
+/* A touch tap leaves :hover stuck on whatever was tapped: nothing ever moves
+   off it, so a button that opens an overlay is still highlighted when the
+   overlay closes. body.touch-input says the last pointer was a finger, which is
+   more reliable here than @media (hover: hover) - this machine has a mouse
+   attached as well as a touchscreen, so the primary pointer reports as
+   hover-capable and the media query would never take effect. */
+body:not(.touch-input) #controls button:hover {
     background: var(--highlight);
 }
 

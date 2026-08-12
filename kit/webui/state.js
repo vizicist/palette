@@ -70,6 +70,8 @@ export const UIState = {
     // it is off the themes are not shown and the Quad presets come from the
     // default theme's directory.
     showThemes: true,
+    // Whether the Show Goats button is offered, from global.showgoatsbutton.
+    showGoatsButton: true,
     helpVisible: false,
 
     wantsStepperStatus() {

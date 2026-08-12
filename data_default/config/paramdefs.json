@@ -210,6 +210,7 @@
 "global.guishowall": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "global.guidefaultlevel": {"valuetype":"int", "min":"0", "max":"1", "init":"0", "comment":"#" },
 "global.showthemes": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# offer the preset themes in the GUI" },
+"global.showgoatsbutton": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# offer the Show Goats button in the GUI" },
 "global.keykitrun": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"#" },
 "global.keykitpath": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# keykit executable path" },
 "global.keykitroot": {"valuetype":"string", "min":"", "max":"", "init":"", "comment":"# keykit root dir" },

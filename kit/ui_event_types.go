@@ -22,6 +22,7 @@ type EngineStatusSnapshot struct {
 	GuideDefaultLevel string            `json:"guidefaultlevel"`
 	AttractAllowGUI   bool              `json:"attractallowgui"`
 	ShowThemes        bool              `json:"showthemes"`
+	ShowGoatsButton   bool              `json:"showgoatsbutton"`
 	Patches           map[string]string `json:"patches,omitempty"`
 }
 
