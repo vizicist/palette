@@ -36,6 +36,18 @@ export function setupActionMenu() {
 // { id, label, danger? }. Resolves with the selected id or null.
 export function showActionMenu({ title, items, cancelLabel = 'Cancel' }) {
     const overlay = document.getElementById('action-menu-overlay');
+
+    // A second menu opened while one is still up takes over the single
+    // menuResolve slot. Settle the one being replaced first - as a cancel, since
+    // nothing was chosen from it - or its caller waits on a promise that can
+    // never resolve, and whatever it was going to do after the await is dropped
+    // silently.
+    if (menuResolve) {
+        const stale = menuResolve;
+        menuResolve = null;
+        stale(null);
+    }
+
     overlay.querySelector('#action-menu-title').textContent = title || '';
 
     const container = overlay.querySelector('#action-menu-buttons');

@@ -449,21 +449,43 @@ var samplePlaybackSync struct {
 	pending   bool
 }
 
-// SuspendSamplePlaybackSync defers resyncs until the returned function runs,
-// at which point one resync happens if anything asked for it. Safe to nest.
+// SuspendSamplePlaybackSync defers resyncs until the returned function runs, at
+// which point one resync happens if anything asked for it. Safe to nest, which
+// it has to be: quad.Load suspends and then calls patch.load, which suspends
+// again.
+//
+// The count is process-wide rather than per-load, and API calls are not
+// serialized - each request runs on its own goroutine - so two loads at once do
+// interleave. What that costs is worth being precise about, because it looks
+// worse than it is. No request is dropped: pending is only cleared by the
+// release that actually performs the sync, and that release is the one bringing
+// the count to zero, so a request made by either load is honoured. What can
+// happen is that a load returns before its resync has run, because the other
+// load is still holding the count above zero and will do the sync on its way
+// out. Callers must not assume the resync has happened by the time they get
+// control back - nothing currently does, and the deferred-by-a-few-milliseconds
+// sync is the same one they would have got.
+//
+// The returned function is idempotent. Calling it twice would otherwise drive
+// the count negative, and a count that never returns to zero again suspends
+// resyncs for the life of the process.
 func SuspendSamplePlaybackSync() func() {
 	samplePlaybackSync.mutex.Lock()
 	samplePlaybackSync.suspended++
 	samplePlaybackSync.mutex.Unlock()
 
+	var once sync.Once
 	return func() {
-		samplePlaybackSync.mutex.Lock()
-		samplePlaybackSync.suspended--
-		flush := samplePlaybackSync.suspended == 0 && samplePlaybackSync.pending
-		if flush {
-			samplePlaybackSync.pending = false
-		}
-		samplePlaybackSync.mutex.Unlock()
+		flush := false
+		once.Do(func() {
+			samplePlaybackSync.mutex.Lock()
+			samplePlaybackSync.suspended--
+			flush = samplePlaybackSync.suspended == 0 && samplePlaybackSync.pending
+			if flush {
+				samplePlaybackSync.pending = false
+			}
+			samplePlaybackSync.mutex.Unlock()
+		})
 		if flush {
 			if err := SyncProSamplePlaybackServiceSamples(); err != nil {
 				LogWarn("deferred pro samplesplitter sync failed", "err", err)

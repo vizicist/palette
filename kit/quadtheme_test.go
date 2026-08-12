@@ -106,6 +106,50 @@ func TestMoveQuadThemeLink(t *testing.T) {
 	}
 }
 
+// Moving into a theme that already has the preset must finish the move rather
+// than refuse it. Refusing left the preset linked in both themes - neither where
+// it started nor where it was sent.
+func TestMoveQuadThemeLinkWhenDestinationAlreadyHasIt(t *testing.T) {
+	setupQuadThemeTest(t)
+	writeTestPreset(t, "quad", "Groove")
+	if err := writeQuadThemeLink("quad_chill", "Groove"); err != nil {
+		t.Fatalf("writeQuadThemeLink chill: %v", err)
+	}
+	if err := writeQuadThemeLink("quad_melodic", "Groove"); err != nil {
+		t.Fatalf("writeQuadThemeLink melodic: %v", err)
+	}
+
+	if err := MoveQuadThemeLink("quad_chill", "Groove", "quad_melodic"); err != nil {
+		t.Fatalf("MoveQuadThemeLink: %v", err)
+	}
+	if quadThemeHasLink("quad_chill", "Groove") {
+		t.Fatal("source link should be gone after move")
+	}
+	if !quadThemeHasLink("quad_melodic", "Groove") {
+		t.Fatal("destination link should still exist after move")
+	}
+	if !savedPresetExists(t, "quad", "Groove") {
+		t.Fatal("master preset should remain after move")
+	}
+}
+
+// The master quad directory is not a theme, and cannot be moved into: its
+// contents are every preset there is, automatically.
+func TestMoveQuadThemeLinkRejectsMasterDestination(t *testing.T) {
+	setupQuadThemeTest(t)
+	writeTestPreset(t, "quad", "Groove")
+	if err := writeQuadThemeLink("quad_chill", "Groove"); err != nil {
+		t.Fatalf("writeQuadThemeLink: %v", err)
+	}
+
+	if err := MoveQuadThemeLink("quad_chill", "Groove", "quad"); err == nil {
+		t.Fatal("moving into the master quad directory should be rejected")
+	}
+	if !quadThemeHasLink("quad_chill", "Groove") {
+		t.Fatal("a rejected move must leave the source link alone")
+	}
+}
+
 func TestRemoveQuadThemeLinkCuratesOnly(t *testing.T) {
 	setupQuadThemeTest(t)
 	writeTestPreset(t, "quad", "Groove")

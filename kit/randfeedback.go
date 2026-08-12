@@ -90,9 +90,8 @@ type feedbackDB struct {
 }
 
 var (
-	theFeedbackDB     *feedbackDB
-	feedbackDBMutex   sync.Mutex
-	feedbackRandMutex sync.Mutex
+	theFeedbackDB   *feedbackDB
+	feedbackDBMutex sync.Mutex
 )
 
 func feedbackFilePath() string {
@@ -129,7 +128,10 @@ func saveFeedbackDB(db *feedbackDB) error {
 	if err != nil {
 		return fmt.Errorf("saveFeedbackDB: %w", err)
 	}
-	return os.WriteFile(path, bytes, 0644)
+	// Written atomically: this file is the only copy of everything the Like and
+	// Avoid buttons have ever taught, it is rewritten on every single press, and
+	// a truncated one comes back as an empty database with a warning.
+	return WriteFileAtomic(path, bytes, 0644)
 }
 
 // AddRandFeedback records the given parameter set as a liked or avoided
@@ -442,9 +444,8 @@ func PickRandomParamsForCategory(category string) map[string]string {
 		totalWeight += weights[i]
 	}
 
-	feedbackRandMutex.Lock()
+	// No lock: the global math/rand source is already goroutine-safe.
 	r := rand.Float64() * totalWeight
-	feedbackRandMutex.Unlock()
 	for i, w := range weights {
 		r -= w
 		if r <= 0 {

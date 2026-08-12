@@ -80,9 +80,41 @@ func (m *oneMorph) updatePressureStats(force, z float64) morphPressureStats {
 	return stats
 }
 
+// morphRetryInterval is how long to wait before looking for Morphs again after
+// there are none left to read from. Long enough that a machine with no Morph
+// attached isn't enumerating serial ports constantly, short enough that
+// replugging one during a show brings the pad back while someone is still
+// standing at it.
+const morphRetryInterval = 3 * time.Second
+
 // StartMorph opens all connected Morphs and streams their contacts as cursor
 // events until the process exits.
+//
+// It keeps going rather than giving up. This runs unattended at venues, where
+// the failure it used to have - one USB hiccup, or one panic, and the pads were
+// dead until somebody noticed and restarted the engine - costs the whole
+// installation. A Morph that stops reading is closed and re-opened on the next
+// pass, and Morphs plugged in after startup are picked up the same way.
 func StartMorph(callback CursorCallbackFunc, forceFactor float64) {
+	for {
+		// Backing off only when there was nothing to read keeps a real drop-out
+		// short: on a four-pad installation, one Morph hiccupping re-opens all
+		// four within a frame or two rather than leaving every pad dead for the
+		// retry interval. A machine with no Morph attached backs off instead.
+		if !readMorphsUntilOneDrops(callback, forceFactor) {
+			time.Sleep(morphRetryInterval)
+		}
+	}
+}
+
+// readMorphsUntilOneDrops opens whatever Morphs are attached and reads them
+// until one stops responding, then returns so its caller can start over with a
+// fresh enumeration - which is what picks up a replugged device, since it comes
+// back as a new port. Reports whether any Morph was opened at all. A panic in
+// here is logged and ends this pass only.
+func readMorphsUntilOneDrops(callback CursorCallbackFunc, forceFactor float64) (opened bool) {
+
+	defer closeAllMorphs()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -101,23 +133,47 @@ func StartMorph(callback CursorCallbackFunc, forceFactor float64) {
 		return
 	}
 	if len(allMorphs) == 0 {
-		LogInfo("No Morphs were found")
-		return
+		// Logged only when it changes, since this is now retried forever and a
+		// machine with no Morph attached would otherwise say so every few
+		// seconds for as long as it runs.
+		if !noMorphsReported {
+			LogInfo("No Morphs were found, will keep looking", "every", morphRetryInterval)
+			noMorphsReported = true
+		}
+		return false
 	}
+	noMorphsReported = false
+
 	for {
 		for _, m := range allMorphs {
-			if m.opened {
-				m.readFrames(callback, forceFactor)
+			m.readFrames(callback, forceFactor)
+			if !m.opened {
+				return true // readFrames closed it; re-enumerate everything
 			}
 		}
 		time.Sleep(time.Millisecond)
 	}
 }
 
+// noMorphsReported keeps the "no Morphs" message down to one per dry spell.
+var noMorphsReported bool
+
+// closeAllMorphs releases the devices so the next morphInitialize can re-open
+// them. Without this a re-enumeration would find ports it already holds.
+func closeAllMorphs() {
+	for _, m := range allMorphs {
+		if m.opened {
+			m.opened = false
+			m.dev.Close()
+		}
+	}
+	allMorphs = nil
+}
+
 func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) {
 	contacts, err := m.dev.ReadFrame()
 	if err != nil {
-		LogWarn("Morph has been disabled due to ReadFrame error", "serialnum", m.serialNum, "err", err)
+		LogWarn("Morph stopped reading, will look for it again", "serialnum", m.serialNum, "err", err)
 		m.opened = false
 		m.dev.Close()
 		return

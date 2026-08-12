@@ -154,13 +154,32 @@ func CopyQuadThemeLink(srcCategory string, filename string, dstTheme string) err
 
 // MoveQuadThemeLink relinks a preset from srcTheme to dstTheme, leaving the
 // master preset untouched. It's a no-op if source and destination match.
+//
+// Moving into a theme that already has the preset is not an error, it is a move
+// that is already half done: the destination link exists, so all that is left is
+// dropping the source one. Failing there instead - which is what deferring to
+// CopyQuadThemeLink's "already in that theme" would do - leaves the preset in
+// both themes, which is neither where it started nor where it was sent.
 func MoveQuadThemeLink(srcTheme string, filename string, dstTheme string) error {
 	if srcTheme == dstTheme {
 		return nil
 	}
-	if err := CopyQuadThemeLink(srcTheme, filename, dstTheme); err != nil {
+	// Checked here as well as in CopyQuadThemeLink, which the already-linked
+	// case below skips.
+	if !isQuadThemeCategory(dstTheme) {
+		return fmt.Errorf("move target %q is not a quad theme", dstTheme)
+	}
+	_, master, err := resolveQuadPreset(srcTheme, filename)
+	if err != nil {
 		return err
 	}
+	if !quadThemeHasLink(dstTheme, master) {
+		if err := CopyQuadThemeLink(srcTheme, filename, dstTheme); err != nil {
+			return err
+		}
+	}
+	// A move out of the master quad directory is a copy: the master holds the
+	// real preset, and every theme link points at it.
 	if isQuadThemeCategory(srcTheme) {
 		return removeQuadThemeLink(srcTheme, filename)
 	}

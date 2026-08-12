@@ -15,8 +15,9 @@ import (
 // every analyze option that changes the result, so an edited file or a changed
 // split mode re-analyzes rather than returning a stale cue.
 type analysisCache struct {
-	mu      sync.Mutex
-	entries map[string]analysisEntry
+	mu       sync.Mutex
+	entries  map[string]analysisEntry
+	inflight map[string]*analysisCall
 }
 
 type analysisEntry struct {
@@ -24,12 +25,27 @@ type analysisEntry struct {
 	waveform []float64
 }
 
+// analysisCall is one analysis that is currently running. Later callers asking
+// for the same key wait on done rather than starting an ffmpeg of their own:
+// the cache lock cannot be held across the analysis itself, so without this a
+// burst of requests for one file - which is exactly what a preset load produces
+// - would all miss together and each spawn a process.
+type analysisCall struct {
+	done     chan struct{}
+	cue      CueData
+	waveform []float64
+	err      error
+}
+
 // maxAnalysisCacheEntries bounds memory if something repeatedly analyzes
 // changing files. A sample library is far smaller than this in practice.
 const maxAnalysisCacheEntries = 512
 
 func newAnalysisCache() *analysisCache {
-	return &analysisCache{entries: make(map[string]analysisEntry)}
+	return &analysisCache{
+		entries:  make(map[string]analysisEntry),
+		inflight: make(map[string]*analysisCall),
+	}
 }
 
 func analysisCacheKey(path string, opts AnalyzeOptions) (string, bool) {
@@ -57,27 +73,46 @@ func (c *analysisCache) wrap(analyze analyzeMP3Func) analyzeMP3Func {
 		}
 
 		c.mu.Lock()
-		entry, hit := c.entries[key]
-		c.mu.Unlock()
-		if hit {
+		if entry, hit := c.entries[key]; hit {
+			c.mu.Unlock()
 			return entry.cue, entry.waveform, nil
 		}
-
-		cue, waveform, err := analyze(path, opts)
-		if err != nil {
-			return cue, waveform, err
+		if call, running := c.inflight[key]; running {
+			// Somebody else is already analyzing this exact file with these
+			// exact options. Wait for their result instead of duplicating it.
+			c.mu.Unlock()
+			<-call.done
+			return call.cue, call.waveform, call.err
 		}
+		call := &analysisCall{done: make(chan struct{})}
+		c.inflight[key] = call
+		c.mu.Unlock()
+
+		call.cue, call.waveform, call.err = analyze(path, opts)
 
 		c.mu.Lock()
-		if len(c.entries) >= maxAnalysisCacheEntries {
-			c.entries = make(map[string]analysisEntry)
+		delete(c.inflight, key)
+		// Only successful analyses are cached; errors may be transient (a file
+		// still being written, say) and shouldn't be remembered. Waiters still
+		// get the error, they just don't get it from the cache next time.
+		if call.err == nil {
+			if len(c.entries) >= maxAnalysisCacheEntries {
+				c.entries = make(map[string]analysisEntry)
+			}
+			c.entries[key] = analysisEntry{cue: call.cue, waveform: call.waveform}
 		}
-		c.entries[key] = analysisEntry{cue: cue, waveform: waveform}
 		c.mu.Unlock()
-		return cue, waveform, nil
+
+		// Released only after the entry is in place, so a waiter that turns
+		// straight around and asks again finds it cached.
+		close(call.done)
+		return call.cue, call.waveform, call.err
 	}
 }
 
+// clear drops the memoized results. Analyses already running are left alone:
+// their waiters are owed an answer, and they re-populate a cache that the next
+// caller is free to clear again.
 func (c *analysisCache) clear() {
 	if c == nil {
 		return

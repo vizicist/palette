@@ -265,6 +265,64 @@ func FileExists(path string) bool {
 	return !fileinfo.IsDir()
 }
 
+// WriteFileAtomic writes data to path so that a reader ever sees either the old
+// contents or the new ones, never a half-written file. os.WriteFile truncates
+// first, so a crash or a power cut in the middle of one leaves the file short -
+// which matters for state that accumulates over a long time and has no other
+// copy anywhere.
+//
+// The temporary file is created alongside the target, since a rename is only
+// atomic within one filesystem, and is cleaned up if anything fails.
+func WriteFileAtomic(path string, data []byte, perm os.FileMode) error {
+
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, filepath.Base(path)+".tmp")
+	if err != nil {
+		return fmt.Errorf("WriteFileAtomic: %w", err)
+	}
+	tmpName := tmp.Name()
+
+	// From here on, any failure has to take the temporary file with it.
+	cleanup := func(err error) error {
+		LogIfError(tmp.Close())
+		LogIfError(os.Remove(tmpName))
+		return fmt.Errorf("WriteFileAtomic: %w", err)
+	}
+
+	if _, err := tmp.Write(data); err != nil {
+		return cleanup(err)
+	}
+	// Without this the rename can land before the contents do, which on a power
+	// cut leaves the file present, named correctly, and empty.
+	if err := tmp.Sync(); err != nil {
+		return cleanup(err)
+	}
+	if err := tmp.Close(); err != nil {
+		LogIfError(os.Remove(tmpName))
+		return fmt.Errorf("WriteFileAtomic: %w", err)
+	}
+	if err := os.Chmod(tmpName, perm); err != nil {
+		LogIfError(os.Remove(tmpName))
+		return fmt.Errorf("WriteFileAtomic: %w", err)
+	}
+	// Windows won't rename onto an existing file the way Unix does, so the
+	// target is removed first. That is the one instant where a reader could find
+	// nothing there - far smaller than the window os.WriteFile leaves open, and
+	// the alternative (ReplaceFile) isn't reachable without more syscall
+	// plumbing than this is worth.
+	if runtime.GOOS == "windows" && PathExists(path) {
+		if err := os.Remove(path); err != nil {
+			LogIfError(os.Remove(tmpName))
+			return fmt.Errorf("WriteFileAtomic: %w", err)
+		}
+	}
+	if err := os.Rename(tmpName, path); err != nil {
+		LogIfError(os.Remove(tmpName))
+		return fmt.Errorf("WriteFileAtomic: %w", err)
+	}
+	return nil
+}
+
 func MapString(amap map[string]string) string {
 	final := ""
 	sep := ""
