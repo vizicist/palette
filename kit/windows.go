@@ -243,10 +243,22 @@ var (
 	closeHandle              = kernel32.NewProc("CloseHandle")
 )
 
-// monitorBounds collects monitor positions during enumeration
+// monitorBounds collects monitor positions during enumeration.
+// Only ever touched between the two halves of an EnumDisplayMonitors call,
+// under monitorBoundsMutex; use enumerateMonitors rather than reading it.
 var monitorBounds []rect
 
-// monitorEnumProc is the callback for EnumDisplayMonitors
+// monitorBoundsMutex serializes monitor enumeration. The callback has no way to
+// reach anything but a global - EnumDisplayMonitors' dwData would have to carry
+// a Go pointer through Windows to do better - so two enumerations running at
+// once would append into each other's results. That is not hypothetical: the
+// interestingness evaluation enumerates on every capture sample, a couple of
+// times a second after every Rand, while window placement enumerates whenever a
+// process is activated.
+var monitorBoundsMutex sync.Mutex
+
+// monitorEnumProc is the callback for EnumDisplayMonitors.
+// Runs only while monitorBoundsMutex is held by enumerateMonitors.
 func monitorEnumProc(hMonitor uintptr, hdcMonitor uintptr, lprcMonitor uintptr, dwData uintptr) uintptr {
 	var mi monitorInfo
 	mi.Size = uint32(unsafe.Sizeof(mi))
@@ -257,18 +269,33 @@ func monitorEnumProc(hMonitor uintptr, hdcMonitor uintptr, lprcMonitor uintptr, 
 	return 1 // Continue enumeration
 }
 
+// enumerateMonitors returns the bounds of every monitor, in enumeration order.
+// The result is a copy, so callers hold nothing that a later enumeration can
+// change underneath them.
+func enumerateMonitors() ([]rect, error) {
+
+	monitorBoundsMutex.Lock()
+	defer monitorBoundsMutex.Unlock()
+
+	monitorBounds = nil
+	callback := syscall.NewCallback(monitorEnumProc)
+	ret, _, err := enumDisplayMonitors.Call(0, 0, callback, 0)
+	if ret == 0 {
+		return nil, fmt.Errorf("EnumDisplayMonitors failed: %v", err)
+	}
+	// NOTE: append instead of the copy builtin, which is shadowed by this
+	// package's copy() in copy.go.
+	return append([]rect(nil), monitorBounds...), nil
+}
+
 // GetLeftMonitorPosition returns the x,y position of a monitor to the left of the primary monitor.
 // If there's no left monitor or detection fails, returns 0,0,false.
 // If a left monitor exists, returns its x,y position and true.
 func GetLeftMonitorPosition() (x int, y int, found bool) {
-	// Clear previous results
-	monitorBounds = nil
 
-	// Enumerate all monitors using Windows API
-	callback := syscall.NewCallback(monitorEnumProc)
-	ret, _, err := enumDisplayMonitors.Call(0, 0, callback, 0)
-	if ret == 0 {
-		LogWarn("GetLeftMonitorPosition: EnumDisplayMonitors failed", "err", err)
+	allBounds, err := enumerateMonitors()
+	if err != nil {
+		LogWarn("GetLeftMonitorPosition: unable to enumerate monitors", "err", err)
 		return 0, 0, false
 	}
 
@@ -277,7 +304,7 @@ func GetLeftMonitorPosition() (x int, y int, found bool) {
 	leftMostY := int32(0)
 	hasLeftMonitor := false
 
-	for _, bounds := range monitorBounds {
+	for _, bounds := range allBounds {
 		if bounds.Left < 0 {
 			if !hasLeftMonitor || bounds.Left < leftMostX {
 				leftMostX = bounds.Left

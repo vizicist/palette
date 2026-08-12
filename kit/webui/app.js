@@ -1641,10 +1641,11 @@ async function allNotesOff() {
 // to do on the way to offering them.
 async function stopNotesAndLoops() {
     try {
-        await Promise.all(patchNames.flatMap(p => [
-            API.setPatchParam(p, 'misc.looping_on', 'false'),
-            API.call('patch.clear', { patch: p })
-        ]));
+        // The three steps are sequential because the order is the point: a patch
+        // whose loop is cleared while it is still looping records and replays
+        // what comes next. Within a step the four patches can go at once.
+        await Promise.all(patchNames.map(p => API.setPatchParam(p, 'misc.looping_on', 'false')));
+        await Promise.all(patchNames.map(p => API.call('patch.clear', { patch: p })));
         await API.call('quad.ANO');
     } catch (e) {
         console.error('Failed to stop notes and loops:', e);

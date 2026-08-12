@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	json "github.com/goccy/go-json"
@@ -96,10 +97,17 @@ type Resolume struct {
 	effectsJSON      map[string]any // unmarshalled resolume.json
 }
 
-var theResolume *Resolume
+var (
+	theResolume     *Resolume
+	theResolumeOnce sync.Once
+)
 
+// TheResolume returns the one Resolume client. Construction is behind a
+// sync.Once: the attract tick and the API goroutine both reach it now that
+// attract videos drive layers from either side, and two clients would each
+// carry their own freeframeClients map.
 func TheResolume() *Resolume {
-	if theResolume == nil {
+	theResolumeOnce.Do(func() {
 		theResolume = &Resolume{
 			resolumeClient:   osc.NewClient(LocalAddress, resolumePort),
 			freeframeClients: map[string]*osc.Client{},
@@ -111,7 +119,7 @@ func TheResolume() *Resolume {
 		if err != nil {
 			LogIfError(err)
 		}
-	}
+	})
 	return theResolume
 }
 

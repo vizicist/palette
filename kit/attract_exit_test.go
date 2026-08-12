@@ -216,3 +216,22 @@ func TestAttractTouchThresholdUnsetCountExitsOnFirstTouch(t *testing.T) {
 		t.Fatal("with no threshold configured, one touch should end attract mode")
 	}
 }
+
+// An unset window must not lock the installation into attract mode. At zero
+// every touch ages out before the next arrives, so the count never got past one
+// and the pads could never end attract mode at all.
+func TestAttractTouchThresholdUnsetWindowStillExits(t *testing.T) {
+	for _, secs := range []float64{0, -1} {
+		am := attractManagerWithTouchThreshold(3, secs)
+
+		if am.noticeTouch(1) {
+			t.Fatalf("secs=%v: one touch ended attract mode", secs)
+		}
+		if am.noticeTouch(2) {
+			t.Fatalf("secs=%v: two touches ended attract mode", secs)
+		}
+		if !am.noticeTouch(3) {
+			t.Fatalf("secs=%v: three touches did not end attract mode", secs)
+		}
+	}
+}

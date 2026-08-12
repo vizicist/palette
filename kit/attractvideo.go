@@ -53,16 +53,27 @@ type AttractVideoPlayer struct {
 	loaded     bool      // clips have been pushed into Resolume
 	playing    bool
 	current    int // index into files of the clip now showing
+	layer      int // the layer Start put the videos on
 	nextSwitch time.Time
 	warned     bool // REST failure already logged; don't repeat it every time
 }
 
-var theAttractVideoPlayer *AttractVideoPlayer
+var (
+	theAttractVideoPlayer     *AttractVideoPlayer
+	theAttractVideoPlayerOnce sync.Once
+)
 
+// TheAttractVideoPlayer returns the one player. The construction is behind a
+// sync.Once because the callers genuinely race: the attract tick calls Advance
+// while the API goroutine turns attract mode (or global.attractvideos) on and
+// off. Note that "go TheAttractVideoPlayer().Start()" evaluates the receiver in
+// the calling goroutine, so those call sites do not serialize it. Two players
+// would mean Start filling in one while Advance and Stop read the other, and
+// videos that come up and then never advance or stop.
 func TheAttractVideoPlayer() *AttractVideoPlayer {
-	if theAttractVideoPlayer == nil {
+	theAttractVideoPlayerOnce.Do(func() {
 		theAttractVideoPlayer = &AttractVideoPlayer{}
-	}
+	})
 	return theAttractVideoPlayer
 }
 
@@ -274,6 +285,11 @@ func (p *AttractVideoPlayer) Start() {
 
 	p.current = 0
 	p.playing = true
+	// Remember the layer rather than re-reading the parameter later. Stop has to
+	// take down the layer it actually put up: changing global.attractvideolayer
+	// mid-show would otherwise leave the old layer soloed, which is the stuck
+	// state Resolume.Activate already has to clear on startup.
+	p.layer = layerNum
 
 	// Resolume creates layers at half opacity, which let the patch layers show
 	// through the video. Set it every time rather than once at creation: the
@@ -303,7 +319,7 @@ func (p *AttractVideoPlayer) Stop() {
 		return
 	}
 	p.playing = false
-	layerNum := attractVideoLayerNum()
+	layerNum := p.layer
 	// Un-solo first. The video is still opaque and on top, so nothing changes
 	// on screen until the layer is bypassed - one clean transition back to
 	// normal, rather than a frame of black or of blended patch graphics.
@@ -329,7 +345,7 @@ func (p *AttractVideoPlayer) Advance() {
 	}
 
 	p.current = (p.current + 1) % len(p.files)
-	TheResolume().connectClip(attractVideoLayerNum(), p.current+1)
+	TheResolume().connectClip(p.layer, p.current+1)
 	p.nextSwitch = time.Now().Add(p.durationOf(p.current))
 
 	LogOfType("attract", "attract video advance",

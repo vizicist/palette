@@ -79,22 +79,20 @@ func autoCaptureIndex(bounds []rect) int {
 // interestMonitorRect picks which monitor to capture. index >= 0 selects
 // that monitor from the enumeration; -1 means auto (see autoCaptureIndex).
 func interestMonitorRect(index int) (rect, error) {
-	monitorBounds = nil
-	callback := syscall.NewCallback(monitorEnumProc)
-	ret, _, err := enumDisplayMonitors.Call(0, 0, callback, 0)
-	if ret == 0 {
-		return rect{}, fmt.Errorf("EnumDisplayMonitors failed: %v", err)
+	bounds, err := enumerateMonitors()
+	if err != nil {
+		return rect{}, err
 	}
-	if len(monitorBounds) == 0 {
+	if len(bounds) == 0 {
 		return rect{}, fmt.Errorf("no monitors found")
 	}
 	if index >= 0 {
-		if index >= len(monitorBounds) {
-			return rect{}, fmt.Errorf("monitor %d not found (%d monitors)", index, len(monitorBounds))
+		if index >= len(bounds) {
+			return rect{}, fmt.Errorf("monitor %d not found (%d monitors)", index, len(bounds))
 		}
-		return monitorBounds[index], nil
+		return bounds[index], nil
 	}
-	return monitorBounds[autoCaptureIndex(monitorBounds)], nil
+	return bounds[autoCaptureIndex(bounds)], nil
 }
 
 // ListCaptureMonitors returns a JSON array describing the monitors in
@@ -102,18 +100,13 @@ func interestMonitorRect(index int) (rect, error) {
 // [{"index":0,"left":0,"top":0,"width":2560,"height":1440,"primary":true,"auto":false}, ...]
 // "auto" marks the one an interestmonitor of -1 would capture.
 func ListCaptureMonitors() (string, error) {
-	captureMutex.Lock()
-	defer captureMutex.Unlock()
-
-	monitorBounds = nil
-	callback := syscall.NewCallback(monitorEnumProc)
-	ret, _, err := enumDisplayMonitors.Call(0, 0, callback, 0)
-	if ret == 0 {
-		return "", fmt.Errorf("EnumDisplayMonitors failed: %v", err)
+	bounds, err := enumerateMonitors()
+	if err != nil {
+		return "", err
 	}
-	autoIndex := autoCaptureIndex(monitorBounds)
+	autoIndex := autoCaptureIndex(bounds)
 	out := "["
-	for i, r := range monitorBounds {
+	for i, r := range bounds {
 		if i > 0 {
 			out += ","
 		}

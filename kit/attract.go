@@ -102,6 +102,10 @@ type attractTouch struct {
 	when time.Time
 }
 
+// attractExitSecsDefault stands in for global.attractexitsecs when that
+// parameter can't be read, matching the paramdef's init.
+const attractExitSecsDefault = 3.0
+
 // noticeTouch records a touch on the pads from one cursor GID, and reports
 // whether enough distinct contacts have arrived close enough together to mean
 // someone is really there.
@@ -126,6 +130,17 @@ func (am *AttractManager) noticeTouch(gid int) bool {
 		needed = 1 // an unset or nonsense parameter behaves as it did before
 	}
 
+	// The window needs the same defence as the count, and more urgently: at zero
+	// every touch ages out before the next one arrives, so the list never grows
+	// past one and any needed above 1 can never be reached - the pads would stop
+	// being able to end attract mode at all. The paramdef's minimum is 0.5, so
+	// this only comes up when the parameter can't be read, which is exactly when
+	// nothing else will catch it.
+	within := am.ExitTouchSecs
+	if within <= 0 {
+		within = attractExitSecsDefault
+	}
+
 	am.attractTouchMutex.Lock()
 	defer am.attractTouchMutex.Unlock()
 
@@ -136,7 +151,7 @@ func (am *AttractManager) noticeTouch(gid int) bool {
 	alreadyCounted := false
 	kept := am.attractTouches[:0]
 	for _, touch := range am.attractTouches {
-		if now.Sub(touch.when).Seconds() > am.ExitTouchSecs {
+		if now.Sub(touch.when).Seconds() > within {
 			continue
 		}
 		if touch.gid == gid {
@@ -241,6 +256,16 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 
 func (am *AttractManager) checkAttract() {
 
+	// Attract videos advance whenever attract mode is on, however it got there.
+	// This sits above the global.attractenabled gate on purpose: that parameter
+	// governs attract mode arriving on its own after an idle timeout, and the
+	// generated gestures once it has, but the Show Goats button turns attract
+	// mode on by hand and global.attractenabled ships off. Behind the gate, the
+	// button would put the first video up and then leave it there for good.
+	if am.AttractModeIsOn() {
+		TheAttractVideoPlayer().Advance()
+	}
+
 	if !am.attractEnabled {
 		return
 	}
@@ -273,9 +298,6 @@ func (am *AttractManager) doAttractAction() {
 	if !am.attractEnabled || !am.AttractModeIsOn() {
 		return
 	}
-	// Move to the next video when the current one has played through. This only
-	// sends OSC, so it is cheap enough to check on every attract tick.
-	TheAttractVideoPlayer().Advance()
 
 	now := time.Now()
 	dt := now.Sub(am.lastAttractGestureTime).Seconds()
