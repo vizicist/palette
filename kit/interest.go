@@ -159,14 +159,14 @@ func computeInterestMetrics(luma []float64, w int, h int, prev []float64) Intere
 // The most recent evaluation result, readable via the global.interest_score
 // API.
 type interestResult struct {
-	Category string            `json:"category"`
-	Patch    string            `json:"patch"`
-	Time     string            `json:"time"`
-	Samples  int               `json:"samples"`
-	Score    float64           `json:"score"`
-	Verdict  string            `json:"verdict"` // avoid, like, or none
-	Last     InterestMetrics   `json:"last"`
-	Error    string            `json:"error,omitempty"`
+	Category string          `json:"category"`
+	Patch    string          `json:"patch"`
+	Time     string          `json:"time"`
+	Samples  int             `json:"samples"`
+	Score    float64         `json:"score"`
+	Verdict  string          `json:"verdict"` // avoid, like, or none
+	Last     InterestMetrics `json:"last"`
+	Error    string          `json:"error,omitempty"`
 }
 
 var (

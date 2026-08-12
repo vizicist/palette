@@ -7,14 +7,14 @@ import (
 )
 
 const (
-	DefaultPort                      = 9876
-	DefaultBaseNote                  = 48
-	DefaultMIDIPortName              = "16. Internal MIDI"
-	DefaultSplitMode                 = "words"
+	DefaultPort         = 9876
+	DefaultBaseNote     = 48
+	DefaultMIDIPortName = "16. Internal MIDI"
+	DefaultSplitMode    = "words"
 	// WholeSplitMode plays an MP3 end to end instead of carving it into
 	// splits. It is what the sampleplayer uses; the samplesplitter keeps
 	// using DefaultSplitMode.
-	WholeSplitMode = "whole"
+	WholeSplitMode                   = "whole"
 	DefaultIntervalSeconds           = 1.0
 	DefaultSilenceThreshold          = 0.01
 	DefaultSilenceMinimum            = 0.5

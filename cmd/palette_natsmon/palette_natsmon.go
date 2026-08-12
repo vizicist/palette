@@ -2,7 +2,7 @@ package main
 
 /*
  * This program monitors NATS traffic from Palettes
-  * and writes it to a file whose name contains the date.
+ * and writes it to a file whose name contains the date.
  */
 
 import (
@@ -93,7 +93,7 @@ func setupConnOptions(opts []nats.Option) []nats.Option {
 	opts = append(opts, nats.ReconnectWait(reconnectDelay))
 	opts = append(opts, nats.MaxReconnects(int(totalWait/reconnectDelay)))
 	opts = append(opts, nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
-		log.Printf("NATS Disconnect Err = %s\n" , err.Error())
+		log.Printf("NATS Disconnect Err = %s\n", err.Error())
 	}))
 	opts = append(opts, nats.ReconnectHandler(func(nc *nats.Conn) {
 		log.Printf("NATS Reconnected\n")

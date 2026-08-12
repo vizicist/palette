@@ -60,17 +60,17 @@ type State struct {
 }
 
 type PlaybackRequest struct {
-	Type           string  `json:"type"`
-	Sigil          string  `json:"sigil,omitempty"`
-	File           string  `json:"file,omitempty"`
-	FilePath       string  `json:"-"`
-	VoiceKey       string  `json:"voice,omitempty"`
-	Note           int     `json:"note"`
-	Velocity       int     `json:"velocity"`
-	Channel        int     `json:"channel"`
-	SplitIndex     int     `json:"split_index"`
-	StartSec       float64 `json:"start_sec"`
-	EndSec         float64 `json:"end_sec"`
+	Type       string  `json:"type"`
+	Sigil      string  `json:"sigil,omitempty"`
+	File       string  `json:"file,omitempty"`
+	FilePath   string  `json:"-"`
+	VoiceKey   string  `json:"voice,omitempty"`
+	Note       int     `json:"note"`
+	Velocity   int     `json:"velocity"`
+	Channel    int     `json:"channel"`
+	SplitIndex int     `json:"split_index"`
+	StartSec   float64 `json:"start_sec"`
+	EndSec     float64 `json:"end_sec"`
 	// MaxRMS is the analyzed loudness of the source file, carried through so
 	// callers can tell a quiet sample from a loud one without re-analyzing.
 	MaxRMS         float64 `json:"max_rms"`

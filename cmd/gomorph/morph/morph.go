@@ -30,7 +30,7 @@ const (
 // CursorDeviceEvent is a single cursor event emitted by a Morph.
 type CursorDeviceEvent struct {
 	CID       string
-	Timestamp int64 // milliseconds
+	Timestamp int64  // milliseconds
 	Ddu       string // "down", "drag", "up"
 	X         float32
 	Y         float32
