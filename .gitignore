@@ -116,3 +116,12 @@ cmd/palette_hub/update_lasttoy.launchd.err
 cmd/obstest/obstest.exe
 release/palette_*.zip
 desktop.ini
+
+# Attract-mode videos are per-installation content, not part of Palette - see
+# data_default/config/attractmode_videos/README.md, which says so, and
+# build/windows/build_data.bat, which rebuilds the shipped directory with only
+# the README in it. They are hundreds of megabytes and whatever plays at one
+# venue rarely suits another, so they don't belong in version control. The
+# README does, since the installer ships it.
+data_default/config/attractmode_videos/*
+!data_default/config/attractmode_videos/README.md
