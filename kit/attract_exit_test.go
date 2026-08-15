@@ -99,6 +99,42 @@ func TestAttractModeTurnsOnOnceThrottleHasElapsed(t *testing.T) {
 	}
 }
 
+// global.attractenabled controls automatic idle entry, but Show Goats enters
+// attract mode explicitly and must work with that setting off.
+func TestManualAttractModeWorksWhileAutomaticModeIsDisabled(t *testing.T) {
+	old := theAttractManager
+	defer func() { theAttractManager = old }()
+	InitLog("")
+	am := &AttractManager{
+		attractModeIsOn:       &atomic.Bool{},
+		lastAttractModeChange: time.Now().Add(-5 * time.Second),
+	}
+	theAttractManager = am
+
+	am.SetAttractMode(true)
+
+	if !am.AttractModeIsOn() {
+		t.Fatal("manual attract mode did not turn on while automatic mode was disabled")
+	}
+	am.SetAttractMode(false)
+}
+
+func TestDisablingAttractModeLeavesActiveMode(t *testing.T) {
+	old := theAttractManager
+	defer func() { theAttractManager = old }()
+	am := attractManagerOn()
+	theAttractManager = am
+
+	am.SetAttractEnabled(false)
+
+	if am.attractModeIsOn.Load() {
+		t.Fatal("disabling attract mode left the raw mode state on")
+	}
+	if am.AttractModeIsOn() {
+		t.Fatal("attract mode still reported on after it was disabled")
+	}
+}
+
 // Repeated "turn it off" calls are harmless: the first one changes the mode
 // and the rest are no-ops, so nothing flaps.
 func TestAttractModeOffIsIdempotent(t *testing.T) {

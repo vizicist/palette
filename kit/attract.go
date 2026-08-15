@@ -182,11 +182,20 @@ func (am *AttractManager) forgetTouches() {
 
 func (am *AttractManager) SetAttractEnabled(b bool) {
 	am.attractEnabled = b
+	// Disabling attract mode is also an instruction to leave it. Keeping the
+	// raw mode bit set would make a later "off" request look like a no-op and
+	// could leave the attract video layer soloed indefinitely.
+	if !b && am.attractModeIsOn.Load() {
+		am.setAttractMode(false)
+	}
 }
 
 func (am *AttractManager) AttractModeIsOn() bool {
-	isOn := am.attractModeIsOn.Load()
-	return isOn && am.attractEnabled
+	// Enabled controls automatic idle entry and generated gestures, not the
+	// actual mode state. Manual entry (the Show Goats button) must work while
+	// automatic attract mode is disabled, and callers must still be able to
+	// observe and turn off that manually-entered mode.
+	return am.attractModeIsOn.Load()
 }
 
 func (am *AttractManager) SetAttractMode(onoff bool) {

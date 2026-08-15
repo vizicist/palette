@@ -111,6 +111,63 @@ type SelectedSampleFile struct {
 	Path  string
 }
 
+// channelStateSnapshot is the portion of State changed by LoadChannelSample.
+// It lets the service restore a working sample after analysis or preloading of
+// a replacement fails, instead of leaving the old sample under new settings.
+type channelStateSnapshot struct {
+	sample     SampleState
+	sampleOK   bool
+	rotation   []SampleState
+	rotationOK bool
+	rotate     bool
+	rotateOK   bool
+	mode       string
+	modeOK     bool
+	loop       bool
+	loopOK     bool
+	dir        string
+	dirOK      bool
+	rotateLast int
+	lastOK     bool
+}
+
+func (s *State) snapshotChannel(channel int) channelStateSnapshot {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	snapshot := channelStateSnapshot{}
+	snapshot.sample, snapshot.sampleOK = s.ChannelSamples[channel]
+	if rotation, ok := s.ChannelRotation[channel]; ok {
+		snapshot.rotation = append([]SampleState(nil), rotation...)
+		snapshot.rotationOK = true
+	}
+	snapshot.rotate, snapshot.rotateOK = s.ChannelRotate[channel]
+	snapshot.mode, snapshot.modeOK = s.ChannelMode[channel]
+	snapshot.loop, snapshot.loopOK = s.ChannelLoop[channel]
+	snapshot.dir, snapshot.dirOK = s.ChannelDir[channel]
+	snapshot.rotateLast, snapshot.lastOK = s.rotateLast[channel]
+	return snapshot
+}
+
+func restoreMapValue[K comparable, V any](values map[K]V, key K, value V, ok bool) {
+	if ok {
+		values[key] = value
+	} else {
+		delete(values, key)
+	}
+}
+
+func (s *State) restoreChannel(channel int, snapshot channelStateSnapshot) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	restoreMapValue(s.ChannelSamples, channel, snapshot.sample, snapshot.sampleOK)
+	restoreMapValue(s.ChannelRotation, channel, snapshot.rotation, snapshot.rotationOK)
+	restoreMapValue(s.ChannelRotate, channel, snapshot.rotate, snapshot.rotateOK)
+	restoreMapValue(s.ChannelMode, channel, snapshot.mode, snapshot.modeOK)
+	restoreMapValue(s.ChannelLoop, channel, snapshot.loop, snapshot.loopOK)
+	restoreMapValue(s.ChannelDir, channel, snapshot.dir, snapshot.dirOK)
+	restoreMapValue(s.rotateLast, channel, snapshot.rotateLast, snapshot.lastOK)
+}
+
 func NewState(config Config) *State {
 	return &State{
 		Config:          config,

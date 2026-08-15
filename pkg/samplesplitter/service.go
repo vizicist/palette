@@ -23,6 +23,7 @@ type ServiceOptions struct {
 
 type Service struct {
 	mu       sync.Mutex
+	loadMu   sync.Mutex
 	config   Config
 	analyzer Analyzer
 	cache    *analysisCache
@@ -238,11 +239,11 @@ func (s *Service) LoadChannelSample(channel int, pb ChannelPlayback) error {
 	if s == nil || s.state == nil {
 		return errors.New("samplesplitter service is not initialized")
 	}
-	s.state.SetBusy(true, "Loading samples")
-	defer s.state.SetBusy(false, "")
-	if s.audio != nil {
-		s.audio.StopNote(channel, -1)
-	}
+	// Loading temporarily records the requested mode so the analyzers can read
+	// it. Serialize loads so a failed request can restore its previous channel
+	// state without clobbering a newer concurrent request.
+	s.loadMu.Lock()
+	defer s.loadMu.Unlock()
 
 	dir := pb.Dir
 	// Loading a preset re-applies every parameter, so this is called many times
@@ -251,6 +252,19 @@ func (s *Service) LoadChannelSample(channel int, pb ChannelPlayback) error {
 	if s.state.ChannelLoadedWith(channel, dir, pb.Mode, pb.Loop, pb.Rotate) {
 		return nil
 	}
+	s.state.SetBusy(true, "Loading samples")
+	defer s.state.SetBusy(false, "")
+	if s.audio != nil {
+		s.audio.StopNote(channel, -1)
+	}
+
+	previous := s.state.snapshotChannel(channel)
+	committed := false
+	defer func() {
+		if !committed {
+			s.state.restoreChannel(channel, previous)
+		}
+	}()
 	// Mode has to be recorded before loading: the loaders read it back through
 	// analyzeOptionsForChannel to decide how to split each file.
 	s.state.SetChannelPlayback(channel, pb.Mode, pb.Loop)
@@ -273,6 +287,7 @@ func (s *Service) LoadChannelSample(channel int, pb ChannelPlayback) error {
 			}
 			s.state.SetAudioStatus(true, nil)
 		}
+		committed = true
 		return nil
 	}
 
@@ -297,6 +312,7 @@ func (s *Service) LoadChannelSample(channel int, pb ChannelPlayback) error {
 		}
 		s.state.SetAudioStatus(true, nil)
 	}
+	committed = true
 	return nil
 }
 

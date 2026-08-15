@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // setupAttractVideoDir points ConfigDir at a temp tree and returns the attract
@@ -96,5 +97,25 @@ func TestResolumeFileURL(t *testing.T) {
 	}
 	if !strings.HasSuffix(got, "/a%20video.mp4") {
 		t.Errorf("resolumeFileURL(%q) = %q, want the space percent-encoded", path, got)
+	}
+}
+
+func TestAttractVideoAdvanceDoesNotWaitForStart(t *testing.T) {
+	p := &AttractVideoPlayer{}
+	// Mimic Start holding the lock during a slow Resolume REST request.
+	p.mutex.Lock()
+	done := make(chan struct{})
+	go func() {
+		p.Advance()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		p.mutex.Unlock()
+	case <-time.After(100 * time.Millisecond):
+		p.mutex.Unlock()
+		<-done
+		t.Fatal("Advance blocked behind Start and would stall the scheduler")
 	}
 }

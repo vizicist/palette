@@ -95,8 +95,12 @@ func TestExtractPayloadKeepsNewerInstalledPreset(t *testing.T) {
 
 	// The bundled preset is older than the user's copy.
 	zr := presetZip(t, presetRel, "bundled version", userTime.Add(-48*time.Hour))
-	if _, _, err := extractPayload(zr, root); err != nil {
+	files, _, err := extractPayload(zr, root)
+	if err != nil {
 		t.Fatal(err)
+	}
+	if len(files) != 0 {
+		t.Fatalf("preserved user preset was recorded as installer-owned: %v", files)
 	}
 	got, err := os.ReadFile(dest)
 	if err != nil || string(got) != "user version" {

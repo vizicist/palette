@@ -84,10 +84,11 @@ export const UIState = {
 
     presetKey() {
         const patch = this.currentCategory === 'global' ? '*' : this.currentPatch;
-        // Quad selections are tracked per theme so switching themes shows the
-        // right highlighted preset (and none if that theme has no selection).
+        // Use the backend's saved-category key exactly. Status snapshots and
+        // loads from other clients identify themed quads as "quad_goat:*",
+        // for example, so a UI-only "quad@quad_goat:*" key never matched.
         const category = this.currentCategory === 'quad'
-            ? `quad@${this.currentTheme}`
+            ? this.currentTheme
             : this.currentCategory;
         return `${category}:${patch}`;
     },

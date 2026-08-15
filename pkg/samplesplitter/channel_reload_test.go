@@ -81,3 +81,25 @@ func TestClearChannelSampleForcesReload(t *testing.T) {
 		t.Fatal("a cleared channel still reported as loaded")
 	}
 }
+
+func TestFailedChannelReloadRestoresPreviousSettings(t *testing.T) {
+	state := loadedRotationState()
+	service := &Service{state: state, cache: newAnalysisCache()}
+
+	// An empty directory fails before analysis. The attempted settings must not
+	// be paired with the old rotation set, or a retry will be mistaken for a
+	// successful no-op.
+	failedDir := t.TempDir()
+	err := service.LoadChannelSample(0, ChannelPlayback{
+		Dir: failedDir, Mode: WholeSplitMode, Rotate: true,
+	})
+	if err == nil {
+		t.Fatal("loading an empty sample directory unexpectedly succeeded")
+	}
+	if !state.ChannelLoadedWith(0, `C:\mp3\goat`, WholeSplitMode, false, true) {
+		t.Fatal("failed reload did not restore the previous working channel")
+	}
+	if state.ChannelLoadedWith(0, failedDir, WholeSplitMode, false, true) {
+		t.Fatal("failed reload left stale samples recorded under the requested directory")
+	}
+}

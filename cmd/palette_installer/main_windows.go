@@ -251,7 +251,7 @@ func extractPayload(zr *zip.Reader, root string) ([]string, []string, error) {
 		return nil, nil, fmt.Errorf("create staging directory: %w", err)
 	}
 	defer os.RemoveAll(stage)
-	var files []string
+	var payloadFiles []string
 	dirSet := make(map[string]bool)
 	for _, entry := range zr.File {
 		name := strings.TrimSuffix(entry.Name, "/")
@@ -293,7 +293,7 @@ func extractPayload(zr *zip.Reader, root string) ([]string, []string, error) {
 			// reinstall of the same version does not look "newer" than itself.
 			_ = os.Chtimes(destination, entry.Modified, entry.Modified)
 		}
-		files = append(files, filepath.ToSlash(name))
+		payloadFiles = append(payloadFiles, filepath.ToSlash(name))
 		for dir := filepath.ToSlash(filepath.Dir(filepath.FromSlash(name))); dir != "."; dir = filepath.ToSlash(filepath.Dir(filepath.FromSlash(dir))) {
 			dirSet[dir] = true
 		}
@@ -308,7 +308,8 @@ func extractPayload(zr *zip.Reader, root string) ([]string, []string, error) {
 			return nil, nil, fmt.Errorf("create install directory %q: %w", dir, err)
 		}
 	}
-	for _, name := range files {
+	var installedFiles []string
+	for _, name := range payloadFiles {
 		source := filepath.Join(stage, filepath.FromSlash(name))
 		destination := filepath.Join(root, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
@@ -329,9 +330,12 @@ func extractPayload(zr *zip.Reader, root string) ([]string, []string, error) {
 		if err := os.Rename(source, destination); err != nil {
 			return nil, nil, fmt.Errorf("install file %q: %w", name, err)
 		}
+		// Only files actually written by this installation belong in its
+		// uninstall record. A newer preset preserved above remains user-owned.
+		installedFiles = append(installedFiles, name)
 	}
-	sort.Strings(files)
-	return files, dirs, nil
+	sort.Strings(installedFiles)
+	return installedFiles, dirs, nil
 }
 
 // installedPresetIsNewer reports whether an already-installed preset at dest was

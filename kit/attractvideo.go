@@ -334,7 +334,13 @@ func (p *AttractVideoPlayer) Stop() {
 // the REST work all happened in Start.
 func (p *AttractVideoPlayer) Advance() {
 
-	p.mutex.Lock()
+	// Start can hold this mutex while Resolume finishes loading a composition
+	// and answers REST requests. Advance runs synchronously on the scheduler
+	// tick, so waiting here would stall every scheduled event. Missing one
+	// advance check is harmless; the next tick will retry.
+	if !p.mutex.TryLock() {
+		return
+	}
 	defer p.mutex.Unlock()
 
 	if !p.playing || len(p.files) == 0 {
