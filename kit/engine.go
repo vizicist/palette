@@ -336,6 +336,23 @@ func jsonAPIHandler(handler func(req *http.Request) (string, error)) http.Handle
 	}
 }
 
+// maxAPIRequestBody caps what the two POST endpoints will read. An API call is
+// a small JSON object - the largest realistic one is a preset name and a
+// handful of parameters - so this is generous by orders of magnitude while
+// still stopping one client from making the engine allocate without bound.
+const maxAPIRequestBody = 1 << 20 // 1MB
+
+// readAPIRequestBody reads a request body with that cap applied.
+// MaxBytesReader also closes the connection on an over-long body rather than
+// letting the sender keep streaming.
+func readAPIRequestBody(req *http.Request) ([]byte, error) {
+	body, err := io.ReadAll(http.MaxBytesReader(nil, req.Body, maxAPIRequestBody))
+	if err != nil {
+		return nil, fmt.Errorf("unable to read request body (limit %d bytes): %w", maxAPIRequestBody, err)
+	}
+	return body, nil
+}
+
 // StartHTTP xxx
 func (e *Engine) StartHTTP(port int) {
 
@@ -362,7 +379,7 @@ func (e *Engine) StartHTTP(port int) {
 		if req.Method != "POST" {
 			return "", fmt.Errorf("HTTP server unable to handle method=%s", req.Method)
 		}
-		body, err := io.ReadAll(req.Body)
+		body, err := readAPIRequestBody(req)
 		if err != nil {
 			return "", err
 		}
@@ -377,7 +394,7 @@ func (e *Engine) StartHTTP(port int) {
 		if req.Method != "POST" {
 			return "", fmt.Errorf("NATS API proxy unable to handle method=%s", req.Method)
 		}
-		body, err := io.ReadAll(req.Body)
+		body, err := readAPIRequestBody(req)
 		if err != nil {
 			return "", err
 		}

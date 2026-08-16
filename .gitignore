@@ -125,3 +125,12 @@ desktop.ini
 # README does, since the installer ships it.
 data_default/config/attractmode_videos/*
 !data_default/config/attractmode_videos/README.md
+
+# Build artifacts that land in the repo root when go build runs over ./...
+# rather than from inside a cmd directory.
+/palette.exe
+/palette_engine.exe
+/palette_monitor.exe
+/palette_chat.exe
+/palette_hub.exe
+/palette_natsmon.exe

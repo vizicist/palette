@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -19,6 +22,65 @@ import (
 	"github.com/vizicist/palette/kit"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// writeLinesAtomic writes to path through a temporary file in the same
+// directory and renames it into place only after every write, the sync and the
+// close have all succeeded. Anything that fails leaves the existing file
+// untouched and takes the temporary with it.
+//
+// The day files are the hub's only record of what the installations reported.
+// Dumping used to create the final path before it had queried NATS for a single
+// message, ignore every write error and ignore the close - and the dump loop
+// skips any date whose file already exists, so one interrupted run left a
+// truncated day that was treated as complete from then on. Import was worse: it
+// truncated a day that already had events and then wrote the merged set with
+// the errors ignored, so failing part way through destroyed the very day it was
+// adding to.
+func writeLinesAtomic(path string, write func(w io.Writer) error) error {
+
+	tmp, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".tmp")
+	if err != nil {
+		return fmt.Errorf("creating temporary file for %s: %w", path, err)
+	}
+	tmpName := tmp.Name()
+
+	abandon := func(err error) error {
+		tmp.Close()
+		os.Remove(tmpName)
+		return err
+	}
+
+	w := bufio.NewWriter(tmp)
+	if err := write(w); err != nil {
+		return abandon(err)
+	}
+	if err := w.Flush(); err != nil {
+		return abandon(fmt.Errorf("writing %s: %w", path, err))
+	}
+	// Without this the rename can land before the contents do, so a power cut
+	// leaves a correctly named, empty day file.
+	if err := tmp.Sync(); err != nil {
+		return abandon(fmt.Errorf("syncing %s: %w", path, err))
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpName)
+		return fmt.Errorf("closing %s: %w", path, err)
+	}
+	// Windows won't rename onto an existing file the way Unix does.
+	if runtime.GOOS == "windows" {
+		if _, err := os.Stat(path); err == nil {
+			if err := os.Remove(path); err != nil {
+				os.Remove(tmpName)
+				return fmt.Errorf("replacing %s: %w", path, err)
+			}
+		}
+	}
+	if err := os.Rename(tmpName, path); err != nil {
+		os.Remove(tmpName)
+		return fmt.Errorf("renaming into %s: %w", path, err)
+	}
+	return nil
+}
 
 func main() {
 	flag.Parse()
@@ -55,8 +117,11 @@ func usage() string {
 	  Reads engine.log from stdin and merges events into days/*.json files
 	  Deduplicates against existing events in the days files
 	  Example: cat engine.log | ssh hub_machine "cd palette_hub && ./palette_hub import_log spacepalette37"
-	palette_hub addpalette {name} {password}
+	palette_hub addpalette {name} [{password}]
 	  Add a new palette user to the NATS server configuration
+	  The name may use only letters, digits, '-' and '_'
+	  With no password argument it is read from stdin, which keeps it out of
+	  the process list: echo secret | palette_hub addpalette NAME
 	`
 }
 
@@ -81,11 +146,26 @@ func HubCommand(args []string) (map[string]string, error) {
 	}
 
 	if cmd == "addpalette" {
-		if len(args) < 3 {
-			return nil, fmt.Errorf("addpalette requires a name and password\n%s", usage())
+		if len(args) < 2 {
+			return nil, fmt.Errorf("addpalette requires a name\n%s", usage())
 		}
 		name := args[1]
-		password := args[2]
+		// Prefer the password on stdin: passing it in argv puts it in the
+		// process list for every user on the hub, and in the shell history.
+		// The argv form still works, so existing scripts keep running.
+		var password string
+		if len(args) >= 3 {
+			password = args[2]
+		} else {
+			line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+			if err != nil && line == "" {
+				return nil, fmt.Errorf("addpalette: reading the password from stdin: %v", err)
+			}
+			password = strings.TrimRight(line, "\r\n")
+		}
+		if password == "" {
+			return nil, fmt.Errorf("addpalette: the password is empty")
+		}
 		result, err := addPalette(name, password)
 		if err != nil {
 			return nil, err
@@ -468,12 +548,6 @@ func dumpDays(streamName string) error {
 
 		fmt.Printf("Dumping %s...\n", dateStr)
 
-		// Create the file
-		file, err := os.Create(filename)
-		if err != nil {
-			return fmt.Errorf("failed to create file %s: %v", filename, err)
-		}
-
 		// Set time range for the entire day in UTC
 		dayStart := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 0, 0, 0, 0, time.UTC)
 		dayEnd := time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 23, 59, 59, 999999999, time.UTC)
@@ -486,27 +560,34 @@ func dumpDays(streamName string) error {
 
 		messageCount := 0
 
-		// Dump messages for this day
-		err = kit.NatsDumpTimeRange(streamName, &dayStart, &dayEnd, func(tm time.Time, subj string, data string) {
-			dd := DumpData{
-				Subject: subj,
-				Tm:      tm.Format(kit.PaletteTimeLayout),
-				Data:    data,
-			}
-			jsonData, err := json.Marshal(dd)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling JSON: %v\n", err)
-				return
-			}
-
-			file.WriteString(string(jsonData) + "\n")
-			messageCount++
+		// Dump this day into a temporary file, and publish it under the real
+		// name only once the whole day has come out cleanly.
+		var dumpErr error
+		writeErr := writeLinesAtomic(filename, func(w io.Writer) error {
+			dumpErr = kit.NatsDumpTimeRange(streamName, &dayStart, &dayEnd, func(tm time.Time, subj string, data string) {
+				if dumpErr != nil {
+					return
+				}
+				dd := DumpData{
+					Subject: subj,
+					Tm:      tm.Format(kit.PaletteTimeLayout),
+					Data:    data,
+				}
+				jsonData, err := json.Marshal(dd)
+				if err != nil {
+					dumpErr = fmt.Errorf("marshalling a message for %s: %w", dateStr, err)
+					return
+				}
+				if _, err := w.Write(append(jsonData, '\n')); err != nil {
+					dumpErr = fmt.Errorf("writing %s: %w", filename, err)
+					return
+				}
+				messageCount++
+			})
+			return dumpErr
 		})
-
-		file.Close()
-
-		if err != nil {
-			return fmt.Errorf("error dumping %s: %v", dateStr, err)
+		if writeErr != nil {
+			return fmt.Errorf("error dumping %s: %v", dateStr, writeErr)
 		}
 
 		fmt.Printf("  -> %d messages written to %s\n", messageCount, filename)
@@ -740,16 +821,19 @@ func importEngineLog(hostname string) (string, error) {
 			return allEvents[i].Time.Before(allEvents[j].Time)
 		})
 
-		// Write back to file
-		file, err := os.Create(filename)
+		// Write back atomically. This replaces a day that already holds
+		// events, so failing part way through used to destroy it.
+		err := writeLinesAtomic(filename, func(w io.Writer) error {
+			for _, event := range allEvents {
+				if _, err := io.WriteString(w, formatDayEvent(event)+"\n"); err != nil {
+					return fmt.Errorf("writing %s: %w", filename, err)
+				}
+			}
+			return nil
+		})
 		if err != nil {
-			return "", fmt.Errorf("failed to create file %s: %v", filename, err)
+			return "", err
 		}
-
-		for _, event := range allEvents {
-			file.WriteString(formatDayEvent(event) + "\n")
-		}
-		file.Close()
 
 		totalNew += len(newEvents)
 		daysModified++
@@ -786,7 +870,23 @@ func formatDayEvent(event DayEvent) string {
 const natsConfigPath = "/etc/nats/server.conf"
 
 // addPalette adds a new palette user with scoped permissions to the NATS server config
+// paletteUserName is the grammar addPalette accepts for a palette name.
+//
+// The name is interpolated into the NATS configuration three times: once inside
+// a quoted string, and twice as a subject token in to_palette.<name>.> and
+// from_palette.<name>.>. Anything outside this set is an injection. A double
+// quote closes the string early, a newline appends arbitrary configuration of
+// the caller's choosing, and a NATS wildcard is worse than either - a name of
+// "*" or ">" produces a permission covering every palette on the hub rather
+// than the one being added.
+var paletteUserName = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
+
 func addPalette(name, password string) (string, error) {
+	if !paletteUserName.MatchString(name) {
+		return "", fmt.Errorf(
+			"invalid palette name %q: use 1 to 64 characters from letters, digits, '-' and '_'", name)
+	}
+
 	// Read the current config
 	configData, err := os.ReadFile(natsConfigPath)
 	if err != nil {
@@ -820,25 +920,59 @@ func addPalette(name, password string) (string, error) {
 
 	newConfig := config[:idx] + newEntry + ",\n" + config[idx:]
 
-	// Write the modified config
-	if err := os.WriteFile(natsConfigPath, []byte(newConfig), 0644); err != nil {
-		return "", fmt.Errorf("failed to write %s: %v", natsConfigPath, err)
+	// Validate a candidate file before it becomes the live configuration.
+	//
+	// This used to overwrite natsConfigPath first and validate afterwards, so
+	// anything that stopped the program in between - or a validation failure
+	// whose restoring write also failed, since that error was discarded - left
+	// the server holding a configuration nobody had checked. The candidate goes
+	// in the same directory so that any relative path inside the configuration
+	// resolves exactly as it will once installed.
+	dir := filepath.Dir(natsConfigPath)
+	candidate, err := os.CreateTemp(dir, filepath.Base(natsConfigPath)+".candidate")
+	if err != nil {
+		return "", fmt.Errorf("failed to create a candidate config in %s: %v", dir, err)
+	}
+	candidateName := candidate.Name()
+	discardCandidate := func() {
+		candidate.Close()
+		os.Remove(candidateName)
+	}
+	if _, err := candidate.WriteString(newConfig); err != nil {
+		discardCandidate()
+		return "", fmt.Errorf("failed to write candidate config: %v", err)
+	}
+	if err := candidate.Close(); err != nil {
+		os.Remove(candidateName)
+		return "", fmt.Errorf("failed to write candidate config: %v", err)
 	}
 
-	// Validate with nats-server -t
-	validateCmd := exec.Command("nats-server", "-t", "-c", natsConfigPath)
+	validateCmd := exec.Command("nats-server", "-t", "-c", candidateName)
 	validateOutput, err := validateCmd.CombinedOutput()
 	if err != nil {
-		// Restore original config on validation failure
-		os.WriteFile(natsConfigPath, configData, 0644)
-		return "", fmt.Errorf("config validation failed, restored original: %s", string(validateOutput))
+		os.Remove(candidateName)
+		return "", fmt.Errorf("config validation failed, %s is unchanged: %s",
+			natsConfigPath, string(validateOutput))
 	}
 
-	// Reload the running NATS server
+	// Install the validated candidate.
+	if err := os.Rename(candidateName, natsConfigPath); err != nil {
+		os.Remove(candidateName)
+		return "", fmt.Errorf("failed to install validated config: %v", err)
+	}
+
+	// Reload the running NATS server. A reload failure used to leave the new
+	// configuration in place, so the next restart would pick up something the
+	// running server had already rejected; put the old one back instead.
 	reloadCmd := exec.Command("nats-server", "--signal", "reload")
 	reloadOutput, err := reloadCmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("config is valid but reload failed: %s", string(reloadOutput))
+		reloadErr := fmt.Errorf("config is valid but reload failed: %s", string(reloadOutput))
+		if restoreErr := os.WriteFile(natsConfigPath, configData, 0644); restoreErr != nil {
+			return "", fmt.Errorf("%w; restoring %s ALSO FAILED (%v) - it now holds the new user but the server does not",
+				reloadErr, natsConfigPath, restoreErr)
+		}
+		return "", fmt.Errorf("%w; %s restored", reloadErr, natsConfigPath)
 	}
 
 	return fmt.Sprintf("Added palette user %q and reloaded NATS server\n", name), nil

@@ -162,7 +162,12 @@ func StartTwitch() error {
 
 	err := client.Connect()
 	if err != nil {
-		return fmt.Errorf("unable to connect to twitch, clientUserName=%s clientAuthenticationToken=%s err=%s", clientUserName, clientAuthenticationToken, err.Error())
+		// The token is deliberately not in here. This error goes to
+		// kit.LogError in main, and an expired token or a flaky venue uplink
+		// makes a connect failure routine - so the OAuth token, which can post
+		// as the user, was being written to chat.log in the clear, and the hub
+		// collects those logs centrally.
+		return fmt.Errorf("unable to connect to twitch, clientUserName=%s err=%w", clientUserName, err)
 	}
 	select {}
 	// unreachable

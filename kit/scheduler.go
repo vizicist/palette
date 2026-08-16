@@ -316,24 +316,42 @@ func (sched *Scheduler) deletePendingEvents(match func(*SchedElement) bool) int 
 }
 
 func (sched *Scheduler) deleteScheduledEvents(match func(*SchedElement) bool, onDelete func(*SchedElement)) int {
-	sched.mutex.Lock()
-	defer sched.mutex.Unlock()
 
-	deleted := 0
-	var nexti *list.Element
-	for i := sched.schedList.Front(); i != nil; i = nexti {
-		nexti = i.Next()
-		se := i.Value.(*SchedElement)
-		if !match(se) {
-			continue
+	// Remove and collect under the lock, then run the callbacks with it
+	// released.
+	//
+	// onDelete used to be called while sched.mutex was held, and it re-enters
+	// the scheduler: DeleteEventsWithTag and FilterEventsWithTag both delete
+	// active cursors from it, and DeleteActiveCursor -> cleanupDeletedActiveCursor
+	// -> stopActiveSamplePlayback -> stopSamplePlayback calls
+	// DeleteSamplePlaybackStarts, which locks this same mutex (and then
+	// ScheduleAt, which wants the pending list). sync.RWMutex is not reentrant,
+	// so a sample-backed cursor being cleaned up here wedged the goroutine
+	// outright - and one of those callers runs on the scheduler goroutine.
+	// clearActiveCursors in cursor.go already avoids this the same way.
+	var deleted []*SchedElement
+	func() {
+		sched.mutex.Lock()
+		defer sched.mutex.Unlock()
+
+		var nexti *list.Element
+		for i := sched.schedList.Front(); i != nil; i = nexti {
+			nexti = i.Next()
+			se := i.Value.(*SchedElement)
+			if !match(se) {
+				continue
+			}
+			sched.schedList.Remove(i)
+			deleted = append(deleted, se)
 		}
-		if onDelete != nil {
+	}()
+
+	if onDelete != nil {
+		for _, se := range deleted {
 			onDelete(se)
 		}
-		sched.schedList.Remove(i)
-		deleted++
 	}
-	return deleted
+	return len(deleted)
 }
 
 func isSoundEvent(value any) bool {
