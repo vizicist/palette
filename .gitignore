@@ -97,6 +97,7 @@ release/palette_*.exe
 cmd/palette_engine/palette_engine.exe
 cmd/palette_engine/palette_engine
 cmd/palette_hub/palette_hub.exe
+/palette_installer.exe
 cmd/palette/palette
 cmd/palette/palette.exe
 cmd/palette_natsmon/palette_natsmon
