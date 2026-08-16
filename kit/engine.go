@@ -82,6 +82,8 @@ func InitEngine() {
 
 	LogInfo("PaletteDataPath", "path", PaletteDataPath())
 
+	LogVersionMismatch()
+
 	/*
 		// The _Boot.json file is now used to set the initial state of the system,
 		// so if you want to force looping off at startup, you can do it there.

@@ -119,7 +119,7 @@ func InitLog(logname string) {
 	}
 	theLog = logger.Sugar()
 	defer LogIfError(logger.Sync()) // flushes buffer, if any
-	LogInfo("InitLog ==============================", "logname", logname)
+	LogInfo("InitLog ==============================", "logname", logname, "version", GetPaletteVersion())
 }
 
 func LogFatal(err error) {

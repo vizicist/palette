@@ -183,15 +183,6 @@ func isPaletteRoot(dir string) bool {
 		(PathExists(filepath.Join(dir, "data_default")) || PathExists(filepath.Join(dir, "bin")))
 }
 
-func GetPaletteVersion() string {
-	path := filepath.Join(PaletteDir(), "VERSION")
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		return "Unknown" // It's okay if file isn't present
-	}
-	return strings.TrimSuffix(string(bytes), "\n")
-}
-
 func PaletteDataPath() (datapath string) {
 
 	paletteData := os.Getenv("PALETTE_DATA")
