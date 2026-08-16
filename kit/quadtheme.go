@@ -49,7 +49,9 @@ func writeQuadThemeLink(themeCategory string, presetName string) error {
 		return err
 	}
 	data = append(data, '\n')
-	return os.WriteFile(path, data, 0644)
+	// Atomic like the presets these point at: a truncated link file reads as a
+	// preset that has vanished from its theme.
+	return WriteFileAtomic(path, data, 0644)
 }
 
 // readQuadThemeLink returns the master preset name a theme link points to. A

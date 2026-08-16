@@ -272,7 +272,10 @@ func (vals *ParamValues) Save(category string, filename string) error {
 		return err
 	}
 	data = append(data, '\n')
-	return os.WriteFile(path, data, 0644)
+	// Atomic, for the same reason as the quad's _Current: this writes the
+	// global _Current and _Boot, which are the settings the engine comes back
+	// up with, and it runs on every global.set.
+	return WriteFileAtomic(path, data, 0644)
 }
 
 // paramsForCategory returns name/value pairs of the parameters that belong in a

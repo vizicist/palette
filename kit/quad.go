@@ -365,6 +365,14 @@ func (quad *Quad) loadQuadRand(category string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if len(arr) == 0 {
+		// Taking a modulo of zero is a panic, not an error, and this runs on
+		// the scheduler goroutine: attract mode calls it every
+		// PresetChangeInterval. An empty category is reachable - a data
+		// directory that was never seeded, or an operator who removed the last
+		// quad preset - and _Current is not written until something saves it.
+		return "", fmt.Errorf("loadQuadRand: no presets in category %s", category)
+	}
 
 	quad.randMutex.Lock()
 	rn := quad.rand.Uint64() % uint64(len(arr))
@@ -520,7 +528,13 @@ func (quad *Quad) saveQuadToDir(category string, quadName string) error {
 		return err
 	}
 	data = append(data, '\n')
-	return os.WriteFile(path, data, 0644)
+	// Atomic: _Current is the live state of the instrument and it is rewritten
+	// on essentially every parameter change, so a power cut at a venue has a
+	// constant chance of landing inside this write. os.WriteFile truncates
+	// first, and quad.Start only LogIfErrors a _Current that won't parse, so a
+	// short file comes back as all four patches at their defaults with nothing
+	// on screen to say why.
+	return WriteFileAtomic(path, data, 0644)
 }
 
 func (quad *Quad) addPatch(name string) *Patch {

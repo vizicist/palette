@@ -488,7 +488,17 @@ func (sched *Scheduler) triggerItemsScheduledAtOrBefore(thisClick Clicks) {
 				LogError(err)
 				synthName = ""
 			}
-			synth := Synths[synthName]
+			// GetSynth rather than a raw map lookup. global.midithrusynth is a
+			// free-form string that nothing validates on set, so a typo or a
+			// name missing from Synths.json gives a nil *Synth, and every
+			// branch below dereferences it - SendNoteToMidiOutput reaches
+			// synth.state through midiOutputEnabled. GetSynth warns and falls
+			// back to the dummy synth registered under "".
+			synth := GetSynth(synthName)
+			if synth == nil {
+				LogWarn("MIDI thru: no synth to send to", "synth", synthName)
+				break
+			}
 			var bt []byte
 
 			switch {

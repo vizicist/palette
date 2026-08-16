@@ -537,12 +537,26 @@ func (a *AudioManager) Close() {
 		return
 	}
 	a.StopAll()
+
+	// Take the device out from under the lock and uninit it with the lock
+	// released. Uninit stops the device and joins miniaudio's audio thread, and
+	// that thread runs dataCallback, which takes this same mutex on every
+	// buffer period - so uniniting while holding it means Uninit waits for the
+	// callback to return while the callback waits for the mutex, and both hang
+	// for good. dataCallback never looks at a.device, so clearing it early is
+	// safe.
+	a.mu.Lock()
+	device := a.device
+	a.device = nil
+	a.mu.Unlock()
+	if device != nil {
+		device.Uninit()
+	}
+
+	// Only once the device is gone, and with it the audio thread, is it safe to
+	// tear the context down.
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if a.device != nil {
-		a.device.Uninit()
-		a.device = nil
-	}
 	if a.context != nil {
 		_ = a.context.Uninit()
 		a.context.Free()
@@ -551,12 +565,17 @@ func (a *AudioManager) Close() {
 }
 
 func (a *AudioManager) openDevice(deviceID *malgo.DeviceID) error {
+	// Same as Close: the old device is uninited with the lock released, because
+	// Uninit joins the audio thread and that thread's dataCallback wants this
+	// mutex. Switching output device while a sample is playing is exactly when
+	// the callback is running.
 	a.mu.Lock()
-	if a.device != nil {
-		a.device.Uninit()
-		a.device = nil
-	}
+	old := a.device
+	a.device = nil
 	a.mu.Unlock()
+	if old != nil {
+		old.Uninit()
+	}
 
 	config := malgo.DefaultDeviceConfig(malgo.Playback)
 	config.SampleRate = audioSampleRate
