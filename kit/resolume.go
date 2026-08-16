@@ -608,6 +608,16 @@ func (r *Resolume) Activate() {
 
 	// Show the animated text generator for preset names
 	r.showTextLayerClip(1)
+
+	// This Resolume is freshly started, so its composition has none of the
+	// attract-video clips or the layer they were pushed into - those are only
+	// ever put into the running composition, never saved. Tell the player to
+	// forget them, so the next attract entry rebuilds them rather than
+	// addressing clips that no longer exist. Done last, once the composition
+	// has settled, and it restores the videos itself if attract mode is already
+	// running - which is likely, since Resolume restarting takes long enough
+	// for the idle timer to elapse.
+	TheAttractVideoPlayer().Reload()
 }
 
 func (r *Resolume) connectClip(layerNum int, clip int) {

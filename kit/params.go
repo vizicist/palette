@@ -135,10 +135,21 @@ func (vals *ParamValues) ApplyValuesFromMap(category string, paramsmap map[strin
 		}
 
 		// Only include ones that match the category.
-		// If the category is "patch" or "quad", match any of sound/visual/effect/misc.
+		// If the category is "patch" or a quad category, match any of
+		// sound/visual/effect/misc.
+		//
+		// IsQuadCategory rather than category == "quad": every themed quad
+		// directory (quad_default, quad_chill, ...) is a quad category too, and
+		// patch.load decides quad-vs-not that way everywhere else. The literal
+		// meant this matched only the bare "quad" category, so the shipped
+		// paramoverrides.json - which patch.load applies through here, and which
+		// exists precisely so an installation can pin values like a brightness
+		// cap - was applied at boot and during attract but silently dropped the
+		// moment an operator loaded a preset from any theme. The GUI always
+		// loads quad presets under a theme, so that was every human-driven load.
 
 		if category == paramCategory ||
-			((category == "patch" || category == "quad") && IsPerPatchParam(fullname)) {
+			((category == "patch" || IsQuadCategory(category)) && IsPerPatchParam(fullname)) {
 
 			// err := params.Set(fullname, value)
 			err := setfunc(fullname, value)

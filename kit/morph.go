@@ -318,6 +318,21 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) 
 		ce := NewCursorEvent(gid, m.currentTag, ddu, pos)
 		ce.Area = area
 		callback(ce)
+
+		// A contact that has lifted must not leave its GID behind. Sensel
+		// contact IDs are slot indices the firmware reuses right away, so the
+		// next finger down usually gets the same one - and with looping on,
+		// DeleteActiveCursorIfZLessThan deliberately keeps the ActiveCursor
+		// alive past the up when maxZ reached the loop threshold. A stale entry
+		// therefore hands the next touch the finished gesture's GID, and
+		// ExecuteCursorEvent takes its "down" as a continuation of that still
+		// looping cursor instead of a new gesture: it inherits the old patch
+		// and maxZ, and the older gesture's loop cleanup later deletes the
+		// newer one's events. maxZ never decreases, so that slot stayed
+		// poisoned for the rest of a run - days, on an installation.
+		if ddu == "up" {
+			delete(m.contactIDToGID, contactid)
+		}
 	}
 }
 

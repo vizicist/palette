@@ -308,6 +308,31 @@ func (p *AttractVideoPlayer) Start() {
 	LogInfo("attract videos playing", "count", len(p.files), "layer", layerNum)
 }
 
+// Reload forgets that the clips were pushed into Resolume, and puts them back
+// up if attract mode is running right now.
+//
+// Everything this player sets up - the clips, and the extra layer ensureLayer
+// adds - lives only in Resolume's running composition. None of it is saved to
+// the .avc, so a Resolume that has restarted has neither. Start skips its
+// reload when it believes the clips are already loaded, so without this the
+// player would go on sending connect and solo OSC to a layer and clip numbers
+// that no longer exist, and the attract videos would silently never appear
+// again for the rest of the engine's uptime.
+func (p *AttractVideoPlayer) Reload() {
+
+	p.mutex.Lock()
+	p.loaded = false
+	p.playing = false
+	p.mutex.Unlock()
+
+	// If attract mode is on right now, Start puts the videos back. If it isn't,
+	// the next entry into attract mode does, and reloads because loaded is now
+	// false.
+	if theAttractManager != nil && theAttractManager.AttractModeIsOn() {
+		p.Start()
+	}
+}
+
 // Stop hides the video layer. Bypassing the layer is what takes the video off
 // screen; as connectClip notes, sending a clip 0 doesn't turn a layer off.
 func (p *AttractVideoPlayer) Stop() {

@@ -37,17 +37,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     // if the feed is slow to come up.
     setupPointerKind();
 
+    // Start the feed, but don't let the rest of the UI depend on it arriving.
+    // LocalNATS.open retries for ever and never rejects, so awaiting it
+    // outright meant that if the websocket was not up - a stale process holding
+    // port 9222, or simply the engine's HTTP server answering before its NATS
+    // server finished binding - this await never settled. Everything below it
+    // is what wires the controls, so the touchscreen came up blank and
+    // completely dead, with the catch that was meant to degrade gracefully
+    // unreachable. The rest of the GUI works over HTTP regardless; only live
+    // status updates need this feed.
+    const feedReady = setupUIStateFeed({
+        status: handleUIStatus,
+        stepper: handleStepperStatus,
+        cursor: handleCursorActivity,
+        obsRecord: handleOBSRecordStatus
+    });
+
     try {
-        await setupUIStateFeed({
-            status: handleUIStatus,
-            stepper: handleStepperStatus,
-            cursor: handleCursorActivity,
-            obsRecord: handleOBSRecordStatus
-        });
+        await promiseWithTimeout(feedReady, uiFeedConnectTimeoutMs, 'NATS UI feed');
         await seedUIState();
     } catch (e) {
-        console.warn('NATS UI feed unavailable:', e);
+        console.warn('NATS UI feed unavailable, continuing without it:', e);
         updateRecordButtonVisibility(false);
+        // The underlying connect is still retrying, so pick things up whenever
+        // it does arrive rather than making someone reload the kiosk.
+        feedReady
+            .then(() => {
+                console.info('NATS UI feed arrived late, seeding UI state');
+                return seedUIState();
+            })
+            .catch(err => console.warn('NATS UI feed never became usable:', err));
     }
 
     applyInitialPageMode();
@@ -129,6 +148,23 @@ function syncStartupMode(status) {
 function statusMode(status) {
     if (!status) return '';
     return status.mode || '';
+}
+
+// How long to wait for the NATS UI feed before bringing the GUI up without it.
+// A working connect is effectively instant; this only has to be longer than a
+// slow-but-succeeding one.
+const uiFeedConnectTimeoutMs = 5000;
+
+// promiseWithTimeout rejects after ms if promise has not settled. It does not
+// cancel promise - there is no cancelling a nats.ws connect, and we do not want
+// to: it keeps retrying, and the caller attaches to it so the UI can catch up
+// when the feed finally arrives.
+function promiseWithTimeout(promise, ms, what) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${what} did not connect within ${ms}ms`)), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 // setupPointerKind records whether the last pointer down was a finger, so the
