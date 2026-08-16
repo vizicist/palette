@@ -33,10 +33,26 @@ type AudioManager struct {
 	channelOrder  map[int][]string
 	channelActive map[int]string
 	noteVoices    map[[2]int]string
-	reverb        *monoReverb
-	outputID      *int
-	outputName    *string
-	err           error
+
+	// Counts of the stops that have targeted each voice key and each channel.
+	//
+	// Play decodes and renders outside a.mu, which can take a while, and only
+	// then takes the lock to insert the voice. A StopVoice, StopNote, StopAll,
+	// reload or all-notes-off arriving during that window used to be silently
+	// overtaken: the stop cleared the channel, then Play took the lock and
+	// inserted its voice anyway, so the sample started playing after the thing
+	// that was supposed to end it. Play now captures these before decoding and
+	// abandons its voice if either has moved.
+	voiceStopEpoch   map[string]uint64
+	channelStopEpoch map[int]uint64
+	// Bumped by StopAll, which has to cancel in-flight Plays for channels it
+	// has never seen and so cannot name.
+	allStopEpoch uint64
+
+	reverb     *monoReverb
+	outputID   *int
+	outputName *string
+	err        error
 }
 
 type AudioDevice struct {
@@ -368,6 +384,20 @@ func (a *AudioManager) Play(req *PlaybackRequest) error {
 		return errors.New("playback request has no file path")
 	}
 
+	voiceKey := req.VoiceKey
+	if voiceKey == "" {
+		voiceKey = "preview"
+	}
+
+	// Note where the stop counters stand before the expensive work, so a stop
+	// that lands while we decode can be honoured rather than overtaken.
+	a.mu.Lock()
+	a.ensureVoiceMapsLocked()
+	startVoiceEpoch := a.voiceStopEpoch[voiceKey]
+	startChannelEpoch := a.channelStopEpoch[req.Channel]
+	startAllEpoch := a.allStopEpoch
+	a.mu.Unlock()
+
 	buf, err := a.decode(req.FilePath)
 	if err != nil {
 		a.setErr(err)
@@ -382,16 +412,25 @@ func (a *AudioManager) Play(req *PlaybackRequest) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	voiceKey := req.VoiceKey
-	if voiceKey == "" {
-		voiceKey = "preview"
-	}
 	a.ensureVoiceMapsLocked()
+	if a.voiceStopEpoch[voiceKey] != startVoiceEpoch ||
+		a.channelStopEpoch[req.Channel] != startChannelEpoch ||
+		a.allStopEpoch != startAllEpoch {
+		// Something asked for silence while this was decoding. The stop wins;
+		// inserting now would start the sample after the note that ended it.
+		return nil
+	}
+
 	a.stopVoiceLocked(voiceKey)
 	voice := &audioVoice{pcm: pcm, loop: req.Loop, channel: req.Channel, note: req.Note, active: true}
 	if req.Channel >= 0 {
 		if activeKey, ok := a.channelActive[req.Channel]; ok {
-			if activeVoice := a.voices[activeKey]; activeVoice != nil {
+			// Only looping voices are arbitrated this way. mixIntoLocked
+			// suppresses an inactive voice only when it loops, so doing this to
+			// a one-shot left it perfectly audible with its position reset to
+			// zero: the older sample restarted from the beginning and mixed
+			// underneath the new one.
+			if activeVoice := a.voices[activeKey]; activeVoice != nil && activeVoice.loop {
 				activeVoice.active = false
 				activeVoice.position = 0
 			}
@@ -513,6 +552,8 @@ func (a *AudioManager) StopAll() {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	a.ensureVoiceMapsLocked()
+	a.allStopEpoch++
 	for voiceKey := range a.voices {
 		a.stopVoiceLocked(voiceKey)
 	}
@@ -693,6 +734,12 @@ func (a *AudioManager) ensureVoiceMapsLocked() {
 	if a.noteVoices == nil {
 		a.noteVoices = make(map[[2]int]string)
 	}
+	if a.voiceStopEpoch == nil {
+		a.voiceStopEpoch = make(map[string]uint64)
+	}
+	if a.channelStopEpoch == nil {
+		a.channelStopEpoch = make(map[int]uint64)
+	}
 }
 
 func (a *AudioManager) ensureReverbLocked() {
@@ -707,6 +754,9 @@ func (a *AudioManager) reverbActiveLocked() bool {
 
 func (a *AudioManager) stopChannelLocked(channel int) {
 	a.ensureVoiceMapsLocked()
+	// Bumped unconditionally, not just per voice found: this has to cancel a
+	// Play that is still decoding for this channel and so has no voice yet.
+	a.channelStopEpoch[channel]++
 	for key, voiceKey := range a.noteVoices {
 		if key[0] == channel {
 			delete(a.voices, voiceKey)
@@ -728,6 +778,12 @@ func (a *AudioManager) stopChannelLocked(channel int) {
 func (a *AudioManager) stopVoiceLocked(voiceKey string) {
 	a.ensureVoiceMapsLocked()
 	voice, hadVoice := a.voices[voiceKey]
+	// Record the stop even when there is no voice yet: the point is to cancel a
+	// Play that is still decoding and has not inserted its voice.
+	a.voiceStopEpoch[voiceKey]++
+	if voice != nil && voice.channel >= 0 {
+		a.channelStopEpoch[voice.channel]++
+	}
 	delete(a.voices, voiceKey)
 	for key, activeVoice := range a.noteVoices {
 		if activeVoice == voiceKey {
