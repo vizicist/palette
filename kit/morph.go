@@ -38,10 +38,55 @@ type oneMorph struct {
 	deviceID         int
 	morphtype        string // "corners", "quadrants", "A", "B", "C", "D"
 	currentTag       string // "A", "B", "C", "D" - it can change dynamically
-	previousTag      string // "A", "B", "C", "D" - it can change dynamically
-	contactIDToGID   map[int]int
+	contacts         map[int]morphContact
 	pressureStats    morphPressureStats
 	dev              *sensel.Device
+}
+
+// morphContact is what one in-progress contact is currently doing: the GID its
+// events carry, and the source it was last seen on.
+//
+// The tag is per contact rather than per Morph. It used to be a single
+// previousTag field on the Morph, compared against currentTag to notice a
+// contact crossing between sources - but on a "quadrants" or "corners" Morph
+// currentTag is recomputed for each contact in the frame, so two fingers in
+// different quadrants made that field alternate on every single event and every
+// event looked like a crossing.
+type morphContact struct {
+	gid int
+	tag string
+}
+
+// gidForContact returns the GID that this contact's events should carry, and -
+// when the contact has crossed from one source to another - the GID and tag of
+// the gesture it just ended, so the caller can send that gesture its "up".
+// retireGid is 0 when there is nothing to retire; UniqueGID starts at 1, so a
+// real GID is never 0.
+//
+// The new GID is recorded in every case. The crossing branch used to mint one
+// and not store it, so the next frame for the same still-down contact looked
+// the old GID up again: one physical contact alternated between two GIDs, and
+// the extra one arrived downstream as an unknown GID with ddu "drag", which
+// ExecuteCursorEvent promotes to "down" - a stray ActiveCursor, and a note,
+// that never received an up of its own.
+func (m *oneMorph) gidForContact(contactid int, tag string) (gid int, retireGid int, retireTag string) {
+
+	previous, seen := m.contacts[contactid]
+	gid = previous.gid
+
+	switch {
+	case !seen:
+		// Never seen this contact before, so it starts a new gesture.
+		gid = theCursorManager.UniqueGID()
+	case previous.tag != tag:
+		// Crossed into a different source: the gesture on the old one is over,
+		// and a new one begins here.
+		retireGid, retireTag = previous.gid, previous.tag
+		gid = theCursorManager.UniqueGID()
+	}
+
+	m.contacts[contactid] = morphContact{gid: gid, tag: tag}
+	return gid, retireGid, retireTag
 }
 
 type morphPressureStats struct {
@@ -265,20 +310,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) 
 		}
 
 		contactid := int(contact.ID)
-		gid, ok := m.contactIDToGID[contactid]
-		if !ok {
-			// If we've never seen this contact before, create a new cid...
-			gid = theCursorManager.UniqueGID()
-			m.contactIDToGID[contactid] = gid
-		} else if m.currentTag != m.previousTag {
-			// If we're switching to a new source, clear existing cursors...
-			ce := NewCursorClearEvent()
-			callback(ce)
-			// and create a new cid...
-			gid = theCursorManager.UniqueGID()
-		}
-
-		m.previousTag = m.currentTag
+		gid, retireGid, retireTag := m.gidForContact(contactid, m.currentTag)
 
 		LogOfType("morph,pressure", "Morph",
 			"idx", m.idx,
@@ -315,6 +347,21 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) 
 		}
 
 		pos := CursorPos{xNorm, yNorm, zNorm}
+
+		// End the old gesture explicitly when a contact crossed sources. This
+		// replaces a NewCursorClearEvent that never did anything: that event
+		// carries an empty Tag, and clearActiveCursors skips every cursor whose
+		// tag doesn't match, with only "*" meaning all - so it cleared nothing
+		// and logged "clear with empty tag?" on each crossing. Nothing else
+		// retires the old GID now that it is no longer reused, so without this
+		// its cursor, and any note it is holding, would linger until
+		// CheckAutoCursorUp's 8-beat timeout swept it up.
+		if retireGid != 0 {
+			up := NewCursorEvent(retireGid, retireTag, "up", pos)
+			up.Area = area
+			callback(up)
+		}
+
 		ce := NewCursorEvent(gid, m.currentTag, ddu, pos)
 		ce.Area = area
 		callback(ce)
@@ -331,7 +378,7 @@ func (m *oneMorph) readFrames(callback CursorCallbackFunc, forceFactor float64) 
 		// newer one's events. maxZ never decreases, so that slot stayed
 		// poisoned for the rest of a run - days, on an installation.
 		if ddu == "up" {
-			delete(m.contactIDToGID, contactid)
+			delete(m.contacts, contactid)
 		}
 	}
 }
@@ -392,8 +439,8 @@ func morphInitialize() error {
 		}
 
 		m := &oneMorph{
-			contactIDToGID: map[int]int{},
-			dev:            dev,
+			contacts: map[int]morphContact{},
+			dev:      dev,
 		}
 		m.idx = idx
 		m.serialNum = dev.SerialNum
