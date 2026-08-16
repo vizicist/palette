@@ -243,6 +243,62 @@ func TestAttractForgetTouches(t *testing.T) {
 	}
 }
 
+// captureBiduleResets swaps in a counting resetBidule for the duration of a
+// test and returns the counter.
+func captureBiduleResets(t *testing.T) *atomic.Int32 {
+	t.Helper()
+	old := resetBidule
+	t.Cleanup(func() { resetBidule = old })
+	var resets atomic.Int32
+	resetBidule = func() { resets.Add(1) }
+	return &resets
+}
+
+// Leaving attract mode must NOT reset Bidule. Reset cycles Bidule's transport
+// off for 400ms, and attract mode is left because someone is touching the pads,
+// so on the way out that toggle runs underneath the first notes of a new
+// session. A note-on that lands mid-cycle can leave a voice sounding in Bidule
+// whose note-off it never acts on - and because the engine sent both, its own
+// bookkeeping is balanced and the note watchdog never expires it.
+func TestAttractExitDoesNotResetBidule(t *testing.T) {
+	resets := captureBiduleResets(t)
+
+	old := theAttractManager
+	defer func() { theAttractManager = old }()
+	am := attractManagerOn()
+	theAttractManager = am
+
+	am.SetAttractMode(false)
+
+	if am.AttractModeIsOn() {
+		t.Fatal("attract mode did not turn off")
+	}
+	if n := resets.Load(); n != 0 {
+		t.Fatalf("leaving attract mode reset Bidule %d times, want 0", n)
+	}
+}
+
+// Entering attract mode is the safe moment to reset Bidule: nobody is playing,
+// which is why the mode turned on at all.
+func TestAttractEntryResetsBidule(t *testing.T) {
+	resets := captureBiduleResets(t)
+
+	old := theAttractManager
+	defer func() { theAttractManager = old }()
+	am := attractManagerOn()
+	am.attractModeIsOn.Store(false)
+	theAttractManager = am
+
+	am.setAttractMode(true)
+
+	if !am.AttractModeIsOn() {
+		t.Fatal("attract mode did not turn on")
+	}
+	if n := resets.Load(); n != 1 {
+		t.Fatalf("entering attract mode reset Bidule %d times, want 1", n)
+	}
+}
+
 // An unset or nonsense count behaves the way it did before any of this: the
 // first touch is enough.
 func TestAttractTouchThresholdUnsetCountExitsOnFirstTouch(t *testing.T) {

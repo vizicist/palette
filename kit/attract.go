@@ -224,6 +224,14 @@ func (am *AttractManager) SetAttractMode(onoff bool) {
 	}
 }
 
+// resetBidule restarts Bidule's transport. It is indirected through a variable
+// so tests can check which attract transitions reach it - the whole point of
+// the change that introduced this is which ones do not. The default spawns the
+// goroutine itself, both because Reset sleeps while it waits for Bidule and
+// setAttractMode runs on the scheduler tick, and so that a test replacing this
+// observes a plain synchronous call.
+var resetBidule = func() { go TheBidule().Reset() }
+
 func (am *AttractManager) setAttractMode(onoff bool) {
 
 	LogInfo("setAttractMode", "onoff", onoff)
@@ -244,11 +252,29 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 		theQuad.allNotesOff()
 	}
 
-	go TheBidule().Reset()
+	// Bidule gets reset on the way in only. Reset switches Bidule's transport
+	// off, sleeps 400ms, and switches it back on - and attract mode is left
+	// precisely because someone is touching the pads, so on the way out that
+	// toggle is guaranteed to run underneath the first notes of a new session.
+	// A note-on landing while the transport is cycling can leave a voice
+	// sounding in Bidule whose note-off it never acts on. Nothing catches that:
+	// the engine sent both the on and the off, so its own bookkeeping is
+	// balanced and the 30-second watchdog never sees it (SendExpiredNoteOffs
+	// only expires notes it still has recorded as down). The note then drones
+	// until the next attract entry happens to send an unconditional ANO.
+	//
+	// Entering attract is the safe moment for the same work, since nobody is
+	// playing - that is why the mode turned on. Nothing is lost by skipping it
+	// on the way out: Reset finishes by turning the transport back on, so it is
+	// already on by the time attract ends, and allNotesOff above still runs in
+	// both directions, so leaving attract is still silent.
+	if onoff {
+		resetBidule()
+	}
 
 	// Attract videos, on installations that have them, play on the Resolume
 	// output for as long as attract mode lasts. Both calls reach Resolume over
-	// the network, so they run off the tick like the Bidule reset above.
+	// the network, so they run off the tick like the Bidule reset.
 	if onoff {
 		go TheAttractVideoPlayer().Start()
 	} else {
