@@ -27,9 +27,40 @@ var oscPort = 3333
 var guiPort = 3943
 var mmttHTTPPort = 4444
 var engineHTTPPort = 3330
-var engineHTTPBindAddress = "0.0.0.0"
 var eventClientPort = 6666
 var LocalAddress = "127.0.0.1"
+
+// PaletteHTTPBindEnv names the environment variable that widens where the
+// engine's HTTP server listens.
+const PaletteHTTPBindEnv = "PALETTE_HTTP_BIND"
+
+// engineHTTPBindAddress is the interface the engine's HTTP server listens on.
+//
+// It used to be 0.0.0.0, which put the whole control API on every interface
+// with no authentication in front of it: the /api handler reads the body and
+// calls ExecuteAPIFromJSON with no token, session, or origin check, so anyone
+// who could reach the port could read any parameter (global.emailpassword is
+// the SMTP credential), point global.resolumepath at an executable of their
+// choosing and start it, delete recordings, or stop the engine. It also
+// exposed /nats/api, which forwards a caller-chosen command to any other
+// Palette on the hub.
+//
+// Nothing needs it: the kiosk browser, python/palette.py and EngineHTTPAPI all
+// use 127.0.0.1, the NATS websocket's CORS allowlist is loopback-only, remote
+// and fleet control go over NATS (to_palette.<host>.api) rather than this port,
+// and the hub connection is outbound.
+//
+// An installation that really wants the GUI reachable from a phone on the venue
+// LAN can set PALETTE_HTTP_BIND (to 0.0.0.0, or better, one interface address).
+// That is deliberately an environment variable rather than a parameter: a
+// setting that controls who may call the API has no business being changeable
+// through the API.
+func engineHTTPBindAddress() string {
+	if bind := os.Getenv(PaletteHTTPBindEnv); bind != "" {
+		return bind
+	}
+	return LocalAddress
+}
 
 func InitKit() {
 

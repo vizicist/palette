@@ -394,9 +394,15 @@ func (e *Engine) StartHTTP(port int) {
 		return EngineNatsAPI(host, string(bytes), time.Second)
 	}))
 
-	source := fmt.Sprintf("%s:%d", engineHTTPBindAddress, port)
-	// Timeouts so a stalled client can't hold a handler goroutine forever
-	// (the server binds all interfaces, so it's reachable from the LAN).
+	bind := engineHTTPBindAddress()
+	source := fmt.Sprintf("%s:%d", bind, port)
+	if bind != LocalAddress {
+		// Worth a line in the log, since it puts an API with no authentication
+		// in front of it onto the network.
+		LogWarn("engine HTTP server is listening beyond localhost",
+			"bind", bind, "env", PaletteHTTPBindEnv)
+	}
+	// Timeouts so a stalled client can't hold a handler goroutine forever.
 	// The generous write timeout allows for long recordings streamed from
 	// /recordings/ over slow connections.
 	server := &http.Server{
