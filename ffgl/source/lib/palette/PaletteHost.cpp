@@ -3,6 +3,13 @@
 #include <strstream>
 #include <cstdlib> // for srand, rand
 #include <ctime>   // for time
+#include <chrono>  // for the bounded wait in RespondToJson
+#include <cerrno>  // for ETIMEDOUT
+
+// How long RespondToJson will wait for a render pass to service its request.
+// ProcessOpenGL services these at frame rate, so reaching this means rendering
+// has stopped rather than that the request is slow.
+static const int json_response_timeout_ms = 2000;
 #include <sys/stat.h>
 
 // to get M_PI
@@ -123,6 +130,8 @@ PaletteDaemon::PaletteDaemon(PaletteHost* mf, int osc_input_port, std::string os
 	_paletteHost = mf;
 	_network_thread_created = false;
 	daemon_shutting_down = false;
+	// daemon_stopped had no value at all here, and the destructor waited on it.
+	daemon_stopped = false;
 
 	if ( osc_input_port < 0 ) {
 		NosuchDebug("NOT CREATING _oscinput!! because osc_input_port<0");
@@ -178,15 +187,19 @@ PaletteDaemon::~PaletteDaemon()
 {
 	NosuchDebug(1,"PaletteDaemon DESTRUCTOR starts!");
 	daemon_shutting_down = true;
-	NosuchDebug(1,"PaletteDaemon waiting to shut down!");
-	while( daemon_stopped == false )
-	{
-		Sleep( 1 );
-	}
-	NosuchDebug(1,"PaletteDaemon is shut down!");
+
+	// Join, rather than spinning on daemon_stopped and joining afterwards.
+	//
+	// That spin waited for a flag the constructor never set, and it ran whether
+	// or not the thread had been created - so a pthread_create that failed left
+	// this loop waiting forever on a flag no thread existed to write, hanging
+	// whatever was tearing the plugin down. pthread_join is the wait, it is
+	// already the barrier the flag was standing in for, and it only makes sense
+	// when there is a thread to join.
 	if ( _network_thread_created ) {
-		// pthread_detach(_network_thread);
+		NosuchDebug(1,"PaletteDaemon waiting to shut down!");
 		pthread_join(_network_thread,NULL);
+		NosuchDebug(1,"PaletteDaemon is shut down!");
 	}
 
 	if ( _oscinput ) {
@@ -920,18 +933,55 @@ std::string PaletteHost::RespondToJson(std::string method, cJSON *params, const 
 	json_params = params;
 	json_id = id;
 
+	// Bounded wait.
+	//
+	// Only ProcessOpenGL services json_pending, so if this layer stops being
+	// rendered - clip stopped, layer bypassed, composition switched - or
+	// teardown has begun, nothing will ever clear it. This used to be an
+	// unbounded pthread_cond_wait, so the OSC input thread blocked for good;
+	// and since the daemon destructor waits for that thread, shutting the
+	// plugin down hung as well. ProcessOpenGL runs at frame rate, so anything
+	// approaching this timeout means it is not running at all.
 	bool err = false;
+	bool timedout = false;
+
+	auto deadline = std::chrono::system_clock::now()
+		+ std::chrono::milliseconds(json_response_timeout_ms);
+
 	while ( json_pending ) {
 		NosuchDebug(3, "####### Waiting for json_cond!");
-		int e = pthread_cond_wait(&json_cond, &json_mutex);
+
+		auto secs = std::chrono::time_point_cast<std::chrono::seconds>(deadline);
+		auto nsecs = std::chrono::duration_cast<std::chrono::nanoseconds>(deadline - secs);
+		struct timespec ts;
+		ts.tv_sec = (long)secs.time_since_epoch().count();
+		ts.tv_nsec = (long)nsecs.count();
+
+		int e = pthread_cond_timedwait(&json_cond, &json_mutex, &ts);
+		if ( e == ETIMEDOUT ) {
+			timedout = true;
+			break;
+		}
 		if ( e ) {
-			NosuchDebug(3,"####### ERROR from pthread_cond_wait e=%d",e);
+			NosuchDebug(3,"####### ERROR from pthread_cond_timedwait e=%d",e);
 			err = true;
 			break;
 		}
 	}
+
+	if ( timedout ) {
+		// Abandon the request rather than keep the thread. Clearing the flag
+		// also stops a renderer that starts up again later from writing a
+		// result nobody is waiting for, into params the caller has since freed.
+		json_pending = false;
+		NosuchDebug("RespondToJson: no render pass serviced method=%s within %dms, giving up",
+			method.c_str(), json_response_timeout_ms);
+	}
+
 	std::string result;
-	if ( err ) {
+	if ( timedout ) {
+		result = error_json(-32000,"Timed out waiting for the render thread");
+	} else if ( err ) {
 		result = error_json(-32000,"Error waiting for json!?");
 	} else {
 		result = json_result;

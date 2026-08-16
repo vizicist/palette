@@ -52,7 +52,12 @@ NosuchOscUdpInput::Listen() {
 	if ( _myhost != NULL && strcmp(_myhost,"*") != 0 ) {
 	    phe = gethostbyname(_myhost);
 	    if (phe == NULL) {
-	        return OscSocketError("unable to get hostname");
+	        // Every failure from here on closes the socket before returning.
+	        // They all used to leak it, so a plugin retrying a listen that keeps
+	        // failing leaked one descriptor per attempt.
+	        int e = OscSocketError("unable to get hostname");
+	        closesocket(s);
+	        return e;
 	    }
 	    memcpy((struct sockaddr FAR *) &(sin.sin_addr),
 	           *(char **)phe->h_addr_list, phe->h_length);
@@ -65,24 +70,33 @@ NosuchOscUdpInput::Listen() {
 
     if (  ioctlsocket(s,FIONBIO,&nbio) < 0 ) {
         NosuchDebug("_openListener error 2");
-        return OscSocketError("unable to set socket to non-blocking");
+        int e = OscSocketError("unable to set socket to non-blocking");
+        closesocket(s);
+        return e;
     }
     if (bind(s, (LPSOCKADDR)&sin, sizeof (sin)) < 0) {
         int e = WSAGetLastError();
 		if( e == WSAEADDRINUSE )
 		{
+			// Reported, not thrown. This used to throw std::runtime_error,
+			// which went straight past the caller's error-return branch - and
+			// Listen is called from a constructor on the plugin's own thread,
+			// so a port already in use took the host down instead of being
+			// handled. Every other failure here returns an error code.
 			NosuchDebug("Palette: host=%s port=%d is already in use.",_myhost,_myport);
-            throw std::runtime_error("Palette: host ");
 		}
 		else
 		{
 			NosuchDebug("Palette: socket bind error: host=%s port=%d e=%d",_myhost,_myport,e);
         }
+        closesocket(s);
         return e;
         // return OscSocketError("unable to bind socket");
     }
     if ( getsockname(s,(LPSOCKADDR)&sin2, &sin2_len) != 0 ) {
-        return OscSocketError("unable to getsockname after bind");
+        int e = OscSocketError("unable to getsockname after bind");
+        closesocket(s);
+        return e;
     }
     // *myport = ntohs(sin2.sin_port);
     NosuchDebug(1,"Listening for OSC on UDP port %d@%s",_myport,_myhost);
@@ -130,9 +144,31 @@ NosuchOscUdpInput::Check()
             return;
         }
         // NosuchDebug("%ld: GOT recvfrom _myport=%d i=%d  cnt=%d",timeGetTime(),_myport,i,cnt);
-        osc::ReceivedPacket p( buf, i );
 
-		ProcessReceivedPacket(inet_ntoa(sin.sin_addr),p);
+		// One datagram must not be able to kill the host.
+		//
+		// osc::ReceivedPacket's constructor throws for a malformed packet, and
+		// both it and the dispatch below used to sit outside any catch. Check
+		// runs on the plugin's own pthread, and an exception escaping a pthread
+		// entry function terminates the process - so a single stray or hostile
+		// UDP packet on this port took Resolume down. Anything thrown for one
+		// packet is now logged and that packet dropped; the rest keep flowing.
+		try {
+			osc::ReceivedPacket p( buf, i );
+			ProcessReceivedPacket(inet_ntoa(sin.sin_addr),p);
+		}
+		catch (osc::Exception& e) {
+			NosuchDebug("NosuchOscUdpInput::Check - ignoring malformed OSC packet from %s: %s",
+				inet_ntoa(sin.sin_addr), e.what());
+		}
+		catch (std::exception& e) {
+			NosuchDebug("NosuchOscUdpInput::Check - exception handling a packet from %s: %s",
+				inet_ntoa(sin.sin_addr), e.what());
+		}
+		catch (...) {
+			NosuchDebug("NosuchOscUdpInput::Check - unknown exception handling a packet from %s",
+				inet_ntoa(sin.sin_addr));
+		}
     }
     NosuchDebug(1,"NosuchOscUdpInput.Check: quiting early, too many packets at once (%d)\n", toomany);
     // The rest of the packets will be picked up by the next call to Check()

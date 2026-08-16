@@ -6,6 +6,8 @@
 // #include <gl/gl.h>
 #endif
 
+#include <atomic>
+
 class PaletteHost;
 class Palette;
 class PaletteHttp;
@@ -25,9 +27,12 @@ public:
 	~PaletteDaemon();
 	void *run(void *arg);
 private:
+	// Shared between the daemon thread and whoever destroys it, so they are
+	// atomic rather than plain bools. daemon_stopped was also never given a
+	// value in the constructor, and the destructor waited on it.
 	bool _network_thread_created;
-	bool daemon_shutting_down;
-	bool daemon_stopped;
+	std::atomic<bool> daemon_shutting_down;
+	std::atomic<bool> daemon_stopped;
 	pthread_t _network_thread;
 	PaletteHost* _paletteHost;
 	PaletteOscInput* _oscinput;

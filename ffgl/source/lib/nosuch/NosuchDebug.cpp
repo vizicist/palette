@@ -196,15 +196,28 @@ RealNosuchDebugInit() {
 	char *value = NULL;
 	size_t len;
 
+	// The mutex and the fallback sink come up before anything that can fail.
+	//
+	// These two lines used to sit after the PALETTE lookup, and the branch
+	// taken when PALETTE is missing called the public NosuchDebug on its way
+	// out. NosuchDebug reaches RealNosuchDebug, which begins by calling this
+	// initializer - and DebugInitialized had not been set yet, so it re-entered
+	// and recursed until the plugin host overflowed its stack. A Palette.dll
+	// loaded without PALETTE in the environment took Resolume down with it.
+	// RealNosuchDebug also waits on dMutex, which in that path had never been
+	// created.
+	dMutex = CreateMutex(NULL, FALSE, NULL);
+	DebugInitialized = TRUE;
+
 	err = _dupenv_s( &palette, &len, "PALETTE" );
 	if( err || palette == NULL )
 	{
-		NosuchDebug( "No value for PALETTE environment variable!?\n" );
+		// Safe to log now: DebugInitialized is set, so this cannot re-enter,
+		// and it goes to the last-resort path set above.
+		NosuchDebug( "No value for PALETTE environment variable, logging to %s\n",
+			NosuchDebugLogPath.c_str() );
 		return;
 	}
-
-	dMutex = CreateMutex(NULL, FALSE, NULL);
-	DebugInitialized = TRUE;
 
 	std::string datapath = PaletteDataPath();
 	NosuchDebugLogPath = datapath + "\\logs\\ffgl.log";
