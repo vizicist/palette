@@ -83,9 +83,24 @@ for bin in "$INSTALL_DIR/bin/"*; do
     echo "  $name -> $bin"
 done
 
-# Set ownership to palette user
-echo "Setting ownership to 'palette' user..."
-chown -R palette:palette "$INSTALL_DIR"
+# Set ownership.
+#
+# Program files stay root-owned. This used to be a blanket
+# "chown -R palette:palette $INSTALL_DIR", which handed the unprivileged service
+# account ownership of the very executables it runs - and those are symlinked
+# into /usr/local/bin, so anything running as 'palette' could rewrite a binary
+# that something else, possibly root, then invokes. Only the directories Palette
+# actually writes to at runtime belong to it.
+echo "Setting ownership..."
+chown -R root:root "$INSTALL_DIR"
+chmod -R go-w "$INSTALL_DIR"
+
+for writable in "$INSTALL_DIR/data_default" "$INSTALL_DIR/logs"; do
+    if [ -d "$writable" ]; then
+        echo "  runtime-writable: $writable"
+        chown -R palette:palette "$writable"
+    fi
+done
 
 echo ""
 echo "Installation complete!"

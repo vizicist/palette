@@ -20,7 +20,7 @@ if errorlevel 1 goto getout
 
 set ship=%PALETTE_SOURCE%\build\windows\ship
 set bin=%ship%\bin
-rm -fr %ship% > nul 2>&1
+rm -fr "%ship%" > nul 2>&1
 mkdir %ship%
 mkdir %ship%\bin
 mkdir %ship%\ffgl
@@ -56,7 +56,7 @@ if "%PALETTE_MMTT%" == "" goto no_mmtt
 echo ================ Creating cmds
 
 set buildcmdsout=%PALETTE_SOURCE%\build\windows\buildcmds.out
-del /f /q %buildcmdsout% >nul 2>&1
+del /f /q "%buildcmdsout%" >nul 2>&1
 
 rem Each of these builds cmd\<name>\<name>.go into %bin%\<name>.exe and
 rem stops the build if it fails - see :build_go.
@@ -176,7 +176,7 @@ if exist "%USERPROFILE%\mingw64\bin\libgcc_s_sjlj-1.dll" copy "%USERPROFILE%\min
 copy "%USERPROFILE%\mingw64\bin\libstdc++-6.dll" %bin% >nul
 
 echo ================ Removing unused things
-if exist %bin%\pyinstalled\tcl\tzdata rm -fr %bin%\pyinstalled\tcl\tzdata
+if exist "%bin%\pyinstalled\tcl\tzdata" rm -fr "%bin%\pyinstalled\tcl\tzdata"
 
 echo ================ Creating installer for VERSION %version%
 

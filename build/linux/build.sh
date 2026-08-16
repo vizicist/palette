@@ -21,6 +21,26 @@ mkdir -p "$BIN"
 # Copy VERSION file
 cp "$PALETTE_SOURCE/VERSION" "$SHIP/"
 
+# Copy the default data tree.
+#
+# The release used to package only binaries, but the engine resolves its data
+# path to /usr/local/palette/data_default (see PaletteDataPath in kit/misc.go),
+# so an install had no paramdefs.json, no presets and no config at all - the
+# engine came up unable to do anything. Sanitized the same way build_data.bat
+# does for Windows: the working state and the per-installation attract videos
+# are not part of a release.
+echo "================ Copying data_default"
+cp -R "$PALETTE_SOURCE/data_default" "$SHIP/data_default"
+rm -f "$SHIP/data_default/saved/global/_Current.json"
+rm -f "$SHIP/data_default/saved/global/_Boot.json"
+rm -rf "$SHIP/data_default/config/chrome"
+find "$SHIP/data_default/logs" -type f ! -name '.gitignore' -delete 2>/dev/null || true
+# Attract videos are per-installation content; ship the README that explains
+# how to add them, never the files themselves.
+if [ -d "$SHIP/data_default/config/attractmode_videos" ]; then
+    find "$SHIP/data_default/config/attractmode_videos" -type f ! -name 'README.md' -delete
+fi
+
 if [ -f "$PALETTE_SOURCE/pkg/samplesplitter/assets/static/index.html" ]; then
     echo "================ Copying samplesplitter"
     cp -R "$PALETTE_SOURCE/pkg/samplesplitter/assets" "$SHIP/samplesplitter"

@@ -66,6 +66,11 @@ SOURCES_CPP=(
     "$FFGL_DIR/source/lib/palette/PaletteUtil.cpp"
     "$FFGL_DIR/source/lib/palette/Layer.cpp"
     "$FFGL_DIR/source/lib/palette/Scheduler.cpp"
+    # ShapeSprite.cpp defines SpriteParametric::create, which Layer.cpp calls
+    # (Layer.cpp:246). It was missing from this list while the Windows project
+    # has always compiled it, so the macOS bundle either failed to link or
+    # loaded without a symbol it needs the moment a parametric shape is used.
+    "$FFGL_DIR/source/lib/palette/ShapeSprite.cpp"
     "$FFGL_DIR/source/lib/palette/Sprite.cpp"
     "$FFGL_DIR/source/lib/palette/SvgSprite.cpp"
     "$FFGL_DIR/source/lib/palette/TrackedCursor.cpp"
