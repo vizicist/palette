@@ -103,3 +103,50 @@ func pendingCount(sched *Scheduler) int {
 	defer sched.pendingMutex.RUnlock()
 	return len(sched.pendingScheduled)
 }
+
+// A panic on the realtime path must cost one tick, not the scheduler.
+//
+// The recover used to sit at Start's scope, outside the `for range tick.C`
+// loop, so any panic unwound the loop and Start returned. Nothing restarts that
+// goroutine, so the engine kept answering HTTP with its clock stopped: no
+// scheduled notes, no cursor handling, no attract, and no hung-note watchdog,
+// which lives in the same loop. Nothing outside could tell, because the process
+// was still up.
+func TestSchedulerTickSurvivesPanic(t *testing.T) {
+	InitLog("")
+
+	oldScheduler := theScheduler
+	oldAttract := theAttractManager
+	oldClick := CurrentClick()
+	defer func() {
+		theScheduler = oldScheduler
+		theAttractManager = oldAttract
+		SetCurrentClick(oldClick)
+	}()
+
+	sched := NewScheduler()
+	theScheduler = sched
+
+	// An AttractManager whose atomic flag was never allocated: checkAttract
+	// dereferences it. This stands in for the reachable panics on this path -
+	// a nil Synth in the MIDI-thru lookup, or loadQuadRand taking a modulo of
+	// an empty quad directory.
+	theAttractManager = &AttractManager{}
+
+	// Make sure the tick gets past its "clock hasn't advanced" early return.
+	SetCurrentClick(-1000)
+
+	// If this propagates, the test binary dies right here - which is precisely
+	// what happened to the scheduler goroutine before the fix.
+	sched.tickOnce()
+
+	if sched.tickPanics != 1 {
+		t.Fatalf("tickOnce recovered %d panics, want 1 (did the tick actually panic?)", sched.tickPanics)
+	}
+
+	// And the loop keeps going: the next tick still runs.
+	sched.tickOnce()
+	if sched.tickPanics != 2 {
+		t.Fatalf("after a second panicking tick, recovered %d, want 2", sched.tickPanics)
+	}
+}

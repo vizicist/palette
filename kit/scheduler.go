@@ -23,6 +23,13 @@ type Scheduler struct {
 	lastClick        Clicks
 	pendingMutex     sync.RWMutex
 	pendingScheduled []*SchedElement
+
+	// State of the realtime loop, carried across ticks. Only tickOnce and
+	// Start touch these, both on the scheduler goroutine.
+	nonRealtime          bool
+	lastMIDINoteWatchdog time.Time
+	tickPanics           int
+	lastTickPanicLogged  time.Time
 }
 
 type Command struct {
@@ -141,42 +148,76 @@ func (sched *Scheduler) Start() {
 	tick := time.NewTicker(2 * time.Millisecond)
 	// sched.time0 = <-tick.C
 
-	nonRealtime := false
-	lastMIDINoteWatchdog := time.Now()
+	sched.nonRealtime = false
+	sched.lastMIDINoteWatchdog = time.Now()
 
 	// By reading from tick.C, we wake up every 2 milliseconds
 	for range tick.C {
-		// sched.now = now
-		now := time.Now()
-		uptimesecs := Uptime()
-
-		// XXX - should lock from here?
-
-		thisClick := CurrentClick()
-		var newclick Clicks
-		if nonRealtime {
-			newclick = thisClick + 1
-		} else {
-			newclick = Seconds2Clicks(uptimesecs)
-		}
-		SetCurrentMilli(int64(uptimesecs * 1000.0))
-
-		if newclick <= thisClick {
-			// Info("SCHEDULER skipping to next loop, newclick is unchanged","newclick",newclick,"currentClick",currentClick)
-			continue
-		}
-
-		sched.advanceClickTo(newclick)
-		theEngine.advanceTransposeTo(newclick)
-
-		theProcessManager.checkProcess()
-		theAttractManager.checkAttract()
-		if now.Sub(lastMIDINoteWatchdog) >= midiNoteWatchdogInterval {
-			SendExpiredMIDINoteOffs(now, maxMIDINoteDuration)
-			lastMIDINoteWatchdog = now
-		}
+		sched.tickOnce()
 	}
 	LogInfo("StartRealtime ends")
+}
+
+// tickOnce is one pass of the realtime loop, and it recovers on its own.
+//
+// The recover belongs here rather than at Start's scope. There are reachable
+// panics on this path - a nil Synth from the MIDI-thru lookup, an empty quad
+// directory reaching loadQuadRand from attract - and from out there any one of
+// them unwinds the whole loop: Start logs it and returns, nothing restarts the
+// goroutine, and the engine goes on answering HTTP with its clock stopped. No
+// scheduled notes, no cursor handling, no attract, and no hung-note watchdog,
+// which lives in this loop too. Nothing outside sees a failure, because the
+// process is still up. Recovering per tick costs one dropped 2ms tick instead.
+func (sched *Scheduler) tickOnce() {
+
+	defer func() {
+		r := recover()
+		if r == nil {
+			return
+		}
+		sched.tickPanics++
+		// A fault that recurs every tick would write a stack trace every 2ms
+		// and fill the disk. Log the first, then at most one a minute, carrying
+		// the running count so a persistent one stays visible.
+		if !sched.lastTickPanicLogged.IsZero() && time.Since(sched.lastTickPanicLogged) < time.Minute {
+			return
+		}
+		sched.lastTickPanicLogged = time.Now()
+		stacktrace := string(debug.Stack())
+		fmt.Printf("PANIC: recover in Scheduler tick called, r=%+v stack=%v", r, stacktrace)
+		LogError(fmt.Errorf("PANIC: recover in Scheduler tick has been called"),
+			"r", r, "panics", sched.tickPanics, "stack", stacktrace)
+	}()
+
+	// sched.now = now
+	now := time.Now()
+	uptimesecs := Uptime()
+
+	// XXX - should lock from here?
+
+	thisClick := CurrentClick()
+	var newclick Clicks
+	if sched.nonRealtime {
+		newclick = thisClick + 1
+	} else {
+		newclick = Seconds2Clicks(uptimesecs)
+	}
+	SetCurrentMilli(int64(uptimesecs * 1000.0))
+
+	if newclick <= thisClick {
+		// Info("SCHEDULER skipping to next loop, newclick is unchanged","newclick",newclick,"currentClick",currentClick)
+		return
+	}
+
+	sched.advanceClickTo(newclick)
+	theEngine.advanceTransposeTo(newclick)
+
+	theProcessManager.checkProcess()
+	theAttractManager.checkAttract()
+	if now.Sub(sched.lastMIDINoteWatchdog) >= midiNoteWatchdogInterval {
+		SendExpiredMIDINoteOffs(now, maxMIDINoteDuration)
+		sched.lastMIDINoteWatchdog = now
+	}
 }
 
 func (sched *Scheduler) advanceClickTo(toClick Clicks) {

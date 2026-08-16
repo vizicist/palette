@@ -76,13 +76,18 @@ func InitParams() {
 }
 
 func GetGlobalParams() map[string]string {
+	GlobalParams.mutex.RLock()
+	defer GlobalParams.mutex.RUnlock()
 	s := map[string]string{}
-	GlobalParams.DoForAllParams(func(nm string, val ParamValue) {
-		s[nm], _ = GlobalParams.ParamValueAsString(nm)
-	})
+	for nm := range GlobalParams.values {
+		s[nm], _ = GlobalParams.paramValueAsStringLocked(nm)
+	}
 	return s
 }
 
+// DoForAllParams calls f for every parameter with the read lock held. f must not
+// call back into any ParamValues method that takes the lock - see
+// paramValueAsStringLocked for why that deadlocks rather than merely nesting.
 func (vals *ParamValues) DoForAllParams(f func(string, ParamValue)) {
 	vals.mutex.RLock()
 	defer vals.mutex.RUnlock()
@@ -97,7 +102,7 @@ func (vals *ParamValues) JSONValues() string {
 	s := ""
 	sep := ""
 	for nm := range vals.values {
-		valstr, _ := vals.ParamValueAsString(nm) // error shouldn't happen
+		valstr, _ := vals.paramValueAsStringLocked(nm) // error shouldn't happen
 		s = s + sep + "        \"" + nm + "\":\"" + valstr + "\""
 		sep = ",\n"
 	}
@@ -184,10 +189,13 @@ func (vals *ParamValues) GetWithPrefix(prefix string) (string, error) {
 	}
 	sort.Strings(names)
 
-	// Build result string
+	// Build result string. The locked helper is required: ParamValueAsString
+	// would take the read lock a second time on this goroutine, which deadlocks
+	// as soon as any writer (a concurrent global.set, or a preset load on the
+	// scheduler) is waiting for the write lock.
 	var result strings.Builder
 	for _, name := range names {
-		valstr, err := vals.ParamValueAsString(name)
+		valstr, err := vals.paramValueAsStringLocked(name)
 		if err != nil {
 			continue
 		}
@@ -252,11 +260,39 @@ func (vals *ParamValues) Save(category string, filename string) error {
 		return err
 	}
 
-	// Print the parameter values sorted by name
-	fullNames := vals.values
-	sortedNames := make([]string, 0, len(fullNames))
-	// lookfor := category + "."
-	for paramName := range fullNames {
+	// Snapshot under one read lock, then marshal and write outside it: the JSON
+	// encoding and the disk write have no business holding a lock that every
+	// parameter change needs.
+	params := vals.paramsForCategory(category)
+
+	data, err := json.MarshalIndent(struct {
+		Params map[string]string `json:"params"`
+	}{Params: params}, "", "    ")
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	return os.WriteFile(path, data, 0644)
+}
+
+// paramsForCategory returns name/value pairs of the parameters that belong in a
+// saved file for this category.
+//
+// The whole scan runs under a single read lock. Save used to range vals.values
+// with no lock at all while SetParamWithString wrote to it under the write
+// lock, which is a "concurrent map iteration and map write" - a fatal runtime
+// error, not a panic, so no recover() anywhere can save the process. It was
+// reachable from ordinary use: Save runs on every global.set (via
+// SaveCurrentGlobalParams) and on patch.save, API calls are not serialized -
+// each HTTP request has its own goroutine, and NATS is a second entry point -
+// and the GUI fires a set per slider movement.
+func (vals *ParamValues) paramsForCategory(category string) map[string]string {
+
+	vals.mutex.RLock()
+	defer vals.mutex.RUnlock()
+
+	sortedNames := make([]string, 0, len(vals.values))
+	for paramName := range vals.values {
 		w := strings.SplitN(paramName, ".", 2)
 		paramCategory := w[0]
 		// Decide if this parameter should be included in the file
@@ -277,21 +313,14 @@ func (vals *ParamValues) Save(category string, filename string) error {
 		if strings.Contains(fullName, "._") {
 			continue
 		}
-		valstring, e := vals.ParamValueAsString(fullName)
+		valstring, e := vals.paramValueAsStringLocked(fullName)
 		if e != nil {
 			LogIfError(e)
 			continue
 		}
 		params[fullName] = valstring
 	}
-	data, err := json.MarshalIndent(struct {
-		Params map[string]string `json:"params"`
-	}{Params: params}, "", "    ")
-	if err != nil {
-		return err
-	}
-	data = append(data, '\n')
-	return os.WriteFile(path, data, 0644)
+	return params
 }
 
 func IsPatchCategory(category string) bool {
@@ -430,8 +459,24 @@ func (vals *ParamValues) Exists(name string) bool {
 }
 
 func (vals *ParamValues) ParamValueAsString(name string) (string, error) {
-	val := vals.paramValue(name)
-	if val == nil {
+	vals.mutex.RLock()
+	defer vals.mutex.RUnlock()
+	return vals.paramValueAsStringLocked(name)
+}
+
+// paramValueAsStringLocked is ParamValueAsString for callers that already hold
+// vals.mutex.
+//
+// Every method that walks the map needs this. sync.RWMutex forbids recursive
+// read locking - once a writer's Lock is pending, a second RLock on the same
+// goroutine blocks behind it and the two wait on each other forever - so a
+// caller holding the lock must not reach a method that takes it again. The
+// alternative the code used to take, walking the map with no lock at all, races
+// SetParamWithString's write and produces "concurrent map iteration and map
+// write", which is a fatal runtime error that no recover() can catch.
+func (vals *ParamValues) paramValueAsStringLocked(name string) (string, error) {
+	val, ok := vals.values[name]
+	if !ok {
 		return "", fmt.Errorf("no parameter named %s", name)
 	}
 	s := ""
