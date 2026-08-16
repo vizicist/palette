@@ -216,7 +216,17 @@ func (m *OneMorph) readFrames(callback CursorDeviceCallbackFunc, forceFactor flo
 		}
 
 		callback(CursorDeviceEvent{
-			CID:  fmt.Sprintf("%d", c.ID),
+			// The device serial has to be in here. Sensel contact IDs are
+			// per-device slot indices that every Morph numbers from the same
+			// values, and all the Morphs share one OSC sender - so with more
+			// than one attached, simultaneous contacts collided under the same
+			// CID. Down and drag carried enough position to partly tell them
+			// apart, but up did not, so one pad's release could delete the
+			// other pad's cursor, leaving jumps and stuck cursors. The serial
+			// rather than Idx because Idx depends on enumeration order, which
+			// shifts when a device is replugged. CID is an opaque string on the
+			// wire, so this only changes the value, not the message shape.
+			CID:  fmt.Sprintf("%s-%d", m.SerialNum, c.ID),
 			Ddu:  ddu,
 			X:    xNorm,
 			Y:    yNorm,
