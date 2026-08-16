@@ -283,8 +283,7 @@ func enumerateMonitors() ([]rect, error) {
 	if ret == 0 {
 		return nil, fmt.Errorf("EnumDisplayMonitors failed: %v", err)
 	}
-	// NOTE: append instead of the copy builtin, which is shadowed by this
-	// package's copy() in copy.go.
+	// append(nil, ...) clones the slice.
 	return append([]rect(nil), monitorBounds...), nil
 }
 

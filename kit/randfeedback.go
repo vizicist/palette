@@ -196,8 +196,7 @@ func feedbackExamplesForCategory(category string) []FeedbackExample {
 	feedbackDBMutex.Lock()
 	defer feedbackDBMutex.Unlock()
 	db := loadFeedbackDB()
-	// NOTE: append instead of the copy builtin, which is shadowed by this
-	// package's copy() in copy.go.
+	// append(nil, ...) clones the slice.
 	return append([]FeedbackExample(nil), db.Categories[category]...)
 }
 

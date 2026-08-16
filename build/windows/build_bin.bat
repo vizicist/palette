@@ -58,35 +58,18 @@ echo ================ Creating cmds
 set buildcmdsout=%PALETTE_SOURCE%\build\windows\buildcmds.out
 del /f /q %buildcmdsout% >nul 2>&1
 
-echo ================ Compiling palette
-pushd %PALETTE_SOURCE%\cmd\palette
-go build palette.go >> %buildcmdsout% 2>&1
-move palette.exe %bin%\palette.exe > nul
-popd
-
-echo ================ Compiling palette_engine
-pushd %PALETTE_SOURCE%\cmd\palette_engine
-go build palette_engine.go >> %buildcmdsout% 2>&1
-move palette_engine.exe %bin%\palette_engine.exe > nul
-popd
-
-echo ================ Compiling palette_monitor
-pushd %PALETTE_SOURCE%\cmd\palette_monitor
-go build palette_monitor.go >> %buildcmdsout% 2>&1
-move palette_monitor.exe %bin%\palette_monitor.exe > nul
-popd
-
-echo ================ Compiling palette_chat
-pushd %PALETTE_SOURCE%\cmd\palette_chat
-go build palette_chat.go >> %buildcmdsout% 2>&1
-move palette_chat.exe %bin%\palette_chat.exe > nul
-popd
-
-echo ================ Compiling palette_hub
-pushd %PALETTE_SOURCE%\cmd\palette_hub
-go build palette_hub.go >> %buildcmdsout% 2>&1
-move palette_hub.exe %bin%\palette_hub.exe > nul
-popd
+rem Each of these builds cmd\<name>\<name>.go into %bin%\<name>.exe and
+rem stops the build if it fails - see :build_go.
+call :build_go palette
+if errorlevel 1 goto getout
+call :build_go palette_engine
+if errorlevel 1 goto getout
+call :build_go palette_monitor
+if errorlevel 1 goto getout
+call :build_go palette_chat
+if errorlevel 1 goto getout
+call :build_go palette_hub
+if errorlevel 1 goto getout
 
 rem print any error messages from compiling cmds
 type %buildcmdsout%
@@ -206,6 +189,33 @@ exit /b 0
 
 :getout
 exit /b 1
+
+rem ======== Build one Go command from cmd\<name>\<name>.go into %bin%.
+rem ======== These builds used to have no errorlevel checks at all, so a
+rem ======== compile error only surfaced in the later "type %buildcmdsout%"
+rem ======== and the script carried on to package an installer and exit 0.
+rem ======== Since %ship% is wiped at the start of the build, that shipped an
+rem ======== installer with the binary missing - or, because "go build" leaves
+rem ======== its previous output in place when it fails, a stale one from an
+rem ======== earlier successful build. Either way the exit code said success.
+:build_go
+echo ================ Compiling %~1
+pushd %PALETTE_SOURCE%\cmd\%~1
+go build %~1.go >> %buildcmdsout% 2>&1
+if errorlevel 1 (
+	echo ERROR: go build failed for %~1
+	type %buildcmdsout%
+	popd
+	exit /b 1
+)
+move %~1.exe %bin%\%~1.exe > nul
+if errorlevel 1 (
+	echo ERROR: unable to move %~1.exe into %bin%
+	popd
+	exit /b 1
+)
+popd
+exit /b 0
 
 :set_msdev_env
 set "vswhere=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"

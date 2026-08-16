@@ -64,7 +64,12 @@ func (cmd Cmd) ValuesFloat(name string, dflt float32) float32 {
 		return dflt
 	}
 	f, err := strconv.ParseFloat(v, 32)
-	if err == nil {
+	if err != nil {
+		// Was err == nil, which returned the default on every value it managed
+		// to parse and 0 (the zero value of f) on every one it didn't - so the
+		// function could never return a parsed value at all. Compare ValuesInt
+		// below, which has always had this the right way round.
+		LogIfError(err)
 		return dflt
 	}
 	return float32(f)

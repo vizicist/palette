@@ -111,20 +111,47 @@ func joystickMonitor(jsid int) {
 	buttonDown := make([]bool, monitoredJoystick.ButtonCount())
 	buttonDownTime := make([]time.Time, monitoredJoystick.ButtonCount())
 
+	// This footswitch is the physical kill-all (short press) and reboot (long
+	// press) control for the installation, so it is worth being stubborn about.
+	// The loop used to `continue` on a read error without waiting for the
+	// ticker, so a joystick returning errors continuously spun as fast as Read
+	// returned rather than at 1Hz; and after 999 errors it gave up for good,
+	// which meant a kicked cable disabled the venue's emergency controls until
+	// somebody rebooted the machine. Now it keeps its 1Hz pace, logs sparsely,
+	// and periodically tries to open the device again - a replugged joystick
+	// needs a new handle, since the old one stays invalid.
+	const reopenEveryErrors = 30
+
 	errcount := 0
 	for {
 		jinfo, err := monitoredJoystick.Read()
-		if err == nil {
-			errcount = 0
-		} else {
+		if err != nil {
 			errcount++
-			if errcount < 4 {
+			// The first few, then one a ten minutes or so, so a permanently
+			// absent footswitch cannot fill the disk.
+			if errcount < 4 || errcount%600 == 0 {
 				kit.LogIfError(err)
-			} else if errcount > 999 {
-				kit.LogWarn("Too many joystick errors, aborting joystick monitoring")
-				break
 			}
+			if errcount%reopenEveryErrors == 0 {
+				if js, oerr := joystick.Open(jsid); oerr == nil {
+					monitoredJoystick.Close()
+					monitoredJoystick = js
+					kit.LogInfo("joystickMonitor: reopened the joystick",
+						"jsid", jsid, "aftererrors", errcount)
+					errcount = 0
+					if n := js.ButtonCount(); n != len(buttonDown) {
+						buttonDown = make([]bool, n)
+						buttonDownTime = make([]time.Time, n)
+					}
+				}
+			}
+			// Wait out the tick exactly as the success path does.
+			<-ticker.C
 			continue
+		}
+		if errcount > 0 {
+			kit.LogInfo("joystickMonitor: joystick is responding again", "aftererrors", errcount)
+			errcount = 0
 		}
 
 		for button := 0; button < monitoredJoystick.ButtonCount(); button++ {
@@ -155,10 +182,8 @@ func joystickMonitor(jsid int) {
 			}
 		}
 
-		tm := <-ticker.C
-		_ = tm
+		<-ticker.C
 	}
-	kit.LogWarn("Joystick monitoring has terminated")
 }
 
 type NoteAction func()

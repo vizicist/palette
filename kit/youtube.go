@@ -77,6 +77,20 @@ func YouTubeConfigured() bool {
 }
 
 // StartYouTubeUpload begins uploading a recording in the background.
+// youtubeUploadTimeout is the outside limit for sending one recording. It only
+// has to be low enough that a wedged upload cannot pin youtubeUploadState at
+// "uploading" for ever; it is not a performance target, so it assumes a floor
+// rate slow enough that no real venue uplink should ever hit it.
+func youtubeUploadTimeout(size int64) time.Duration {
+	const minimum = 30 * time.Minute
+	const floorBytesPerSecond = 8 * 1024 // 64 kbit/s
+	budget := time.Duration(size/floorBytesPerSecond) * time.Second
+	if budget < minimum {
+		return minimum
+	}
+	return budget
+}
+
 // Progress is pushed to the web UI via the obsrecord snapshot.
 func StartYouTubeUpload(filename string) error {
 	if !YouTubeConfigured() {
@@ -173,8 +187,7 @@ func youtubeUpload(path string, title string) (string, error) {
 		return "", fmt.Errorf("YouTube upload session response has no Location header")
 	}
 
-	// Step 2: send the file bytes. No client timeout — a long recording
-	// on a slow uplink can legitimately take many minutes.
+	// Step 2: send the file bytes.
 	req, err = http.NewRequest("PUT", sessionURL, file)
 	if err != nil {
 		return "", err
@@ -182,7 +195,30 @@ func youtubeUpload(path string, title string) (string, error) {
 	req.Header.Set("Content-Type", "video/mp4")
 	req.ContentLength = info.Size()
 
-	resp, err = (&http.Client{}).Do(req)
+	// This used to run on a client with no timeout at all, on the grounds that
+	// a long recording on a slow uplink legitimately takes many minutes. True,
+	// but it meant a connection that stalled - accepted and then never answered
+	// - blocked here for ever, so the goroutine never recorded a result and
+	// youtubeUploadState stayed "uploading" for the life of the process. Every
+	// later upload then failed with "already uploading", with no timeout, no
+	// stall detector and no way to reset it short of restarting the engine.
+	//
+	// ResponseHeaderTimeout is the one that catches that case: it bounds the
+	// wait for a reply after the body has gone out, without limiting how long
+	// sending the body may take. The overall Timeout is the backstop that
+	// guarantees the state cannot pin for ever, and is generous - scaled to the
+	// file at a very low assumed floor rate.
+	uploadClient := &http.Client{
+		Timeout: youtubeUploadTimeout(info.Size()),
+		Transport: &http.Transport{
+			Proxy:                 http.ProxyFromEnvironment,
+			TLSHandshakeTimeout:   30 * time.Second,
+			ResponseHeaderTimeout: 2 * time.Minute,
+		},
+	}
+	defer uploadClient.CloseIdleConnections()
+
+	resp, err = uploadClient.Do(req)
 	if err != nil {
 		return "", err
 	}

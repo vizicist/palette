@@ -335,7 +335,13 @@ func writeJSON(w http.ResponseWriter, data any, status int) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// No Access-Control-Allow-Origin. This server hosts its own UI at "/", so
+	// every legitimate caller is same-origin and needs no CORS header at all.
+	// The wildcard that used to be here let any page in any browser on this
+	// machine call the control endpoints - which are state-changing GETs, so a
+	// bare <img> or fetch was enough to repoint the audio output, trigger
+	// playback or stop everything - and, because it was a wildcard, read the
+	// replies too, including the MP3 listing and its directory path.
 	w.WriteHeader(status)
 	_, _ = w.Write(body)
 }
