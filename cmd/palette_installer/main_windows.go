@@ -308,32 +308,96 @@ func extractPayload(zr *zip.Reader, root string) ([]string, []string, error) {
 			return nil, nil, fmt.Errorf("create install directory %q: %w", dir, err)
 		}
 	}
+	// Publishing is all-or-nothing.
+	//
+	// Each live file used to be deleted and then replaced by a rename, so a
+	// rename that failed - an antivirus holding the old file, a disk error -
+	// left that one missing, and the error returned from part way through the
+	// loop left the directory as a mixture of old files, new files and gaps.
+	// The previous file is now moved aside rather than deleted, and any failure
+	// puts every file this loop touched back where it was.
+	type publishedFile struct {
+		destination string
+		backup      string // empty when nothing was there before
+	}
+	var published []publishedFile
+
+	// rollback undoes the publishes done so far and returns a note naming
+	// anything it could not put back - the one case that leaves the
+	// installation genuinely damaged, so it belongs in the error the user sees.
+	rollback := func() string {
+		var unrestored []string
+		for i := len(published) - 1; i >= 0; i-- {
+			p := published[i]
+			if p.backup == "" {
+				// Nothing was here before this install, so take the new file
+				// away again.
+				os.Remove(p.destination)
+				continue
+			}
+			os.Remove(p.destination)
+			if err := os.Rename(p.backup, p.destination); err != nil {
+				unrestored = append(unrestored, p.destination)
+			}
+		}
+		if len(unrestored) == 0 {
+			return " (previous files restored)"
+		}
+		return fmt.Sprintf(" (WARNING: %d previous file(s) could not be restored: %s)",
+			len(unrestored), strings.Join(unrestored, ", "))
+	}
+
 	var installedFiles []string
 	for _, name := range payloadFiles {
 		source := filepath.Join(stage, filepath.FromSlash(name))
 		destination := filepath.Join(root, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
-			return nil, nil, fmt.Errorf("create install directory: %w", err)
+			return nil, nil, fmt.Errorf("create install directory: %v%s", err, rollback())
 		}
 		if installerbundle.IsPresetPath(name) {
 			keep, err := installedPresetIsNewer(destination, source)
 			if err != nil {
-				return nil, nil, fmt.Errorf("compare installed preset %q: %w", name, err)
+				return nil, nil, fmt.Errorf("compare installed preset %q: %v%s", name, err, rollback())
 			}
 			if keep {
 				continue // preserve the user's more recently modified preset
 			}
 		}
-		if err := os.Remove(destination); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, nil, fmt.Errorf("replace installed file %q: %w", name, err)
+
+		backup := ""
+		if _, err := os.Lstat(destination); err == nil {
+			candidate := destination + ".palette-old"
+			os.Remove(candidate) // a leftover from an earlier interrupted run
+			if err := os.Rename(destination, candidate); err != nil {
+				return nil, nil, fmt.Errorf("replace installed file %q: %v%s", name, err, rollback())
+			}
+			backup = candidate
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return nil, nil, fmt.Errorf("examine installed file %q: %v%s", name, err, rollback())
 		}
+
 		if err := os.Rename(source, destination); err != nil {
-			return nil, nil, fmt.Errorf("install file %q: %w", name, err)
+			// Put this file's own previous version back before unwinding the
+			// rest, since it is not in published yet.
+			if backup != "" {
+				os.Rename(backup, destination)
+			}
+			return nil, nil, fmt.Errorf("install file %q: %v%s", name, err, rollback())
 		}
+		published = append(published, publishedFile{destination: destination, backup: backup})
+
 		// Only files actually written by this installation belong in its
 		// uninstall record. A newer preset preserved above remains user-owned.
 		installedFiles = append(installedFiles, name)
 	}
+
+	// Committed: drop the superseded copies.
+	for _, p := range published {
+		if p.backup != "" {
+			os.Remove(p.backup)
+		}
+	}
+
 	sort.Strings(installedFiles)
 	return installedFiles, dirs, nil
 }
