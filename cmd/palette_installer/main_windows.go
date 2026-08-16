@@ -459,8 +459,35 @@ func uninstall(exePath string, opts options) error {
 			return nil
 		}
 	}
+	// Release any locks on the payload before trying to remove it.
 	if record.Manifest.Kind == "app" {
 		stopPaletteProcesses()
+	}
+
+	// Payload first, and give up if any of it survives.
+	//
+	// This used to run last: the environment entries, the shortcuts and the
+	// uninstall registration were all removed first, then every os.Remove
+	// result was discarded and success was reported regardless. A locked file
+	// therefore stayed on disk with the uninstaller and its Programs-and-
+	// Features entry already gone, so there was nothing left to retry with.
+	// Now the registration and the install record survive a partial removal,
+	// and running the uninstaller again picks up where it stopped.
+	if failures := removeInstalledFiles(record); len(failures) > 0 {
+		shown := failures
+		if len(shown) > 8 {
+			shown = shown[:8]
+		}
+		msg := fmt.Sprintf("Uninstallation is incomplete: %d file(s) could not be removed.\n\n%s\n\n"+
+			"Close anything still using Palette and run the uninstaller again.",
+			len(failures), strings.Join(shown, "\n"))
+		if !opts.quiet {
+			messageBox("Palette Uninstaller", msg, mbOK|mbIconInfo)
+		}
+		return errors.New(msg)
+	}
+
+	if record.Manifest.Kind == "app" {
 		if err := removeUserPath(filepath.Join(record.Root, "ffgl"), filepath.Join(record.Root, "bin")); err != nil {
 			return err
 		}
@@ -472,9 +499,16 @@ func uninstall(exePath string, opts options) error {
 			deleteUserEnvironment("PALETTE_DATA")
 		}
 	}
-	deleteUserEnvironmentIfEqual("PALETTE_DATAROOT", record.DataRoot)
+
 	unregisterUninstaller(record.Manifest)
-	removeInstalledFiles(record)
+
+	// PALETTE_DATAROOT is shared by the application and every data package, so
+	// it only goes when the last of them does. Checked after unregistering this
+	// component so it does not find itself.
+	if !otherPaletteComponentInstalled(record.Manifest) {
+		deleteUserEnvironmentIfEqual("PALETTE_DATAROOT", record.DataRoot)
+	}
+
 	broadcastEnvironmentChange()
 	if !opts.quiet {
 		messageBox("Palette Uninstaller", "Uninstallation completed successfully.", mbOK|mbIconInfo)
@@ -483,12 +517,26 @@ func uninstall(exePath string, opts options) error {
 	return nil
 }
 
-func removeInstalledFiles(record installRecord) {
+// removeInstalledFiles deletes the payload and reports the files it could not
+// remove.
+//
+// Every os.Remove result used to be discarded, so a file held open by an
+// antivirus scanner or a still-running process was silently left behind while
+// the uninstaller reported success and then removed its own registration.
+// Directories are different: one that is not empty afterwards is a symptom of
+// the files that failed, not a separate problem, so those are not reported.
+func removeInstalledFiles(record installRecord) []string {
+	var failed []string
+
 	files := append([]string(nil), record.Files...)
 	sort.Slice(files, func(i, j int) bool { return len(files[i]) > len(files[j]) })
 	for _, name := range files {
-		os.Remove(filepath.Join(record.Root, filepath.FromSlash(name)))
+		path := filepath.Join(record.Root, filepath.FromSlash(name))
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			failed = append(failed, fmt.Sprintf("%s: %v", path, err))
+		}
 	}
+
 	dirs := append([]string(nil), record.Dirs...)
 	for i, dir := range dirs {
 		dirs[i] = filepath.Join(record.Root, filepath.FromSlash(dir))
@@ -498,6 +546,41 @@ func removeInstalledFiles(record installRecord) {
 	for _, dir := range dirs {
 		os.Remove(dir)
 	}
+	return failed
+}
+
+// otherPaletteComponentInstalled reports whether a Palette component other than
+// self still has an uninstall registration.
+//
+// The application and every data package set PALETTE_DATAROOT to the same
+// value, and each uninstaller used to delete it whenever its own recorded value
+// matched - so removing a data package pulled the variable out from under an
+// application that was still installed and needed it. With a custom
+// --data-root that leaves the engine reading and writing somewhere else
+// entirely.
+func otherPaletteComponentInstalled(self installerbundle.Manifest) bool {
+	const root = `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall`
+	cmd := exec.Command("reg.exe", "query", root)
+	cmd.SysProcAttr = hiddenProcess()
+	out, err := cmd.Output()
+	if err != nil {
+		// Can't tell. Leave the shared variable alone rather than risk breaking
+		// a component that is still installed; a stale variable is recoverable,
+		// a missing one sends the engine to the wrong data directory.
+		return true
+	}
+	mine := strings.ToLower(uninstallKey(self))
+	for _, line := range strings.Split(string(out), "\n") {
+		key := strings.ToLower(strings.TrimSpace(line))
+		if key == "" || key == mine {
+			continue
+		}
+		leaf := key[strings.LastIndexByte(key, '\\')+1:]
+		if leaf == "palette" || strings.HasPrefix(leaf, "palettedata_") {
+			return true
+		}
+	}
+	return false
 }
 
 func stopPaletteProcesses() {

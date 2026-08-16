@@ -24,6 +24,22 @@ var samplePlaybackService struct {
 	mutex   sync.Mutex
 	service *ss.Service
 	cancel  context.CancelFunc
+
+	// leases counts the withSamplePlaybackService calls that are currently
+	// inside their callback, holding a service pointer they took a moment ago.
+	//
+	// The pointer used to be copied under the mutex and then used with it
+	// released, so a shutdown could Close the service - tearing down the malgo
+	// device and context - while a scheduled note, a reload or a parameter
+	// setter was still calling into it. Shutdown now detaches the service
+	// first, so no further lease can be taken, and waits for the outstanding
+	// ones before touching any native resources.
+	//
+	// A WaitGroup rather than an RWMutex on purpose: callbacks can call
+	// withSamplePlaybackService again (stopSamplePlaybackForPatch does), and
+	// nesting read locks is exactly the deadlock that TBD #1 was about.
+	// Another lease just increments the count.
+	leases sync.WaitGroup
 }
 
 func StartSamplePlaybackService() error {
@@ -185,18 +201,27 @@ func clampSamplePlaybackWords(words int) int {
 }
 
 func StopSamplePlaybackService() {
+	// Detach first: with the service out of the holder, withSamplePlaybackService
+	// hands out no further leases, so the Wait below cannot race a new one.
 	samplePlaybackService.mutex.Lock()
 	service := samplePlaybackService.service
 	cancel := samplePlaybackService.cancel
 	samplePlaybackService.service = nil
 	samplePlaybackService.cancel = nil
 	samplePlaybackService.mutex.Unlock()
+
 	if cancel != nil {
 		cancel()
 	}
-	if service != nil {
-		_ = service.Close()
+	if service == nil {
+		return
 	}
+	// Then wait for the calls already inside the service to come back out.
+	// Close tears down the malgo device and context; doing that underneath a
+	// scheduled note or a reload that is still calling in is how native
+	// resources get used after they are freed.
+	samplePlaybackService.leases.Wait()
+	_ = service.Close()
 }
 
 func SamplePlaybackServiceRunning() bool {
@@ -308,10 +333,22 @@ func withSamplePlaybackService(fn func(*ss.Service)) bool {
 	if !samplePlaybackProcessAllowed() {
 		return false
 	}
+	// Take the lease under the same mutex that hands out the pointer, so that
+	// once a shutdown has detached the service no new lease can appear behind
+	// it and its Wait cannot miss one.
 	samplePlaybackService.mutex.Lock()
 	service := samplePlaybackService.service
+	if service != nil {
+		samplePlaybackService.leases.Add(1)
+	}
 	samplePlaybackService.mutex.Unlock()
-	if service == nil || !service.Running() {
+
+	if service == nil {
+		return false
+	}
+	defer samplePlaybackService.leases.Done()
+
+	if !service.Running() {
 		return false
 	}
 	fn(service)
