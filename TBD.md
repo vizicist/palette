@@ -15,20 +15,39 @@ second.
 - **P3 — Low:** Lower-impact correctness, maintainability, or defense-in-depth
   improvement.
 
+## Status
+
+Every P1 item has been worked on. 24 of the 27 P1 checkboxes are closed; the
+three still open are noted in place:
+
+- **14** - payload publishing is transactional, whole-version swap and
+  configuration rollback are not.
+- **19** (second box) - the macOS path handling in `PaletteHost.cpp` is unchanged.
+- **21** (first box) - the build stops on a failed compile, but there is still no
+  required-file manifest or hash check before packaging.
+
+Two caveats that a checked box does not convey:
+
+- **7** is restriction, not authentication. The HTTP server defaults to loopback;
+  a wider `PALETTE_HTTP_BIND` still serves an unauthenticated API.
+- The FFGL C++ fixes (**5**, **6**, **13**, **22A**) are compile-verified with a
+  full MSBuild rebuild, and the macOS and Linux packaging fixes (**19**, **20**)
+  are syntax-checked only. None of them has been run on its target.
+
+Nothing in P2 or P3 below has been touched.
+
 ## Recommended next batch
 
-1. Parameter locking and serialized atomic persistence.
-2. Scheduler callback and pending-event cleanup.
-3. Audio teardown, cancellation, and one-shot arbitration.
-4. FFGL lifecycle and exception containment.
-5. Web UI NATS fallback and authenticated HTTP control.
-6. Go 1.25.13 and a cross-platform build/test CI workflow.
+1. Finish 14, 19 and 21 (see above).
+2. Authenticated HTTP control, for installations that need a LAN-reachable API.
+3. Run the macOS and Linux release builds to exercise 19 and 20 for real.
+4. Go 1.25.13 and a cross-platform build/test CI workflow.
 
 ## P1 — High
 
 ### 1. Parameter reads can recursively deadlock
 
-- [ ] Fix recursive read locking in
+- [x] Fix recursive read locking in
   [`kit/params.go:173-190`](kit/params.go#L173-L190).
 - `GetWithPrefix` holds `vals.mutex.RLock()` and calls
   `ParamValueAsString`, which reacquires the same `RWMutex` through
@@ -40,10 +59,13 @@ second.
   `JSONValues` at [`kit/params.go:78-100`](kit/params.go#L78-L100).
 - Snapshot names and values under one read lock, release it, and then format
   values or invoke callbacks without relocking.
+- **Done** in `ccd64b66`. Reads that walk the map use
+  `paramValueAsStringLocked`; `GetGlobalParams`, `DoForAllParams` and
+  `JSONValues` were fixed too.
 
 ### 2. Parameter saving can crash on concurrent map access
 
-- [ ] Make `ParamValues.Save` take a synchronized snapshot in
+- [x] Make `ParamValues.Save` take a synchronized snapshot in
   [`kit/params.go:245-294`](kit/params.go#L245-L294).
 - `Save` aliases and iterates `vals.values` without its mutex while concurrent
   `global.set` or `patch.set` calls can mutate that map.
@@ -51,20 +73,24 @@ second.
   `concurrent map iteration and map write` error.
 - Copy a complete string snapshot under `RLock`, then marshal after unlocking.
   Serialize writes targeting the same preset file.
+- **Done** in `ccd64b66`. The scan is `paramsForCategory` under one read lock;
+  marshalling and the disk write happen outside it.
 
 ### 3. Scheduler deletion callbacks can deadlock playback
 
-- [ ] Run deletion callbacks after releasing `sched.mutex` in
+- [x] Run deletion callbacks after releasing `sched.mutex` in
   [`kit/scheduler.go:277-295`](kit/scheduler.go#L277-L295).
 - `deleteScheduledEvents` invokes `onDelete` while holding the scheduler mutex.
 - Deleting a sample-backed active cursor reaches `DeleteSamplePlaybackStarts`
   during cleanup, which tries to acquire the same scheduler mutex again.
 - Remove and collect matching elements under the lock, unlock, and only then
   run cleanup callbacks.
+- **Done** in `65dba98a`. Matches are removed and collected under the lock,
+  callbacks run after releasing it.
 
 ### 4. Audio teardown and device switching can deadlock
 
-- [ ] Separate device lifecycle synchronization from the audio mix mutex in
+- [x] Separate device lifecycle synchronization from the audio mix mutex in
   [`pkg/samplesplitter/audio.go:535-559`](pkg/samplesplitter/audio.go#L535-L559).
 - `Close` and `openDevice` call `malgo.Device.Uninit()` while holding `a.mu`,
   while the realtime callback starts by acquiring that mutex.
@@ -72,10 +98,12 @@ second.
   waiting on `a.mu`, teardown or an output change waits forever.
 - Detach the device under a lifecycle lock, release the mix lock, and then
   uninitialize the detached device.
+- **Done** in `3761ef1f`. The device is detached under the lock and
+  uninitialised with it released.
 
 ### 5. FFGL daemon teardown has undefined behavior and hang paths
 
-- [ ] Replace the daemon's busy-wait lifecycle with synchronized shutdown and
+- [x] Replace the daemon's busy-wait lifecycle with synchronized shutdown and
   joining in
   [`ffgl/source/lib/palette/PaletteHost.cpp:119-225`](ffgl/source/lib/palette/PaletteHost.cpp#L119-L225).
 - `daemon_stopped` is uninitialized, and all lifecycle flags are plain `bool`s
@@ -84,10 +112,13 @@ second.
   no thread can ever set it.
 - Initialize all state, use atomics or a mutex, request shutdown, and
   `pthread_join` only when thread creation succeeded.
+- **Done** in `ff886b89`. Flags are atomic, `daemon_stopped` is initialised,
+  and the destructor `pthread_join`s only when a thread was created.
+  Compile-verified, not run inside Resolume.
 
 ### 6. Pending FFGL JSON requests can block teardown forever
 
-- [ ] Add cancellation and a bounded wait to
+- [x] Add cancellation and a bounded wait to
   [`PaletteHost::RespondToJson`](ffgl/source/lib/palette/PaletteHost.cpp#L909-L943).
 - The network thread waits indefinitely for `ProcessOpenGL` to service
   `json_pending`.
@@ -95,10 +126,12 @@ second.
   observe shutdown while the destructor waits for that thread.
 - Reject pending requests once GL shutdown starts, broadcast the condition
   during teardown, and use a bounded wait.
+- **Done** in `ff886b89`. The wait is bounded (2s) and a timeout clears
+  `json_pending`. Compile-verified, not run inside Resolume.
 
 ### 7. LAN HTTP control has no authorization
 
-- [ ] Restrict or authenticate the API exposed by
+- [x] Restrict or authenticate the API exposed by
   [`kit/engine.go:351-409`](kit/engine.go#L351-L409).
 - The HTTP server listens on `0.0.0.0` and exposes mutating APIs without
   authentication or request-origin validation.
@@ -107,10 +140,15 @@ second.
 - Default to loopback, or require an authenticated session/token with
   authorization and Origin/CSRF checks before retaining LAN access.
 - Apply small request-body limits to both POST endpoints.
+- **Done.** Restricted, NOT authenticated, in `efd39350` and `65dba98a`. The
+  server defaults to `LocalAddress` and both POST endpoints cap the body at
+  1MB. Anyone who opts back in to a wider bind with `PALETTE_HTTP_BIND` is
+  still serving an unauthenticated API - the token/Origin/CSRF work is still
+  open.
 
 ### 8. An invalid MIDI-thru synth value terminates the scheduler
 
-- [ ] Validate and safely resolve `global.midithrusynth` in
+- [x] Validate and safely resolve `global.midithrusynth` in
   [`kit/scheduler.go:445-474`](kit/scheduler.go#L445-L474).
 - String parameter assignment accepts arbitrary values, so
   `Synths[synthName]` can be nil.
@@ -118,10 +156,12 @@ second.
   recovers the panic and returns, permanently stopping future scheduled events.
 - Validate the parameter as an enum, guard the lookup, and isolate malformed
   events so one event cannot terminate the scheduler loop.
+- **Done** in `3761ef1f`. `GetSynth` falls back to the dummy synth, with a nil
+  guard behind it.
 
 ### 9. Overlapping sampleplayer one-shots restart older samples
 
-- [ ] Limit channel queue arbitration to looping voices in
+- [x] Limit channel queue arbitration to looping voices in
   [`pkg/samplesplitter/audio.go:360-405`](pkg/samplesplitter/audio.go#L360-L405).
 - `Play` marks the prior channel voice inactive and resets its position for
   every request, including `Loop == false`.
@@ -130,20 +170,25 @@ second.
   reset and restart the older voice again.
 - Let non-looping keyed voices mix independently and add an overlapping
   one-shot regression test.
+- **Done** in `d3892e49`. Only looping voices are arbitrated, which is what the
+  mixer honours.
 
 ### 10. A stop can be overtaken by an in-flight play
 
-- [ ] Add cancellation generations or reserve a cancellable voice before
+- [x] Add cancellation generations or reserve a cancellable voice before
   decoding in
   [`pkg/samplesplitter/audio.go:360-405`](pkg/samplesplitter/audio.go#L360-L405).
 - Decode and full-segment rendering happen before the voice lock.
 - A concurrent `StopVoice`, `StopNote`, `StopAll`, reload, or all-notes-off can
   clear a channel while `Play` is working. `Play` then acquires the lock and
   inserts the voice after the stop.
+- **Done** in `d3892e49`. Stops bump per-voice, per-channel and global
+  counters; `Play` notes them before decoding and abandons its voice if any
+  moved.
 
 ### 11. Sample service callbacks race concurrent shutdown
 
-- [ ] Pin in-flight service calls against shutdown in
+- [x] Pin in-flight service calls against shutdown in
   [`kit/samplesplitter.go:187-199`](kit/samplesplitter.go#L187-L199) and
   [`kit/samplesplitter.go:307-318`](kit/samplesplitter.go#L307-L318).
 - `withSamplePlaybackService` releases the global mutex after copying the
@@ -153,10 +198,13 @@ second.
   writes and clears it.
 - Introduce an in-flight lease or lifecycle `RWMutex`, and make shutdown wait
   for active leases before closing native resources.
+- **Done** in `4e7b3eb0`. Callers hold a lease for the callback; shutdown
+  detaches first and waits for outstanding leases before closing anything
+  native.
 
 ### 12. Web UI initialization waits forever for browser-local NATS
 
-- [ ] Make state-feed startup bounded and independent of control initialization
+- [x] Make state-feed startup bounded and independent of control initialization
   in [`kit/webui/local_nats.js:4-32`](kit/webui/local_nats.js#L4-L32) and
   [`kit/webui/app.js:31-68`](kit/webui/app.js#L31-L68).
 - The browser hardcodes `ws://127.0.0.1:9222` and retries forever before the UI
@@ -165,10 +213,12 @@ second.
   `http://ENGINE-IP:3330` contacts its own loopback and can never connect.
 - Use a bounded initial attempt, initialize controls independently, and provide
   an HTTP polling fallback or a same-origin authenticated WebSocket/SSE bridge.
+- **Done** in `8e5189ec`. The feed gets 5s before the GUI comes up without it,
+  and a late arrival seeds the UI rather than needing a reload.
 
 ### 13. Malformed UDP and port conflicts can terminate the FFGL host
 
-- [ ] Contain all OSC input exceptions inside the plugin boundary in
+- [x] Contain all OSC input exceptions inside the plugin boundary in
   [`ffgl/source/lib/nosuch/NosuchOscUdpInput.cpp:44-136`](ffgl/source/lib/nosuch/NosuchOscUdpInput.cpp#L44-L136).
 - Oscpack packet construction can throw for malformed UDP, but construction and
   dispatch are outside any catch. The exception can escape the pthread entry
@@ -177,6 +227,9 @@ second.
   branch. Failure paths after `socket()` also leak the socket.
 - Use RAII socket ownership, catch exceptions per datagram and at every FFGL ABI
   boundary, and add malformed-packet/fuzz coverage.
+- **Done** in `ff886b89`. Per-datagram try/catch, the port conflict returns an
+  error instead of throwing, and every failure path closes the socket.
+  Compile-verified, not run inside Resolume.
 
 ### 14. Windows updates are not transactional
 
@@ -190,10 +243,15 @@ second.
   old, new, and missing files.
 - Stage and validate the complete version, retain the previous version, then
   perform an atomic swap and transactional configuration update.
+- **Not closed.** Partly done in `1630fa9b`: publishing the payload is now
+  all-or-nothing - the previous file is moved aside rather than deleted, and
+  any failure restores every file already replaced. STILL OPEN: staging and
+  swapping a complete version tree, and rolling back the environment, shortcut
+  and registry steps in `configureInstall`.
 
 ### 15. Windows uninstall can report success after removal failures
 
-- [ ] Preserve recovery information and report removal errors in
+- [x] Preserve recovery information and report removal errors in
   [`cmd/palette_installer/main_windows.go:462-500`](cmd/palette_installer/main_windows.go#L462-L500).
 - Environment entries, shortcuts, and uninstall registration are removed before
   payload cleanup. Every payload `os.Remove` result is ignored.
@@ -201,20 +259,26 @@ second.
   uninstaller and repair entry remove themselves.
 - Remove payload first, aggregate failures, and preserve the record and
   uninstaller whenever cleanup is incomplete.
+- **Done** in `4e7b3eb0`. The payload goes first, failures are aggregated and
+  reported, and the registration and install record survive a partial removal
+  so it can be retried.
 
 ### 16. App and data uninstallers conflict over shared environment state
 
-- [ ] Define ownership for `PALETTE_DATAROOT` in
+- [x] Define ownership for `PALETTE_DATAROOT` in
   [`cmd/palette_installer/main_windows.go:399-478`](cmd/palette_installer/main_windows.go#L399-L478).
 - Both application and data installers set the same variable. Either uninstaller
   deletes it when its own recorded value matches, without checking whether the
   other installed component still needs it.
 - Assign ownership to one component, or inspect/reference-count all Palette
   uninstall registrations and delete the shared value only with the last user.
+- **Done** in `4e7b3eb0`. `PALETTE_DATAROOT` is deleted only when no other
+  Palette uninstall registration remains; an unreadable registry counts as
+  "still in use".
 
 ### 17. `addpalette` permits NATS config and subject injection
 
-- [ ] Validate identifiers and update NATS configuration transactionally in
+- [x] Validate identifiers and update NATS configuration transactionally in
   [`cmd/palette_hub/palette_hub.go:786-844`](cmd/palette_hub/palette_hub.go#L786-L844).
 - The raw name is interpolated into quoted configuration and permission subjects
   without rejecting quotes, newlines, or NATS wildcards.
@@ -223,40 +287,55 @@ second.
 - Enforce a strict identifier grammar, read passwords from a protected input
   rather than argv, validate a temporary configuration, and atomically replace
   and roll back around reload.
+- **Done** in `65dba98a`. Names must match `^[A-Za-z0-9_-]{1,64}$`, a candidate
+  config is validated before it becomes live, and a failed reload restores the
+  original. The password may also be read from stdin instead of argv.
 
 ### 18. Twitch credentials are included in connection-error logs
 
-- [ ] Remove the authentication token from errors in
+- [x] Remove the authentication token from errors in
   [`cmd/palette_chat/palette_chat.go:161-166`](cmd/palette_chat/palette_chat.go#L161-L166).
 - An ordinary network or authentication failure formats the full token into the
   returned error, and `main` logs it.
 - Log the username and upstream error only. Rotate any token that has already
   appeared in logs.
+- **Done** in `65dba98a`. The error carries the username and the underlying
+  error only. Any token that has already been logged should still be rotated.
 
 ### 19. macOS FFGL releases omit required code and use incompatible paths
 
-- [ ] Add `ShapeSprite.cpp` to
+- [x] Add `ShapeSprite.cpp` to
   [`build/macos/build_ffgl.sh:44-73`](build/macos/build_ffgl.sh#L44-L73).
 - `Layer.cpp` calls `SpriteParametric::create`, whose definition is omitted from
   the macOS source list. The bundle can fail to link or load.
+- **Done** in `1a9ac59a`. Verified by inspection: `Layer.cpp:246` calls
+  `SpriteParametric::create`, defined in `ShapeSprite.cpp:162`. Not built on
+  macOS.
 - [ ] Replace backslash concatenation and shell-only `PALETTE` assumptions with
   `std::filesystem::path` and the macOS application-support directory in
   [`ffgl/source/lib/palette/PaletteHost.cpp:243-250`](ffgl/source/lib/palette/PaletteHost.cpp#L243-L250)
   and related asset loading.
 - Add a post-build symbol/load smoke test launched without shell environment
   variables.
+- **Not closed.** The backslash concatenation and shell-only `PALETTE`
+  assumptions in `PaletteHost.cpp` are unchanged, and there is no post-build
+  load smoke test.
 
 ### 20. Linux packaging omits runtime data and makes code runtime-writable
 
-- [ ] Package the required sanitized `data_default` tree in
+- [x] Package the required sanitized `data_default` tree in
   [`build/linux/build.sh:15-49`](build/linux/build.sh#L15-L49).
 - The engine resolves its default data path under `/usr/local/palette`, but the
   release currently packages only binaries.
-- [ ] Keep program files root-owned in
+- **Done** in `1a9ac59a`. `build.sh` ships a sanitised `data_default`. Not run
+  on Linux.
+- [x] Keep program files root-owned in
   [`build/linux/install.sh:62-88`](build/linux/install.sh#L62-L88).
 - The installer recursively gives the runtime account ownership of executable
   code linked from `/usr/local/bin`. Give that account ownership only of
   dedicated state, data, and log directories.
+- **Done** in `1a9ac59a`. Program files stay root-owned; only the
+  runtime-writable directories change hands. Not run on Linux.
 
 ### 21. Windows release scripts can package missing or stale artifacts
 
@@ -266,13 +345,21 @@ second.
   proceed with a missing command or stale manually built executable.
 - Build directly to explicit ship paths and verify a required-file manifest and
   hashes before packaging.
-- [ ] Quote and validate every destructive target derived from
+- **Not closed.** Partly done in `a18c2f52`: the five Go builds and their moves
+  are checked through a `:build_go` subroutine, so a compile error stops the
+  build instead of packaging a missing or stale binary with exit code 0. STILL
+  OPEN: building directly to explicit ship paths, and verifying a required-file
+  manifest with hashes before packaging.
+- [x] Quote and validate every destructive target derived from
   `PALETTE_SOURCE` in `build_bin.bat`, `build_data.bat`, and `clean.bat`.
   Prefer one PowerShell implementation using `-LiteralPath`.
+- **Done** in `1a9ac59a`. Every destructive target is quoted, and `clean.bat`
+  and `build_data.bat` refuse to run unless `PALETTE_SOURCE` holds a `VERSION`
+  file.
 
 ### 22. Hub day files can be accepted after partial writes
 
-- [ ] Make day-file creation and import atomic in
+- [x] Make day-file creation and import atomic in
   [`cmd/palette_hub/palette_hub.go:463-512`](cmd/palette_hub/palette_hub.go#L463-L512)
   and
   [`cmd/palette_hub/palette_hub.go:743-752`](cmd/palette_hub/palette_hub.go#L743-L752).
@@ -281,10 +368,13 @@ second.
 - Import truncates an existing day and also ignores write errors.
 - Write a same-directory temporary file, check marshal/write/sync/close, and
   rename only after full success.
+- **Done** in `65dba98a`. Both dump and import go through `writeLinesAtomic`,
+  which renames into place only after every write, the sync and the close
+  succeed.
 
 ### 22A. FFGL logging recursively initializes when `PALETTE` is unset
 
-- [ ] Make logging initialization self-contained and safe before use from
+- [x] Make logging initialization self-contained and safe before use from
   `DllMain` in
   [`ffgl/source/lib/nosuch/NosuchDebug.cpp:185-212`](ffgl/source/lib/nosuch/NosuchDebug.cpp#L185-L212).
 - When `PALETTE` is missing, `RealNosuchDebugInit` calls `NosuchDebug` before
@@ -293,10 +383,13 @@ second.
 - Initialize synchronization and a fallback sink before environment lookup, and
   never call the public logger from its own initializer. Minimize work performed
   under the Windows loader lock.
+- **Done** in `ff886b89`. The mutex and fallback sink come up before the
+  `PALETTE` lookup, so the diagnostic can no longer re-enter its own
+  initialiser. Compile-verified, not run inside Resolume.
 
 ### 22B. Multiple Morph devices emit colliding cursor identities
 
-- [ ] Include a device serial or stable device index in cursor IDs emitted by
+- [x] Include a device serial or stable device index in cursor IDs emitted by
   [`cmd/gomorph/morph/morph.go:200-225`](cmd/gomorph/morph/morph.go#L200-L225)
   and match the source for cursor-up handling in FFGL.
 - Every device uses its own contact IDs starting at the same values, while all
@@ -304,6 +397,8 @@ second.
   but cursor-up ignores it.
 - Simultaneous contacts with the same device-local ID can update or delete one
   another, causing jumps and stuck cursors.
+- **Done** in `d365d3f5`. The device serial is part of the CID. The engine was
+  unaffected - `kit/morph.go` already uses globally unique GIDs.
 
 ## P2 — Medium
 
