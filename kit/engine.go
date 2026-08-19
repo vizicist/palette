@@ -375,6 +375,22 @@ func (e *Engine) StartHTTP(port int) {
 	// path-traversal attempts outside the recordings directory.
 	http.Handle("/recordings/", http.StripPrefix("/recordings/", http.FileServer(http.Dir(obsRecordDir()))))
 
+	// Serve the attract-mode videos, for the destination that has the browser on
+	// the GUI screen play them itself (global.attractvideodestination=gui).
+	// Same shape as /recordings/ above, and for the same reasons: FileServer
+	// answers the Range requests a <video> element makes, and http.Dir refuses
+	// to serve anything outside the directory. A missing directory - the normal
+	// case, since the installer ships it empty and most installations have no
+	// videos - simply 404s.
+	http.Handle("/attractvideos/", http.StripPrefix("/attractvideos/", http.FileServer(http.Dir(AttractVideoDir()))))
+
+	// Serve the shapes directory, for the venue logo the GUI shows beside the
+	// attract videos. Read from here rather than copied into the embedded web
+	// UI so there is one of each of these files: they are third-party brand
+	// artwork whose terms are recorded in shapes/ATTRIBUTION.md, and an
+	// installation that replaces one gets the new artwork everywhere.
+	http.Handle("/shapes/", http.StripPrefix("/shapes/", http.FileServer(http.Dir(ShapesDir()))))
+
 	http.HandleFunc("/api", jsonAPIHandler(func(req *http.Request) (string, error) {
 		if req.Method != "POST" {
 			return "", fmt.Errorf("HTTP server unable to handle method=%s", req.Method)

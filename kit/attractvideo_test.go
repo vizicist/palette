@@ -3,9 +3,12 @@ package kit
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
+
+	json "github.com/goccy/go-json"
 )
 
 // setupAttractVideoDir points ConfigDir at a temp tree and returns the attract
@@ -117,5 +120,160 @@ func TestAttractVideoAdvanceDoesNotWaitForStart(t *testing.T) {
 		p.mutex.Unlock()
 		<-done
 		t.Fatal("Advance blocked behind Start and would stall the scheduler")
+	}
+}
+
+// setupAttractVideoDestination points global.attractvideodestination at one
+// value for the duration of a test, restoring the global parameter state after.
+func setupAttractVideoDestination(t *testing.T, dest string) {
+	t.Helper()
+
+	oldParamDefs := ParamDefs
+	oldGlobalParams := GlobalParams
+	t.Cleanup(func() {
+		ParamDefs = oldParamDefs
+		GlobalParams = oldGlobalParams
+	})
+
+	ParamDefs = map[string]ParamDef{
+		"global.attractvideodestination": {
+			Category:      "global",
+			Init:          attractVideoDestMain,
+			TypedParamDef: ParamDefString{},
+		},
+	}
+	GlobalParams = NewParamValues()
+	if err := GlobalParams.SetParamWithString("global.attractvideodestination", dest); err != nil {
+		t.Fatalf("set global.attractvideodestination: %v", err)
+	}
+}
+
+func TestNormalizeAttractVideoDestination(t *testing.T) {
+	for _, tc := range []struct {
+		in   string
+		want string
+	}{
+		{"main", attractVideoDestMain},
+		{"gui", attractVideoDestGUI},
+		{"GUI", attractVideoDestGUI},
+		{"  gui  ", attractVideoDestGUI},
+		{"", attractVideoDestMain},
+		// A typo must leave the videos where they have always been, not make
+		// them vanish from both destinations.
+		{"guy", attractVideoDestMain},
+		{"resolume", attractVideoDestMain},
+	} {
+		if got := normalizeAttractVideoDestination(tc.in); got != tc.want {
+			t.Errorf("normalizeAttractVideoDestination(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestAttractVideoDestinationReadsTheParameter(t *testing.T) {
+	setupAttractVideoDestination(t, attractVideoDestGUI)
+
+	if got := AttractVideoDestination(); got != attractVideoDestGUI {
+		t.Errorf("AttractVideoDestination() = %q, want %q", got, attractVideoDestGUI)
+	}
+}
+
+// Resolume asks where the videos go while it is starting up, which can be
+// before the parameters are loaded.
+func TestAttractVideoDestinationWithoutParams(t *testing.T) {
+	oldGlobalParams := GlobalParams
+	GlobalParams = nil
+	t.Cleanup(func() { GlobalParams = oldGlobalParams })
+
+	if got := AttractVideoDestination(); got != attractVideoDestMain {
+		t.Errorf("AttractVideoDestination() = %q, want %q", got, attractVideoDestMain)
+	}
+}
+
+// The files/loaded bookkeeping records what has been pushed into Resolume as
+// clips. A run on the GUI screen pushes nothing, so it must not touch it: if it
+// recorded its own file list there, a later switch back to the Resolume
+// destination would find the list unchanged, believe those files were already
+// loaded, and skip the load - leaving it connecting clips that were never
+// opened.
+func TestAttractVideoStartGUILeavesResolumeClipsAlone(t *testing.T) {
+	loadedFiles := []string{"one.mp4", "two.mp4"}
+	p := &AttractVideoPlayer{
+		files:     loadedFiles,
+		durations: []float64{12, 34},
+		loaded:    true,
+	}
+
+	p.startGUI([]string{"one.mp4", "two.mp4", "three.mp4"})
+
+	if !slices.Equal(p.files, loadedFiles) {
+		t.Errorf("startGUI changed the loaded clip list to %v, want %v", p.files, loadedFiles)
+	}
+	if !p.loaded {
+		t.Error("startGUI cleared loaded, so a later Resolume run would not reload the clips it still has")
+	}
+	if !p.playing {
+		t.Error("startGUI did not mark the player playing, so Stop would do nothing")
+	}
+	if p.dest != attractVideoDestGUI {
+		t.Errorf("startGUI recorded dest %q, want %q", p.dest, attractVideoDestGUI)
+	}
+}
+
+// The browser moves to the next file when the one it is playing ends, so the
+// tick must leave the playlist alone - both because it has nothing to send and
+// because advancing here would put the engine's idea of the current file out of
+// step with the browser's.
+func TestAttractVideoAdvanceGUILeavesThePlaylistAlone(t *testing.T) {
+	p := &AttractVideoPlayer{
+		files:      []string{"one.mp4", "two.mp4", "three.mp4"},
+		durations:  []float64{1, 1, 1},
+		playing:    true,
+		dest:       attractVideoDestGUI,
+		nextSwitch: time.Now().Add(-time.Minute), // long overdue
+	}
+
+	p.Advance()
+
+	if p.current != 0 {
+		t.Errorf("Advance moved the GUI playlist to %d, want it left at 0", p.current)
+	}
+}
+
+func TestAttractVideoStopGUIEndsThePlay(t *testing.T) {
+	p := &AttractVideoPlayer{playing: true, dest: attractVideoDestGUI}
+
+	p.Stop()
+
+	if p.playing {
+		t.Error("Stop left the player marked playing")
+	}
+	// Stopping twice must stay harmless - the second call is what a Restart
+	// after attract mode has already ended looks like.
+	p.Stop()
+}
+
+// The browser has one thing to test - an empty file list - so the list must
+// marshal as [] rather than null when there is nothing to play.
+func TestAttractVideoListJSONWithNothingToPlay(t *testing.T) {
+	setupAttractVideoDir(t)
+	setupAttractVideoDestination(t, attractVideoDestGUI)
+
+	got, err := AttractVideoListJSON()
+	if err != nil {
+		t.Fatalf("AttractVideoListJSON: %v", err)
+	}
+
+	var playlist AttractVideoPlaylist
+	if err := json.Unmarshal([]byte(got), &playlist); err != nil {
+		t.Fatalf("unmarshal %q: %v", got, err)
+	}
+	if playlist.Destination != attractVideoDestGUI {
+		t.Errorf("destination = %q, want %q", playlist.Destination, attractVideoDestGUI)
+	}
+	if playlist.Files == nil {
+		t.Errorf("files = null in %q, want an empty array", got)
+	}
+	if len(playlist.Files) != 0 {
+		t.Errorf("files = %v, want none", playlist.Files)
 	}
 }

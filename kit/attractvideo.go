@@ -27,6 +27,48 @@ import (
 // the layer - reuses the OSC path the rest of the engine already uses.
 const attractVideoDirName = "attractmode_videos"
 
+// The videos play in one of two places, chosen by
+// global.attractvideodestination:
+//
+//	main - the Resolume output, the projection the audience sees (the default,
+//	       and everything above about clips and layers describes this one)
+//	gui  - the browser on the GUI screen, which plays the files itself
+//
+// These are two different code paths rather than two ways of driving Resolume,
+// because Resolume renders to its own output and nothing here can point that at
+// the GUI screen. The GUI screen is a browser, though, and a browser already
+// knows how to play video: "gui" serves this same directory over the engine's
+// HTTP server (/attractvideos/) and the page plays it in a <video> element. So
+// the GUI destination needs no Resolume at all - not even its webserver, which
+// is the part of the "main" path most likely to be switched off.
+//
+// The engine does almost nothing for the GUI destination. It reports where the
+// videos belong in the UI status snapshot and lists the files for
+// global.attractvideolist; the browser does the playing and the advancing.
+const (
+	attractVideoDestMain = "main"
+	attractVideoDestGUI  = "gui"
+)
+
+// normalizeAttractVideoDestination folds anything unrecognized onto "main", so
+// a typo in the parameter leaves the videos where they have always been rather
+// than making them disappear from both places.
+func normalizeAttractVideoDestination(dest string) string {
+	if strings.EqualFold(strings.TrimSpace(dest), attractVideoDestGUI) {
+		return attractVideoDestGUI
+	}
+	return attractVideoDestMain
+}
+
+// AttractVideoDestination is where attract videos play right now.
+func AttractVideoDestination() string {
+	if GlobalParams == nil {
+		return attractVideoDestMain
+	}
+	return normalizeAttractVideoDestination(
+		GetParamWithDefault("global.attractvideodestination", attractVideoDestMain))
+}
+
 // attractVideoExtensions keeps stray files (thumbnails, notes, .DS_Store) out
 // of the playlist. It is not a claim about what Resolume can decode; Resolume
 // decides that when the clip is opened.
@@ -52,8 +94,9 @@ type AttractVideoPlayer struct {
 	durations  []float64 // seconds, parallel to files
 	loaded     bool      // clips have been pushed into Resolume
 	playing    bool
-	current    int // index into files of the clip now showing
-	layer      int // the layer Start put the videos on
+	current    int    // index into files of the clip now showing
+	layer      int    // the layer Start put the videos on
+	dest       string // the destination Start actually used
 	nextSwitch time.Time
 	warned     bool // REST failure already logged; don't repeat it every time
 }
@@ -256,6 +299,31 @@ func (p *AttractVideoPlayer) Start() {
 		return
 	}
 
+	if AttractVideoDestination() == attractVideoDestGUI {
+		p.startGUI(files)
+		return
+	}
+	p.startMain(files)
+}
+
+// startGUI records that the videos are playing on the GUI screen. There is no
+// work to do: the browser learns from the status snapshot that attract mode is
+// on and that the videos belong here, and plays them itself.
+//
+// What it deliberately does not touch is the files/loaded/durations bookkeeping,
+// which is only ever about what has been pushed into Resolume. Recording a GUI
+// run's file list there would make a later switch back to "main" believe those
+// files were already loaded as clips, and skip the load.
+func (p *AttractVideoPlayer) startGUI(files []string) {
+	p.current = 0
+	p.playing = true
+	p.dest = attractVideoDestGUI
+	LogInfo("attract videos playing on the GUI screen", "count", len(files))
+}
+
+// startMain puts the videos on the Resolume output. The caller holds the mutex.
+func (p *AttractVideoPlayer) startMain(files []string) {
+
 	layerNum := attractVideoLayerNum()
 
 	// Reload only when the directory contents changed, so turning attract mode
@@ -288,8 +356,11 @@ func (p *AttractVideoPlayer) Start() {
 	// Remember the layer rather than re-reading the parameter later. Stop has to
 	// take down the layer it actually put up: changing global.attractvideolayer
 	// mid-show would otherwise leave the old layer soloed, which is the stuck
-	// state Resolume.Activate already has to clear on startup.
+	// state Resolume.Activate already has to clear on startup. The destination
+	// is remembered for the same reason - Stop must not send un-solo and bypass
+	// for a run that never touched Resolume, nor skip them for one that did.
 	p.layer = layerNum
+	p.dest = attractVideoDestMain
 
 	// Resolume creates layers at half opacity, which let the patch layers show
 	// through the video. Set it every time rather than once at creation: the
@@ -344,6 +415,13 @@ func (p *AttractVideoPlayer) Stop() {
 		return
 	}
 	p.playing = false
+	if p.dest == attractVideoDestGUI {
+		// Nothing was ever sent to Resolume, so there is nothing to take down.
+		// The browser stops its own playback when the status snapshot says
+		// attract mode is over.
+		LogInfo("attract videos stopped on the GUI screen")
+		return
+	}
 	layerNum := p.layer
 	// Un-solo first. The video is still opaque and on top, so nothing changes
 	// on screen until the layer is bypassed - one clean transition back to
@@ -351,6 +429,20 @@ func (p *AttractVideoPlayer) Stop() {
 	TheResolume().soloLayer(layerNum, false)
 	TheResolume().bypassLayer(layerNum, true)
 	LogInfo("attract videos stopped")
+}
+
+// Restart takes the videos down from wherever they are and puts them back up at
+// whichever destination the parameter now names. It is what a change to
+// global.attractvideodestination does while attract mode is already running.
+//
+// Stopping first is the point, not tidiness: Stop undoes the destination that
+// Start actually used, so switching away from "main" un-solos the Resolume
+// layer. Without that the layer would stay soloed with a paused video on it and
+// nothing but a Resolume restart would clear it, while the GUI played the same
+// files underneath.
+func (p *AttractVideoPlayer) Restart() {
+	p.Stop()
+	p.Start()
 }
 
 // Advance moves to the next video once the current one has played through,
@@ -368,7 +460,16 @@ func (p *AttractVideoPlayer) Advance() {
 	}
 	defer p.mutex.Unlock()
 
-	if !p.playing || len(p.files) == 0 {
+	if !p.playing {
+		return
+	}
+	if p.dest == attractVideoDestGUI {
+		// The browser moves to the next file when the current one ends, which
+		// is both more accurate than a duration we asked Resolume for and the
+		// only option here - there is nothing to send.
+		return
+	}
+	if len(p.files) == 0 {
 		return
 	}
 	if time.Now().Before(p.nextSwitch) {
@@ -381,6 +482,42 @@ func (p *AttractVideoPlayer) Advance() {
 
 	LogOfType("attract", "attract video advance",
 		"clip", p.current+1, "file", filepath.Base(p.files[p.current]))
+}
+
+// AttractVideoPlaylist is everything the GUI screen needs to play the videos
+// itself: where they are meant to play, and the names to ask for under
+// /attractvideos/. Names rather than paths - the browser has no business
+// knowing where the directory is, and the file server resolves them relative to
+// it.
+//
+// Files is empty whenever the videos are switched off or the directory holds
+// nothing playable, so the browser has one thing to test rather than having to
+// re-derive the rules that attractVideoFiles already applies.
+type AttractVideoPlaylist struct {
+	Destination string   `json:"destination"`
+	Files       []string `json:"files"`
+}
+
+// AttractVideoListJSON answers global.attractvideolist.
+func AttractVideoListJSON() (string, error) {
+
+	// An empty slice rather than nil, so this marshals as [] and the browser
+	// never has to distinguish "no videos" from "null".
+	playlist := AttractVideoPlaylist{
+		Destination: AttractVideoDestination(),
+		Files:       []string{},
+	}
+	if attractVideosEnabled() {
+		for _, file := range attractVideoFiles() {
+			playlist.Files = append(playlist.Files, filepath.Base(file))
+		}
+	}
+
+	b, err := json.Marshal(playlist)
+	if err != nil {
+		return "", fmt.Errorf("AttractVideoListJSON: %w", err)
+	}
+	return string(b), nil
 }
 
 func (p *AttractVideoPlayer) durationOf(i int) time.Duration {

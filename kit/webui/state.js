@@ -11,6 +11,13 @@ export const patchSigils = {
     D: 'directive'
 };
 
+// normalizeAttractVideoDestination mirrors the engine's own normalizing (see
+// attractvideo.go): anything that isn't "gui" means the videos play on the
+// Resolume output and this GUI has nothing to do with them.
+export function normalizeAttractVideoDestination(value) {
+    return String(value || '').trim().toLowerCase() === 'gui' ? 'gui' : 'main';
+}
+
 export function normalizeInitialPage(page) {
     const value = String(page || '').trim().toLowerCase();
     return ['pro', 'bss', 'pro2', 'goat'].includes(value) ? value : 'pro';
@@ -72,6 +79,21 @@ export const UIState = {
     showThemes: true,
     // Whether the Show Goats button is offered, from global.showgoatsbutton.
     showGoatsButton: true,
+    // Whether attract mode is on, as the engine last reported it. Kept because
+    // what the GUI shows for it depends on several other things that change
+    // independently of the status that carried it.
+    attractModeOn: false,
+    // global.attractvideos and global.attractvideodestination. Together they
+    // say whether the attract videos should play on this screen; the file names
+    // to play come from global.attractvideolist.
+    attractVideos: true,
+    attractVideoDestination: 'main',
+    // global.attractvideoresize: whether a video that isn't the shape of the
+    // screen fills it and loses its edges, rather than fitting inside it with
+    // black bars.
+    attractVideoResize: false,
+    attractVideoFiles: [],
+    attractVideoPlaying: false,
     helpVisible: false,
 
     wantsStepperStatus() {

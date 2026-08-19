@@ -165,7 +165,7 @@ func loadPitchSetEnums() {
 }
 
 func loadShapeEnums() {
-	shapeNames, err := shapeNamesFromDir(ParamEnums["shape"], filepath.Join(PaletteDataPath(), "shapes"))
+	shapeNames, err := shapeNamesFromDir(ParamEnums["shape"], ShapesDir())
 	if err != nil {
 		LogWarn("loadShapeEnums: unable to load shapes", "err", err)
 		return

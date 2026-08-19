@@ -4,6 +4,7 @@ DECLARE_TYPES(log);
 DECLARE_TYPES(pitchset);
 DECLARE_TYPES(mode);
 DECLARE_TYPES(guisize);
+DECLARE_TYPES(attractvideodestination);
 DECLARE_TYPES(mmtt);
 DECLARE_TYPES(destination);
 DECLARE_TYPES(quantstyle);

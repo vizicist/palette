@@ -25,6 +25,10 @@ func uiStatusSnapshot() EngineStatusSnapshot {
 		AttractAllowGUI:   IsTrueValue(GetParamWithDefault("global.attractallowgui", "false")),
 		ShowThemes:        IsTrueValue(GetParamWithDefault("global.showthemes", "true")),
 		ShowGoatsButton:   IsTrueValue(GetParamWithDefault("global.showgoatsbutton", "true")),
+
+		AttractVideos:           IsTrueValue(GetParamWithDefault("global.attractvideos", "true")),
+		AttractVideoDestination: AttractVideoDestination(),
+		AttractVideoResize:      IsTrueValue(GetParamWithDefault("global.attractvideoresize", "false")),
 	}
 	if theAttractManager != nil {
 		snapshot.AttractMode = theAttractManager.AttractModeIsOn()

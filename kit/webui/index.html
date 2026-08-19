@@ -32,6 +32,20 @@
     <!-- Attract mode overlay -->
     <div id="attract-overlay" class="hidden">
         <img src="sppro_attractscreen.png" alt="Space Palette Pro" class="attract-image">
+        <!-- Used when global.attractvideodestination is "gui": the attract
+             videos play here instead of on the Resolume output. It covers the
+             image while it runs. No "controls" and no "loop" - the playlist is
+             advanced from app.js when each file ends. Muted here as well as in
+             render.js, so the element can never come up making noise even for
+             the moment before the script sets its source. -->
+        <video id="attract-video" class="attract-video hidden" playsinline muted></video>
+        <!-- The bottom third of the screen when global.attractvideoresize is
+             on: the video gives up that space and the venue logo sits in it.
+             The logo is served from the shapes directory rather than embedded
+             here, so there is only one copy of it. -->
+        <div id="attract-video-logo" class="attract-video-logo hidden">
+            <img src="/shapes/dirtygoat.svg" alt="Dirty Goat Roadhouse">
+        </div>
     </div>
 
     <!-- Reset modal overlay -->

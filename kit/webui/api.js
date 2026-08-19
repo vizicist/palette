@@ -80,6 +80,11 @@ export const API = {
     obsRecord() { return this.call('global.obsrecord'); },
     obsRecordStop() { return this.call('global.obsrecordstop'); },
     obsRecordList() { return this.call('global.obsrecordlist'); },
+
+    // Attract videos: where they are meant to play, and the file names to ask
+    // for under /attractvideos/ when that is this screen.
+    attractVideoList() { return this.call('global.attractvideolist'); },
+
     obsRecordDelete(name) { return this.call('global.obsrecorddelete', { name }); },
     youtubeUpload(name) { return this.call('global.youtubeupload', { name }); },
 

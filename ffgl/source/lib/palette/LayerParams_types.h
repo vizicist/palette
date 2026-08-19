@@ -4,6 +4,7 @@ DEFINE_TYPES(log);
 DEFINE_TYPES(pitchset);
 DEFINE_TYPES(mode);
 DEFINE_TYPES(guisize);
+DEFINE_TYPES(attractvideodestination);
 DEFINE_TYPES(mmtt);
 DEFINE_TYPES(destination);
 DEFINE_TYPES(quantstyle);
@@ -67,6 +68,9 @@ LayerParams_InitializeTypes() {
 	LayerParams_guisizeTypes.push_back("small");
 	LayerParams_guisizeTypes.push_back("medium");
 	LayerParams_guisizeTypes.push_back("palette");
+
+	LayerParams_attractvideodestinationTypes.push_back("main");
+	LayerParams_attractvideodestinationTypes.push_back("gui");
 
 	LayerParams_mmttTypes.push_back("kinect");
 	LayerParams_mmttTypes.push_back("depthai");

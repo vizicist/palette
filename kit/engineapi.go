@@ -127,6 +127,7 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"obsrecord":            globalObsRecord,
 	"obsrecordstop":        globalObsRecordStop,
 	"obsrecordlist":        globalObsRecordList,
+	"attractvideolist":     globalAttractVideoList,
 	"obsrecorddelete":      globalObsRecordDelete,
 	"obssetup":             globalObsSetup,
 	"youtubeupload":        globalYouTubeUpload,
@@ -339,6 +340,13 @@ func globalObsRecordStop(api string, apiargs map[string]string) (string, error) 
 
 func globalObsRecordList(api string, apiargs map[string]string) (string, error) {
 	return ObsRecordList()
+}
+
+// globalAttractVideoList tells the GUI screen what to play and whether the
+// videos belong there at all, for the destination that has the browser play
+// them itself. See attractvideo.go.
+func globalAttractVideoList(api string, apiargs map[string]string) (string, error) {
+	return AttractVideoListJSON()
 }
 
 func globalObsRecordDelete(api string, apiargs map[string]string) (string, error) {
@@ -600,6 +608,17 @@ func applyAttractGlobalParam(name string, value string) bool {
 			} else {
 				go TheAttractVideoPlayer().Stop()
 			}
+		}
+		return true
+	case "global.attractvideodestination":
+		// Move the videos while attract mode is already running, rather than
+		// leaving them where they are until the next attract cycle. Restart
+		// takes down whichever destination is up before bringing the new one on,
+		// which is what keeps a switch away from "main" from leaving a soloed
+		// Resolume layer behind. Like the Start above it can reach Resolume over
+		// HTTP, so it goes to a goroutine rather than blocking the API call.
+		if theAttractManager.AttractModeIsOn() {
+			go TheAttractVideoPlayer().Restart()
 		}
 		return true
 	case "global.attractidlesecs":

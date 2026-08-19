@@ -149,10 +149,98 @@ export function showAttract() {
 }
 
 export function hideAttract() {
+    // Before the overlay goes away, not after: a <video> that is merely hidden
+    // goes on playing, and its soundtrack would carry on over whatever the
+    // person who just touched the pads is playing.
+    hideAttractVideo();
     if (UIState.attractModeActive) {
         UIState.attractModeActive = false;
         document.getElementById('attract-overlay').classList.add('hidden');
     }
+}
+
+// The attract overlay shows one of two things: the attract screen image, or -
+// when global.attractvideodestination is "gui" - the attract videos playing
+// here rather than on the Resolume output. app.js owns the playlist and decides
+// when to move on; these two are the DOM half of it.
+
+function attractImageElement() {
+    return document.querySelector('#attract-overlay .attract-image');
+}
+
+// applyAttractVideoResize puts the current global.attractvideoresize onto the
+// elements: the video fills its frame, and the frame gives up the bottom
+// third of the screen to the venue logo. Called both when the parameter
+// changes and on every file, so a video that starts after the change is framed
+// the same way as the one playing when it happened.
+export function applyAttractVideoResize() {
+    const video = document.getElementById('attract-video');
+    if (!video) return;
+    const fill = !!UIState.attractVideoResize;
+    video.classList.toggle('attract-video-fill', fill);
+
+    const logo = document.getElementById('attract-video-logo');
+    if (logo) {
+        // The logo goes with the video and only with the video: the space it
+        // sits in is space taken from one. It must not appear over the attract
+        // screen image, which is what shows when there is nothing to play.
+        logo.classList.toggle('hidden', !fill || video.classList.contains('hidden'));
+    }
+}
+
+// showAttractVideoSource points the overlay's video element at one file and
+// starts it. The attract image is hidden while it plays: the video keeps its
+// aspect ratio, so unless it happens to be the shape of its frame there is
+// space around it that the image would otherwise show through.
+export function showAttractVideoSource(src) {
+    const video = document.getElementById('attract-video');
+    if (!video) return;
+    const img = attractImageElement();
+    if (img) img.classList.add('hidden');
+    video.classList.remove('hidden');
+    applyAttractVideoResize();
+    video.src = src;
+    // Always silent. These videos are the idle screen, not a performance: the
+    // GUI screen sits next to whoever walks up, and audio out of it would talk
+    // over the room and over Bidule. The Resolume destination is the one that
+    // carries any soundtrack.
+    //
+    // Set here as well as on the element, rather than trusting the markup: this
+    // is the only thing standing between a fresh set of files and unexpected
+    // noise, and it also means muted autoplay - which browsers always allow -
+    // so the videos start without waiting for anyone to touch the screen.
+    video.muted = true;
+    video.play().catch(() => {
+        // Nothing to retry: muted autoplay is what browsers permit, so a
+        // refusal here is the file, not the policy. The error handler in app.js
+        // moves on to the next one.
+    });
+}
+
+// hideAttractVideo stops playback and gives the attract image back. The flag is
+// cleared here rather than by the callers so that it cannot disagree with the
+// element: hideAttract calls this too, and anything that took the overlay down
+// without clearing the flag would leave app.js believing the videos were still
+// running and refusing to start them again.
+//
+// Clearing it first also matters because tearing the source down can itself
+// raise an error event, which app.js must not read as a file that wouldn't
+// play.
+export function hideAttractVideo() {
+    UIState.attractVideoPlaying = false;
+    const video = document.getElementById('attract-video');
+    if (video && !video.classList.contains('hidden')) {
+        video.pause();
+        video.removeAttribute('src');
+        // Drop what has been buffered, rather than holding a whole video in
+        // memory between attract runs.
+        video.load();
+        video.classList.add('hidden');
+    }
+    const logo = document.getElementById('attract-video-logo');
+    if (logo) logo.classList.add('hidden');
+    const img = attractImageElement();
+    if (img) img.classList.remove('hidden');
 }
 
 export function showResetModal() {

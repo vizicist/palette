@@ -1,21 +1,24 @@
 import { API } from './api.js';
 import { initialPageDefaultRoute, Routes, routeLabel } from './routes.js';
-import { patchNames, stepperNumSteps, samplePlaybackQuantValues, themes, themeForDir, defaultThemeDir, UIState } from './state.js';
+import { patchNames, stepperNumSteps, samplePlaybackQuantValues, themes, themeForDir, defaultThemeDir, normalizeAttractVideoDestination, UIState } from './state.js';
 import { applyUISnapshot, requestUISnapshot, setupUIStateFeed } from './ui_nats.js';
 import { handleOBSRecordStatus, setupRecording, updateRecordButtonVisibility } from './recorder.js';
 import { setupVirtualKeyboard, showVirtualKeyboard } from './virtual-keyboard.js';
 import { setupActionMenu, showActionMenu } from './action-menu.js';
 import {
+    applyAttractVideoResize,
     applyInitialPageMode,
     fitAppTitle,
     flashSigilForPatch,
     hideAttract,
+    hideAttractVideo,
     hideHelp,
     hideResetModal,
     renderStepperIndicator,
     setPalettePadActivity,
     setupAppTitleFit,
     showAttract,
+    showAttractVideoSource,
     showHelp,
     showResetMessage,
     showResetModal,
@@ -137,6 +140,9 @@ function syncInitialPageValue(page) {
 function syncStartupMode(status) {
     UIState.advancedMode = status && (status.guidefaultlevel === '1' || status.guidefaultlevel === 1);
     UIState.attractAllowGui = !!(status && status.attractallowgui);
+    UIState.attractVideos = statusAttractVideos(status);
+    UIState.attractVideoDestination = normalizeAttractVideoDestination(status && status.attractvideodestination);
+    UIState.attractVideoResize = !!(status && status.attractvideoresize);
     UIState.showThemes = statusShowThemes(status);
     UIState.showGoatsButton = statusShowGoatsButton(status);
     const mode = statusMode(status);
@@ -1540,6 +1546,17 @@ async function showGoats() {
     }
 }
 
+// statusAttractVideos reads global.attractvideos out of an engine status. A
+// status without the field is an older engine, from before attract videos could
+// play anywhere but the Resolume output - where the destination normalizes to
+// "main" and this value has no effect on the GUI either way.
+function statusAttractVideos(status) {
+    if (status && Object.prototype.hasOwnProperty.call(status, 'attractvideos')) {
+        return !!status.attractvideos;
+    }
+    return true;
+}
+
 // statusShowGoatsButton reads global.showgoatsbutton out of an engine status. A
 // status without the field is an older engine, which always had the button, so
 // that means shown rather than hidden.
@@ -1656,6 +1673,145 @@ function setupAttractOverlay() {
         e.preventDefault();
         exitAttractMode();
     }, { passive: false });
+
+    const video = document.getElementById('attract-video');
+    if (video) {
+        video.addEventListener('ended', attractVideoEnded);
+        video.addEventListener('error', attractVideoFailed);
+    }
+
+    // Read the directory once now, rather than waiting for attract mode to
+    // arrive: on a screen that comes up with attract mode already running there
+    // is no transition to trigger it, and the videos would never start.
+    refreshAttractPlaylist();
+}
+
+// ---------------------------------------------------------------------------
+// Attract videos on the GUI screen
+//
+// When global.attractvideodestination is "gui" the attract videos play here
+// instead of on the Resolume output, out of the same directory - the engine
+// serves it under /attractvideos/ and names the files in
+// global.attractvideolist. Everything below is the playlist half of that; the
+// video element itself is handled in render.js.
+
+// Index into UIState.attractVideoFiles of the file now playing.
+let attractVideoIndex = 0;
+// Consecutive files the browser could not play, so a directory of files it
+// doesn't decode falls back to the attract screen instead of spinning through
+// them for ever.
+let attractVideoFailures = 0;
+// Identifies the most recent playlist request, so a slow answer that has been
+// overtaken by a newer one is discarded rather than applied on top of it.
+let attractPlaylistRequest = 0;
+
+// attractVideoWantedHere is whether the videos are supposed to play on this
+// screen at all. It says nothing about whether there is anything to play.
+function attractVideoWantedHere() {
+    return UIState.attractVideos && UIState.attractVideoDestination === 'gui';
+}
+
+// refreshAttractPlaylist asks the engine what to play. It is called when
+// attract mode turns on and when either of the two parameters changes, rather
+// than once at startup, so videos added to or removed from the directory are
+// picked up without reloading the page.
+async function refreshAttractPlaylist() {
+    const request = ++attractPlaylistRequest;
+    let files = [];
+    try {
+        const list = await API.attractVideoList();
+        if (list && typeof list.destination === 'string') {
+            // This answer is fresher than whatever status carried us here.
+            UIState.attractVideoDestination = normalizeAttractVideoDestination(list.destination);
+        }
+        if (list && Array.isArray(list.files)) {
+            files = list.files;
+        }
+    } catch (e) {
+        console.error('Failed to list attract videos:', e);
+    }
+    if (request !== attractPlaylistRequest) return;
+    UIState.attractVideoFiles = files;
+    applyAttractPresentation();
+}
+
+// applyAttractPresentation decides what this screen shows for the attract mode
+// the engine has reported: nothing, the attract screen image, or the videos.
+// It is called from every status update, so it has to be safe to run when
+// nothing has changed - which is why starting playback checks whether it is
+// already going.
+function applyAttractPresentation() {
+
+    const wanted = UIState.attractModeOn
+        && UIState.activeAdventure === 'space'
+        && !UIState.helpVisible;
+
+    if (!wanted) {
+        hideAttract(); // which stops the video too
+        return;
+    }
+
+    // The videos take the screen whenever they are meant to play here and there
+    // is something to play. That deliberately does not check
+    // global.attractallowgui: that parameter governs showing the attract
+    // *screen*, and someone who has pointed the videos at the GUI has already
+    // said they want something on it - having to set a second, differently
+    // named parameter before anything appeared would just look broken.
+    //
+    // An empty playlist falls through to the attract screen, so pointing the
+    // videos at a directory with nothing in it shows what it always showed
+    // rather than a black rectangle.
+    if (attractVideoWantedHere() && UIState.attractVideoFiles.length > 0) {
+        showAttract();
+        startAttractVideo();
+        return;
+    }
+
+    hideAttractVideo();
+    if (UIState.attractAllowGui) {
+        showAttract();
+    } else {
+        hideAttract();
+    }
+}
+
+function startAttractVideo() {
+    if (UIState.attractVideoPlaying) return;
+    UIState.attractVideoPlaying = true;
+    attractVideoIndex = 0;
+    attractVideoFailures = 0;
+    playAttractVideo(0);
+}
+
+function playAttractVideo(index) {
+    const files = UIState.attractVideoFiles;
+    if (!files.length) return;
+    attractVideoIndex = ((index % files.length) + files.length) % files.length;
+    showAttractVideoSource(`/attractvideos/${encodeURIComponent(files[attractVideoIndex])}`);
+}
+
+function attractVideoEnded() {
+    if (!UIState.attractVideoPlaying) return;
+    attractVideoFailures = 0;
+    playAttractVideo(attractVideoIndex + 1);
+}
+
+function attractVideoFailed() {
+    if (!UIState.attractVideoPlaying) return;
+    const files = UIState.attractVideoFiles;
+    console.error('Attract video would not play:', files[attractVideoIndex]);
+    attractVideoFailures++;
+    if (attractVideoFailures < files.length) {
+        // One file the browser can't decode shouldn't stall the rotation.
+        playAttractVideo(attractVideoIndex + 1);
+        return;
+    }
+    // Nothing in the directory plays. Drop the playlist so the screen falls
+    // back to the attract image rather than sitting on a black rectangle; the
+    // next entry into attract mode fetches it again and tries afresh.
+    UIState.attractVideoFiles = [];
+    hideAttractVideo();
+    applyAttractPresentation();
 }
 
 // allNotesOff silences every patch without the heavier resets silenceAll does,
@@ -1707,9 +1863,14 @@ async function silenceAll() {
 }
 
 async function exitAttractMode() {
+    // Locally first, before the round trip: someone has just put a hand on the
+    // screen, and a video that keeps playing (and keeps making noise) while two
+    // API calls go out reads as the touch not having registered. The status
+    // that follows agrees.
+    UIState.attractModeOn = false;
+    hideAttract();
     await API.call('global.attract', { onoff: 'false' }).catch(() => {});
     await silenceAll();
-    hideAttract();
 }
 
 async function syncAttractStateFromEngine() {
@@ -1724,19 +1885,46 @@ async function syncAttractStateFromEngine() {
 }
 
 function handleUIStatus(status) {
-    if (UIState.activeAdventure !== 'space') {
-        hideAttract();
-    } else if (status && isTrueStatusValue(status.attractmode) && UIState.attractAllowGui && !UIState.helpVisible) {
-        showAttract();
-    } else {
-        hideAttract();
-    }
-
-    updateRecordButtonVisibility(!!(status && status.obsrunning));
-
+    // The attract settings are taken out of the status before anything is
+    // decided from them. Reading them afterwards - which is how this used to
+    // run - meant every decision used the previous status's values and only
+    // caught up on the next one.
     if (status && Object.prototype.hasOwnProperty.call(status, 'attractallowgui')) {
         UIState.attractAllowGui = !!status.attractallowgui;
     }
+    // A change to either video parameter, or attract mode arriving, re-reads the
+    // directory: videos are dropped in and taken out between sets, and the
+    // engine lists whatever is there at the time.
+    let playlistStale = false;
+    if (status && Object.prototype.hasOwnProperty.call(status, 'attractvideos')) {
+        const attractVideos = !!status.attractvideos;
+        playlistStale = playlistStale || attractVideos !== UIState.attractVideos;
+        UIState.attractVideos = attractVideos;
+    }
+    if (status && Object.prototype.hasOwnProperty.call(status, 'attractvideodestination')) {
+        const destination = normalizeAttractVideoDestination(status.attractvideodestination);
+        playlistStale = playlistStale || destination !== UIState.attractVideoDestination;
+        UIState.attractVideoDestination = destination;
+    }
+    // Reframing takes effect on whatever is playing right now: it is only a
+    // style on the element, so it needs no new file and doesn't make the
+    // playlist stale.
+    if (status && Object.prototype.hasOwnProperty.call(status, 'attractvideoresize')) {
+        UIState.attractVideoResize = !!status.attractvideoresize;
+        applyAttractVideoResize();
+    }
+    const attractModeOn = !!(status && isTrueStatusValue(status.attractmode));
+    playlistStale = playlistStale || (attractModeOn && !UIState.attractModeOn);
+    UIState.attractModeOn = attractModeOn;
+
+    applyAttractPresentation();
+    if (playlistStale) {
+        // Not awaited: it applies the presentation again when it lands, and
+        // until then the screen shows what the playlist we already have says.
+        refreshAttractPlaylist();
+    }
+
+    updateRecordButtonVisibility(!!(status && status.obsrunning));
     // Take global.showthemes changes live, so turning it off puts the Theme
     // Selector away and drops back to the default theme without a reload.
     if (status && Object.prototype.hasOwnProperty.call(status, 'showthemes')) {

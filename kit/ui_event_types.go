@@ -23,7 +23,14 @@ type EngineStatusSnapshot struct {
 	AttractAllowGUI   bool              `json:"attractallowgui"`
 	ShowThemes        bool              `json:"showthemes"`
 	ShowGoatsButton   bool              `json:"showgoatsbutton"`
-	Patches           map[string]string `json:"patches,omitempty"`
+	// The attract-video settings are here rather than only in
+	// global.attractvideolist so that changing any of them reaches the GUI
+	// screen live - a status snapshot goes out on every global.set - instead of
+	// waiting for the next time the browser happens to ask for the playlist.
+	AttractVideos           bool              `json:"attractvideos"`
+	AttractVideoDestination string            `json:"attractvideodestination"`
+	AttractVideoResize      bool              `json:"attractvideoresize"`
+	Patches                 map[string]string `json:"patches,omitempty"`
 }
 
 type OBSRecordUISnapshot struct {

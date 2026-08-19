@@ -240,6 +240,14 @@ func ConfigDir() string {
 	return filepath.Join(PaletteDataPath(), "config")
 }
 
+// ShapesDir holds the .svg files that become visual.shape values. The GUI also
+// reads one of them - the venue logo shown beside the attract videos - over
+// HTTP, which is why this is a function rather than a path built where it is
+// needed.
+func ShapesDir() string {
+	return filepath.Join(PaletteDataPath(), "shapes")
+}
+
 func GetConfigFileData(filename string) ([]byte, error) {
 	path := ConfigFilePath(filename)
 	return os.ReadFile(path)

@@ -5,6 +5,7 @@
   "pitchset": [""],
   "mode": ["pro", "bss", "pro2", "goat"],
   "guisize": ["small","medium","palette"],
+  "attractvideodestination": [ "main", "gui" ],
 	"mmtt": ["kinect", "depthai", ""],
 	"destination": [ ".", "A", "B", "C", "D" ],
 	"quantstyle": [ "none", "frets", "fixed", "pressure" ],
