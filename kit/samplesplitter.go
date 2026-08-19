@@ -581,6 +581,16 @@ func syncProSamplePlaybackSamples(service *ss.Service) error {
 	if service == nil {
 		return fmt.Errorf("sample playback service is not running")
 	}
+	// Every patch is attempted, and the failures are reported together.
+	//
+	// This used to return on the first one. A single patch pointed at a
+	// directory that is missing, renamed or empty therefore took sample
+	// playback away from every patch after it - and since the order is A, B, C,
+	// D, a bad A left all four pads silent with nothing in the GUI to say why.
+	// A patch that fails now keeps whatever it already had loaded rather than
+	// being cleared, so one bad edit does not also destroy the sound that was
+	// working.
+	var failures []string
 	for _, patchName := range patchNames {
 		channel := SamplePlaybackChannelForPatch(patchName)
 		patch := GetPatch(patchName)
@@ -590,12 +600,21 @@ func syncProSamplePlaybackSamples(service *ss.Service) error {
 		}
 		playback, err := proChannelPlaybackForPatch(patch)
 		if err != nil {
-			return err
+			LogWarn("sample playback patch left as it was", "patch", patchName, "err", err)
+			failures = append(failures, fmt.Sprintf("%s: %v", patchName, err))
+			continue
 		}
 		if err := service.LoadChannelSample(channel, playback); err != nil {
-			return fmt.Errorf("load sample playback patch %s from %s: %w", patchName, playback.Dir, err)
+			LogWarn("sample playback patch left as it was",
+				"patch", patchName, "dir", playback.Dir, "err", err)
+			failures = append(failures, fmt.Sprintf("%s (%s): %v", patchName, playback.Dir, err))
+			continue
 		}
 		logChannelSampleInventory(patchName, channel, playback, service)
+	}
+	if len(failures) > 0 {
+		return fmt.Errorf("sample playback: %d of %d patches could not be loaded: %s",
+			len(failures), len(patchNames), strings.Join(failures, "; "))
 	}
 	return nil
 }

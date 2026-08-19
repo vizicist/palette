@@ -18,8 +18,8 @@ what remains.
 
 ## Status
 
-Of the original 54 items (1 to 52, plus 22A and 22B), 32 have been dealt with
-and removed. What is left is 22: four P1 remnants, 15 in P2 - one of which, 38,
+Of the original 54 items (1 to 52, plus 22A and 22B), 34 have been dealt with
+and removed. What is left is 20: four P1 remnants, 13 in P2 - one of which, 38,
 is also partly addressed - and three in P3.
 
 Worth knowing about the work already done:
@@ -35,8 +35,8 @@ Worth knowing about the work already done:
 
 1. Finish the four P1 remnants: 7 (authentication), 14 (version swap), 19
    (macOS paths), 21 (release manifest).
-2. The sample-service reload and state cluster - 24, 26, 28, 29, 30 - which is
-   the largest untouched group and sits entirely on the audio path.
+2. The rest of the sample-service state cluster - 24, 28, 29 - which sits on
+   the same audio path as the reload work already done.
 3. Run the macOS and Linux release builds, the only way to actually exercise
    the packaging fixes.
 
@@ -82,7 +82,6 @@ Worth knowing about the work already done:
 - Add a post-build symbol/load smoke test launched without shell environment
   variables.
 
-
 ### 21. Windows packaging does not verify what it shipped
 
 - The five Go builds and their moves now fail the build through a `:build_go`
@@ -104,15 +103,6 @@ Worth knowing about the work already done:
 - Changes to word count, minimum duration, word threshold, or files inside the
   same directory therefore do not reload Pro channels.
 
-### 26. BSS reload is destructive and can report success with no samples
-
-- [ ] Build, validate, and preload candidate state before replacing live state
-  in [`pkg/samplesplitter/service.go:202-220`](pkg/samplesplitter/service.go#L202-L220).
-- Reload stops audio and clears the working cache before analysis.
-- Empty, invalid, or entirely below-threshold directories can commit error-only
-  state, preload zero paths, and still report audio healthy.
-- Consolidate the duplicate HTTP reload implementation into the service method.
-
 ### 28. `LastPlayback` is published and then mutated without locking
 
 - [ ] Publish an immutable value snapshot in
@@ -130,15 +120,6 @@ Worth knowing about the work already done:
   and reload paths in `state.go`.
 - Engine setters mutate configuration under `State.mu`, while HTTP handlers and
   reload routines read the fields without that lock.
-
-### 30. One bad patch prevents later valid sample patches from syncing
-
-- [ ] Aggregate per-channel failures in
-  [`kit/samplesplitter.go:543-560`](kit/samplesplitter.go#L543-L560).
-- Synchronization returns on the first invalid directory or load failure,
-  leaving later enabled patches untouched.
-- Attempt every channel, preserve previous state for failed channels, and
-  bootstrap the service from any valid directory.
 
 ### 33. Stepper snapshots retain mutable event pointers
 

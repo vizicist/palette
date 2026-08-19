@@ -184,6 +184,20 @@ func NewState(config Config) *State {
 	}
 }
 
+// ConfigSnapshot returns a copy of the configuration under the state lock.
+//
+// State.Config is a plain exported field that engine setters mutate under s.mu
+// while other readers take it directly; this is the safe way to read it. The
+// remaining direct readers are a separate item.
+func (s *State) ConfigSnapshot() Config {
+	if s == nil {
+		return Config{}
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.Config
+}
+
 func (s *State) Snapshot() StateSnapshot {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

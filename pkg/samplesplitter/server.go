@@ -249,27 +249,14 @@ func (s Server) handleReloadSigils(w http.ResponseWriter, r *http.Request) {
 		writeError(w, errors.New("samplesplitter state is not initialized"), http.StatusNotImplemented)
 		return
 	}
-	s.State.SetBusy(true, "Loading samples")
-	defer s.State.SetBusy(false, "")
-	if s.Audio != nil {
-		s.Audio.StopAll()
-		s.Audio.ClearCache()
-	}
-	s.State.LoadSigilDefaults(s.Analyzer, nil)
-	s.State.LoadFirstIfEmpty(s.Analyzer)
-	if s.Audio != nil {
-		var err error
-		if s.State.Snapshot().Compressed {
-			err = s.Audio.PreloadCompressed(s.State.StartupSamplePaths())
-		} else {
-			err = s.Audio.Preload(s.State.StartupSamplePaths())
-		}
-		if err != nil {
-			s.State.SetAudioStatus(false, err)
-			writeError(w, err, http.StatusInternalServerError)
-			return
-		}
-		s.State.SetAudioStatus(true, nil)
+	// One implementation, shared with Service.ReloadSigilSamples. This used to
+	// be a second copy of the same sequence, which had drifted: it passed a nil
+	// rng and inlined its own compressed/uncompressed preload, and like the
+	// original it tore down the live samples before finding out whether the
+	// directory held anything.
+	if err := ReloadSigilSamples(s.State, s.Analyzer, s.Audio, nil); err != nil {
+		writeError(w, err, http.StatusInternalServerError)
+		return
 	}
 	writeJSON(w, s.State.Snapshot(), http.StatusOK)
 }

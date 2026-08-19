@@ -203,20 +203,65 @@ func (s *Service) ReloadSigilSamples() error {
 	if s == nil || s.state == nil {
 		return errors.New("samplesplitter service is not initialized")
 	}
-	s.state.SetBusy(true, "Loading samples")
-	defer s.state.SetBusy(false, "")
-	if s.audio != nil {
-		s.audio.StopAll()
-		s.audio.ClearCache()
+	return ReloadSigilSamples(s.state, s.analyzer, s.audio,
+		rand.New(rand.NewSource(time.Now().UnixNano())))
+}
+
+// ReloadSigilSamples rebuilds the sigil sample selection from the configured
+// directory.
+//
+// The directory is checked before anything live is disturbed. This used to stop
+// audio and clear the decoded cache first and analyse afterwards, so a
+// directory that was empty, unreadable, or entirely below the minimum duration
+// tore down what was playing and then left the service with nothing - while
+// still reporting audio healthy, because preloading an empty list returns no
+// error. A "reload" that silently produced silence looked like broken hardware.
+//
+// The HTTP handler had its own copy of the same sequence, with its own subtle
+// differences; both go through here now.
+func ReloadSigilSamples(state *State, analyzer Analyzer, audio *AudioManager, rng *rand.Rand) error {
+
+	if state == nil {
+		return errors.New("samplesplitter state is not initialized")
 	}
-	s.state.LoadSigilDefaults(s.analyzer, rand.New(rand.NewSource(time.Now().UnixNano())))
-	s.state.LoadFirstIfEmpty(s.analyzer)
-	if s.audio != nil {
-		if err := preloadAudio(s.audio, s.state); err != nil {
-			s.state.SetAudioStatus(false, err)
+
+	// Validate the candidate directory first. On failure nothing is touched, so
+	// whatever was loaded keeps playing.
+	cfg := state.ConfigSnapshot()
+	candidates, err := ListMP3FilesWithMinimumDuration(cfg.MP3Dir, cfg.MinimumMP3DurationSeconds)
+	if err != nil {
+		return fmt.Errorf("reload: unable to read %s: %w", cfg.MP3Dir, err)
+	}
+	if len(candidates) == 0 {
+		return fmt.Errorf(
+			"reload: no MP3 of at least %.2fs in %s; the samples already loaded were left alone",
+			cfg.MinimumMP3DurationSeconds, cfg.MP3Dir)
+	}
+
+	state.SetBusy(true, "Loading samples")
+	defer state.SetBusy(false, "")
+
+	if audio != nil {
+		audio.StopAll()
+		audio.ClearCache()
+	}
+	state.LoadSigilDefaults(analyzer, rng)
+	state.LoadFirstIfEmpty(analyzer)
+
+	if audio != nil {
+		if err := preloadAudio(audio, state); err != nil {
+			state.SetAudioStatus(false, err)
 			return err
 		}
-		s.state.SetAudioStatus(true, nil)
+		// Preloading an empty list succeeds, so the count is what says whether
+		// this reload actually produced anything to play.
+		if len(state.StartupSamplePaths()) == 0 {
+			err := fmt.Errorf("reload: %d usable file(s) in %s, but none were selected",
+				len(candidates), cfg.MP3Dir)
+			state.SetAudioStatus(false, err)
+			return err
+		}
+		state.SetAudioStatus(true, nil)
 	}
 	return nil
 }
