@@ -541,7 +541,6 @@ func ObsRecordClip() (string, error) {
 		wasRecording := obsRecording
 		startTime := obsRecordStart
 		if wasRecording {
-			obsRecording = false
 			obsRecordStopChan = nil
 		}
 		obsRecordMu.Unlock()
@@ -550,11 +549,18 @@ func ObsRecordClip() (string, error) {
 			return
 		}
 
+		// Same as the manual path: do not claim the recording has stopped
+		// until OBS says so, or a failure here leaves Palette believing it is
+		// idle while OBS keeps writing.
 		err := ObsCommand("recordstop")
 		elapsed := time.Since(startTime).Round(time.Millisecond)
 		if err != nil {
-			LogOfType("obs", "OBS recording stopped (timer elapsed) but recordstop failed", "elapsed", elapsed, "err", err)
+			LogWarn("OBS recordstop failed after the timer elapsed, still recording",
+				"elapsed", elapsed, "err", err)
 		} else {
+			obsRecordMu.Lock()
+			obsRecording = false
+			obsRecordMu.Unlock()
 			LogOfType("obs", "OBS recording stopped: timer elapsed", "elapsed", elapsed)
 		}
 		NotifyOBSRecordChanged()
@@ -575,7 +581,6 @@ func ObsRecordStop() (string, error) {
 		return `{"recording":false}`, nil
 	}
 
-	obsRecording = false
 	startTime := obsRecordStart
 	stopChan := obsRecordStopChan
 	obsRecordStopChan = nil
@@ -584,13 +589,24 @@ func ObsRecordStop() (string, error) {
 	}
 	obsRecordMu.Unlock()
 
+	// The recording state is committed only once OBS confirms the stop.
+	//
+	// obsRecording used to be cleared here, before the command was sent, so a
+	// failed recordstop left Palette reporting "not recording" while OBS
+	// happily carried on - and because every later stop returns early on
+	// !obsRecording, there was no way to stop it again. That fills a venue's
+	// disk quietly.
 	err := ObsCommand("recordstop")
 	elapsed := time.Since(startTime).Round(time.Millisecond)
 	if err != nil {
-		LogOfType("obs", "OBS recording stopped (early) but recordstop failed", "elapsed", elapsed, "err", err)
+		LogWarn("OBS recordstop failed, still recording", "elapsed", elapsed, "err", err)
 		NotifyOBSRecordChanged()
 		return "", fmt.Errorf("ObsRecordStop stop: %w", err)
 	}
+
+	obsRecordMu.Lock()
+	obsRecording = false
+	obsRecordMu.Unlock()
 
 	LogOfType("obs", "OBS recording stopped: stopped early", "elapsed", elapsed)
 	NotifyOBSRecordChanged()

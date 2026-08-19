@@ -41,7 +41,12 @@ type MidiIO struct {
 	midiPortChannelState map[PortChannel]*MidiPortChannelState
 	inports              midi.InPorts
 	outports             midi.OutPorts
-	stop                 func()
+
+	// listenerMutex guards midiInput and stop together. Changing the input
+	// device at runtime has to stop the old listener and start a new one, and
+	// that used not to happen at all.
+	listenerMutex sync.Mutex
+	stop          func()
 }
 
 // MidiPortChannelState is used to remember the last
@@ -114,12 +119,24 @@ func InitMIDIIO() {
 	// }
 }
 
+// SetMidiInput selects the MIDI input device and starts listening on it.
+//
+// It used to swap the port and stop there. Start called midi.ListenTo exactly
+// once, before blocking forever, so nothing ever listened to a device chosen
+// afterwards: changing global.midiinput at runtime silently disabled MIDI
+// input, and an engine that started with no device - which logs "No MIDI input
+// port has been selected" - could never gain one without a restart.
 func (m *MidiIO) SetMidiInput(midiInputName string) {
 
-	if theMidiIO.midiInput != nil {
-		err := theMidiIO.midiInput.Close()
+	m.listenerMutex.Lock()
+	defer m.listenerMutex.Unlock()
+
+	m.stopListeningLocked()
+
+	if m.midiInput != nil {
+		err := m.midiInput.Close()
 		LogIfError(err)
-		theMidiIO.midiInput = nil
+		m.midiInput = nil
 	}
 
 	if midiInputName == "" {
@@ -135,9 +152,45 @@ func (m *MidiIO) SetMidiInput(midiInputName string) {
 		if strings.Contains(name, midiInputName) {
 			// We only open a single input, though midiInputs is an array
 			LogInfo("Opening MIDI input", "name", name)
-			theMidiIO.midiInput = inp
+			m.midiInput = inp
 			break // only pick the first one that matches
 		}
+	}
+
+	if m.midiInput == nil {
+		LogWarn("No MIDI input port matches", "name", midiInputName)
+		return
+	}
+	if err := m.startListeningLocked(); err != nil {
+		LogWarn("unable to listen on the new MIDI input", "name", midiInputName, "err", err)
+	}
+}
+
+// startListeningLocked begins delivering from the selected input, replacing any
+// listener already running. Callers hold listenerMutex.
+func (m *MidiIO) startListeningLocked() error {
+
+	m.stopListeningLocked()
+
+	if m.midiInput == nil {
+		LogWarn("No MIDI input port has been selected")
+		return nil
+	}
+	stop, err := midi.ListenTo(m.midiInput, m.handleMidiInput, midi.UseSysEx(), midi.HandleError(m.handleMidiError))
+	if err != nil {
+		return err
+	}
+	m.stop = stop
+	LogInfo("Listening for MIDI input", "port", m.midiInput.String())
+	return nil
+}
+
+// stopListeningLocked ends the current listener, if any. Callers hold
+// listenerMutex.
+func (m *MidiIO) stopListeningLocked() {
+	if m.stop != nil {
+		m.stop()
+		m.stop = nil
 	}
 }
 
@@ -160,17 +213,17 @@ func (m *MidiIO) Start() {
 		}
 	}()
 
-	if m.midiInput == nil {
-		LogWarn("No MIDI input port has been selected")
-		return
-	}
-	stop, err := midi.ListenTo(m.midiInput, m.handleMidiInput, midi.UseSysEx(), midi.HandleError(m.handleMidiError))
+	// Just start the listener and return. midi.ListenTo runs on its own
+	// goroutine, and a device selected later is picked up by SetMidiInput, so
+	// there is nothing left for this one to park on - it used to sit in a bare
+	// select{} forever, which is why the listener could only ever be started
+	// once.
+	m.listenerMutex.Lock()
+	err := m.startListeningLocked()
+	m.listenerMutex.Unlock()
 	if err != nil {
 		LogWarn("midi.ListenTo", "err", err)
-		return
 	}
-	m.stop = stop
-	select {} // is this needed?
 }
 
 func (m *MidiIO) handleMidiInput(msg midi.Message, timestamp int32) {

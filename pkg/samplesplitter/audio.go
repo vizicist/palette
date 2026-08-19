@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"os/exec"
 	"runtime"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 	"unsafe"
 
 	"github.com/gen2brain/malgo"
@@ -22,12 +24,21 @@ const (
 )
 
 type AudioManager struct {
-	mu            sync.Mutex
-	ffmpegPath    string
-	state         *State
-	context       *malgo.AllocatedContext
-	device        *malgo.Device
-	cache         map[string]*audioBuffer
+	mu         sync.Mutex
+	ffmpegPath string
+	state      *State
+	context    *malgo.AllocatedContext
+	device     *malgo.Device
+	// Decoded PCM, keyed by path. Each entry also carries the size and
+	// modification time it was decoded from, because keying on the pathname
+	// alone meant replacing a file on disk left the old audio in place - the
+	// analysis cache has always keyed on identity, so new cue boundaries could
+	// be paired with stale PCM. Bounded, because a decoded WAV is far larger
+	// than the MP3 and nothing ever evicted these: a directory of samples
+	// swapped a few times over a multi-day run grew until the process died.
+	cache map[string]*audioBuffer
+	// Monotonic counter used to pick the least-recently-served cache entry.
+	cacheClock    int64
 	voices        map[string]*audioVoice
 	channelVoices map[int]string
 	channelOrder  map[int][]string
@@ -65,7 +76,18 @@ type audioBuffer struct {
 	samples        []int16
 	compressed     []int16
 	compressedOnce sync.Once
+
+	// Identity of the file this was decoded from.
+	size    int64
+	modTime time.Time
+	// When this entry was last served, for eviction.
+	used int64
 }
+
+// maxDecodedCacheEntries bounds the decoded-PCM cache. A sample library in
+// normal use is far below this; it exists so that a long run that keeps
+// swapping files cannot grow without limit.
+const maxDecodedCacheEntries = 64
 
 type audioVoice struct {
 	pcm      []int16
@@ -358,7 +380,11 @@ func (a *AudioManager) SetOutput(id int) (string, error) {
 		return "", fmt.Errorf("audio output device %d not found", id)
 	}
 	info := infos[id]
-	if err := a.openDevice(&info.ID); err != nil {
+	// Keep the working output until the replacement is actually running. This
+	// used to uninit the current device first, so a device that failed to open
+	// - unplugged, in use, wrong sample rate - left no audio output at all,
+	// while the reported output name still named the old one.
+	if err := a.openDeviceKeepingOldOnFailure(&info.ID, true); err != nil {
 		a.setErr(err)
 		return "", err
 	}
@@ -503,6 +529,28 @@ func (a *AudioManager) SetReverbLength(length float64) {
 	a.reverb.SetLength(length)
 }
 
+// evictDecodedLocked drops least-recently-served entries until at most keep
+// remain. Callers hold a.mu.
+func (a *AudioManager) evictDecodedLocked(keep int) {
+	if keep < 0 {
+		keep = 0
+	}
+	for len(a.cache) > keep {
+		oldestKey := ""
+		var oldestUsed int64
+		first := true
+		for k, b := range a.cache {
+			if first || b.used < oldestUsed {
+				oldestKey, oldestUsed, first = k, b.used, false
+			}
+		}
+		if first {
+			return
+		}
+		delete(a.cache, oldestKey)
+	}
+}
+
 func (a *AudioManager) ClearCache() {
 	if a == nil {
 		return
@@ -606,16 +654,27 @@ func (a *AudioManager) Close() {
 }
 
 func (a *AudioManager) openDevice(deviceID *malgo.DeviceID) error {
-	// Same as Close: the old device is uninited with the lock released, because
-	// Uninit joins the audio thread and that thread's dataCallback wants this
-	// mutex. Switching output device while a sample is playing is exactly when
-	// the callback is running.
-	a.mu.Lock()
-	old := a.device
-	a.device = nil
-	a.mu.Unlock()
-	if old != nil {
-		old.Uninit()
+	return a.openDeviceKeepingOldOnFailure(deviceID, false)
+}
+
+// openDeviceKeepingOldOnFailure opens a playback device. When keepOldOnFailure
+// is set the current device is left running until the replacement has started,
+// so a failed switch leaves the previous output working instead of none at all.
+//
+// The device is always uninited with a.mu released: Uninit joins the audio
+// thread and that thread's dataCallback wants this mutex, and switching output
+// while a sample is playing is exactly when the callback is running.
+func (a *AudioManager) openDeviceKeepingOldOnFailure(deviceID *malgo.DeviceID, keepOldOnFailure bool) error {
+
+	var old *malgo.Device
+	if !keepOldOnFailure {
+		a.mu.Lock()
+		old = a.device
+		a.device = nil
+		a.mu.Unlock()
+		if old != nil {
+			old.Uninit()
+		}
 	}
 
 	config := malgo.DefaultDeviceConfig(malgo.Playback)
@@ -640,9 +699,14 @@ func (a *AudioManager) openDevice(deviceID *malgo.DeviceID) error {
 		return err
 	}
 
+	// The replacement is running, so the old one can go now.
 	a.mu.Lock()
+	previous := a.device
 	a.device = device
 	a.mu.Unlock()
+	if keepOldOnFailure && previous != nil {
+		previous.Uninit()
+	}
 	return nil
 }
 
@@ -881,10 +945,28 @@ func (a *AudioManager) syncActiveVoicesLocked() {
 }
 
 func (a *AudioManager) decode(path string) (*audioBuffer, error) {
+
+	// Stat first: a cache hit is only a hit if the file is still the one that
+	// was decoded. A file that cannot be stat'ed falls through and is decoded,
+	// which is what ffmpeg will report on properly.
+	var size int64
+	var modTime time.Time
+	if info, err := os.Stat(path); err == nil {
+		size = info.Size()
+		modTime = info.ModTime()
+	}
+
 	a.mu.Lock()
 	if cached, ok := a.cache[path]; ok {
-		a.mu.Unlock()
-		return cached, nil
+		if cached.size == size && cached.modTime.Equal(modTime) {
+			a.cacheClock++
+			cached.used = a.cacheClock
+			a.mu.Unlock()
+			return cached, nil
+		}
+		// Same path, different file. The old PCM would be paired with cues
+		// analyzed from the new one.
+		delete(a.cache, path)
 	}
 	a.mu.Unlock()
 
@@ -903,9 +985,15 @@ func (a *AudioManager) decode(path string) (*audioBuffer, error) {
 	for i := range samples {
 		samples[i] = int16(binary.LittleEndian.Uint16(output[i*2 : i*2+2]))
 	}
-	buf := &audioBuffer{samples: samples}
+	buf := &audioBuffer{samples: samples, size: size, modTime: modTime}
 
 	a.mu.Lock()
+	if a.cache == nil {
+		a.cache = make(map[string]*audioBuffer)
+	}
+	a.evictDecodedLocked(maxDecodedCacheEntries - 1)
+	a.cacheClock++
+	buf.used = a.cacheClock
 	a.cache[path] = buf
 	a.mu.Unlock()
 	return buf, nil
