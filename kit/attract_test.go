@@ -51,10 +51,10 @@ func TestAttractGestureZParamsApplyLive(t *testing.T) {
 		t.Fatalf("SetAndApplyGlobalParam zmax err = %v", err)
 	}
 
-	if got := theAttractManager.GestureZMin; got != 0.40 {
+	if got := theAttractManager.Settings().GestureZMin; got != 0.40 {
 		t.Fatalf("GestureZMin = %v, want 0.40", got)
 	}
-	if got := theAttractManager.GestureZMax; got != 0.90 {
+	if got := theAttractManager.Settings().GestureZMax; got != 0.90 {
 		t.Fatalf("GestureZMax = %v, want 0.90", got)
 	}
 }
@@ -104,10 +104,12 @@ func TestGenerateRandomGestureHandlesEqualLengthRange(t *testing.T) {
 	defer func() { theAttractManager = oldAttractManager }()
 
 	theAttractManager = &AttractManager{
-		GestureMinLength: 0.5,
-		GestureMaxLength: 0.5,
-		GestureZMin:      0.5,
-		GestureZMax:      0.5,
+		settings: attractSettings{
+			GestureMinLength: 0.5,
+			GestureMaxLength: 0.5,
+			GestureZMin:      0.5,
+			GestureZMax:      0.5,
+		},
 	}
 	cm := &CursorManager{
 		cursorRand: rand.New(rand.NewSource(1)),

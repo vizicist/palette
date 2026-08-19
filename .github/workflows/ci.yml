@@ -1,0 +1,107 @@
+name: Build and test
+
+# The repository had no build or test coverage in CI at all - only pre-commit
+# and secret scanning - so nothing caught a broken build, a failing test, a data
+# race or a known-vulnerable Go release until someone ran them by hand.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: Go ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # The engine runs on Windows at venues, the hub on macOS, and the
+        # samplesplitter service on Linux, so all three are built.
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          # Read the version from go.mod so this never drifts from the module.
+          go-version-file: go.mod
+          check-latest: true
+
+      - name: Build every command
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      # -race is the point of this job: most of what has been fixed in this
+      # codebase recently was concurrent-access bugs that only the race
+      # detector reports.
+      - name: Test with the race detector
+        run: go test -race -shuffle=on ./...
+
+  staticcheck:
+    name: staticcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          check-latest: true
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      - run: staticcheck ./...
+
+  govulncheck:
+    name: govulncheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          check-latest: true
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      # This is what would have caught the six reachable standard-library
+      # advisories that sat in the module's Go version unnoticed.
+      - run: govulncheck ./...
+
+  webui:
+    name: Web UI syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      # The web UI is plain ES modules with no build step, so a syntax error
+      # only shows up as a blank touchscreen at a venue. --check parses each
+      # module without executing it.
+      - name: Parse every web UI module
+        run: |
+          set -euo pipefail
+          status=0
+          for f in kit/webui/*.js; do
+            if ! node --check "$f"; then
+              echo "SYNTAX ERROR: $f" >&2
+              status=1
+            fi
+          done
+          exit $status
+
+  python:
+    name: Python syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Byte-compile the Python helpers
+        run: python -m compileall -q python

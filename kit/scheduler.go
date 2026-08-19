@@ -377,6 +377,20 @@ func samplePlaybackEventChannel(value any) int {
 
 // forEachEventWithTag applies fn to every scheduled element with the given
 // tag, in place (no removal). Compare deleteScheduledEvents, which removes.
+// forEachPendingEventWithTag applies fn to the not-yet-scheduled events of one
+// tag. forEachEventWithTag only walks schedList, so without this the pending
+// events of a patch were never faded, only thrown away.
+func (sched *Scheduler) forEachPendingEventWithTag(tag string, fn func(*SchedElement)) {
+	sched.pendingMutex.Lock()
+	defer sched.pendingMutex.Unlock()
+
+	for _, se := range sched.pendingScheduled {
+		if se.Tag == tag {
+			fn(se)
+		}
+	}
+}
+
 func (sched *Scheduler) forEachEventWithTag(tag string, fn func(*SchedElement)) {
 	sched.mutex.Lock()
 	defer sched.mutex.Unlock()
@@ -390,12 +404,16 @@ func (sched *Scheduler) forEachEventWithTag(tag string, fn func(*SchedElement)) 
 }
 
 func (sched *Scheduler) FadeEventsWithTag(tag string) {
-	sched.forEachEventWithTag(tag, func(se *SchedElement) {
+	fade := func(se *SchedElement) {
 		if ce, isce := se.Value.(CursorEvent); isce {
 			ce.Pos.Z *= 0.3
 			se.Value = ce
 		}
-	})
+	}
+	sched.forEachEventWithTag(tag, fade)
+	// Pending events belong to this patch too, and fading them is the point -
+	// patch.go used to deal with them by discarding the entire pending list.
+	sched.forEachPendingEventWithTag(tag, fade)
 }
 
 func (sched *Scheduler) FilterEventsWithTag(tag string) {
@@ -408,6 +426,9 @@ func (sched *Scheduler) FilterEventsWithTag(tag string) {
 			theCursorManager.DeleteActiveCursor(ce.GID)
 		}
 	})
+	sched.deletePendingEvents(func(se *SchedElement) bool {
+		return se.Tag == tag
+	})
 }
 
 func (sched *Scheduler) DeleteEventsWithTag(tag string) {
@@ -418,6 +439,9 @@ func (sched *Scheduler) DeleteEventsWithTag(tag string) {
 		if isce && ce.Ddu == "up" {
 			theCursorManager.DeleteActiveCursor(ce.GID)
 		}
+	})
+	sched.deletePendingEvents(func(se *SchedElement) bool {
+		return se.Tag == tag
 	})
 }
 

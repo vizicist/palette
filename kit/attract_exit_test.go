@@ -12,10 +12,9 @@ import (
 func attractManagerOn() *AttractManager {
 	InitLog("") // setAttractMode logs, which needs a logger
 	am := &AttractManager{
-		attractEnabled:        true,
+		settings:              attractSettings{Enabled: true, ModeCheckSecs: 2},
 		attractModeIsOn:       &atomic.Bool{},
 		lastAttractModeChange: time.Now(),
-		ModeCheckSecs:         2,
 	}
 	am.attractModeIsOn.Store(true)
 	return am
@@ -68,7 +67,7 @@ func TestAttractModeTurningOnIsStillThrottled(t *testing.T) {
 	defer func() { theAttractManager = old }()
 	InitLog("")
 	am := &AttractManager{
-		attractEnabled:        true,
+		settings:              attractSettings{Enabled: true},
 		attractModeIsOn:       &atomic.Bool{},
 		lastAttractModeChange: time.Now(), // changed just now
 	}
@@ -86,7 +85,7 @@ func TestAttractModeTurnsOnOnceThrottleHasElapsed(t *testing.T) {
 	defer func() { theAttractManager = old }()
 	InitLog("")
 	am := &AttractManager{
-		attractEnabled:        true,
+		settings:              attractSettings{Enabled: true},
 		attractModeIsOn:       &atomic.Bool{},
 		lastAttractModeChange: time.Now().Add(-5 * time.Second),
 	}
@@ -155,8 +154,10 @@ func TestAttractModeOffIsIdempotent(t *testing.T) {
 // `needed` touches within `secs` seconds before it will let go.
 func attractManagerWithTouchThreshold(needed int, secs float64) *AttractManager {
 	am := attractManagerOn()
-	am.ExitTouchCount = needed
-	am.ExitTouchSecs = secs
+	am.updateSettings(func(s *attractSettings) {
+		s.ExitTouchCount = needed
+		s.ExitTouchSecs = secs
+	})
 	return am
 }
 

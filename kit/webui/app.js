@@ -1691,10 +1691,14 @@ async function stopNotesAndLoops() {
 
 async function silenceAll() {
     try {
-        for (const p of patchNames) {
-            API.setPatchParam(p, 'misc.looping_on', 'false');
-            API.call('patch.clear', { patch: p });
-        }
+        // Sequential, for the same reason stopNotesAndLoops is: a patch whose
+        // loop is cleared while it is still looping records and replays what
+        // comes next. These eight calls used to be launched and never awaited,
+        // so clear could beat looping_on=false, ANO could land before either,
+        // and any rejection escaped this catch as an unhandled promise. Within
+        // a step the four patches can still go at once.
+        await Promise.all(patchNames.map(p => API.setPatchParam(p, 'misc.looping_on', 'false')));
+        await Promise.all(patchNames.map(p => API.call('patch.clear', { patch: p })));
         await API.call('quad.ANO');
         await API.audioReset();
     } catch (e) {

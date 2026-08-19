@@ -7,25 +7,16 @@ import (
 	"time"
 )
 
-type AttractManager struct {
-	attractMutex            sync.RWMutex
-	attractEnabled          bool
-	attractModeIsOn         *atomic.Bool
-	lastAttractModeChange   time.Time
-	lastAttractGestureTime  time.Time
-	lastAttractPresetChange time.Time
-	lastAttractModeCheck    time.Time
-	ModeCheckSecs           float64
-
-	attractRand      *rand.Rand
-	attractRandMutex sync.Mutex
-
-	// Recent touches on the pads, used to decide whether someone is really
-	// there. Only touches inside the ExitTouchSecs window are kept.
-	attractTouchMutex sync.Mutex
-	attractTouches    []attractTouch
-
-	// parameters
+// attractSettings is the tunable half of the attract configuration.
+//
+// It is copied out of the manager under attractMutex so a reader gets one
+// consistent set of values without holding the lock across the work it drives.
+// These used to be plain exported fields that the API goroutine wrote - every
+// global.attract* parameter has a setter - while the scheduler and the cursor
+// paths read them with no synchronisation at all.
+type attractSettings struct {
+	Enabled              bool
+	ModeCheckSecs        float64
 	GestureMinLength     float64
 	GestureMaxLength     float64
 	GestureZMin          float64
@@ -39,33 +30,63 @@ type AttractManager struct {
 	ExitTouchSecs        float64
 }
 
+type AttractManager struct {
+	// attractMutex guards settings and every lastAttract* time below. The
+	// times matter most: time.Time is three words, so an unsynchronised read
+	// of one being written can return an instant that never existed.
+	attractMutex            sync.RWMutex
+	settings                attractSettings
+	attractModeIsOn         *atomic.Bool
+	lastAttractModeChange   time.Time
+	lastAttractGestureTime  time.Time
+	lastAttractPresetChange time.Time
+	lastAttractModeCheck    time.Time
+
+	attractRand      *rand.Rand
+	attractRandMutex sync.Mutex
+
+	// Recent touches on the pads, used to decide whether someone is really
+	// there. Only touches inside ExitTouchSecs are kept.
+	attractTouchMutex sync.Mutex
+	attractTouches    []attractTouch
+}
+
+// Settings returns a copy of the tunables.
+func (am *AttractManager) Settings() attractSettings {
+	am.attractMutex.RLock()
+	defer am.attractMutex.RUnlock()
+	return am.settings
+}
+
+// updateSettings applies a change to the tunables under the lock.
+func (am *AttractManager) updateSettings(fn func(s *attractSettings)) {
+	am.attractMutex.Lock()
+	defer am.attractMutex.Unlock()
+	fn(&am.settings)
+}
+
+// noteAttractActivity resets the idle timer. Called for every real cursor
+// event, from the cursor goroutine.
+func (am *AttractManager) noteAttractActivity() {
+	am.attractMutex.Lock()
+	am.lastAttractModeChange = time.Now()
+	am.attractMutex.Unlock()
+}
+
 var theAttractManager *AttractManager
 
 func NewAttractManager() *AttractManager {
 
 	am := &AttractManager{
 		attractMutex:            sync.RWMutex{},
-		attractEnabled:          false,
 		attractModeIsOn:         &atomic.Bool{},
 		lastAttractModeChange:   time.Now(),
 		lastAttractGestureTime:  time.Now(),
 		lastAttractPresetChange: time.Now(),
 		lastAttractModeCheck:    time.Now(),
-		ModeCheckSecs:           2,
 		attractRand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 		attractRandMutex:        sync.Mutex{},
-
-		GestureMinLength:     0,
-		GestureMaxLength:     0,
-		GestureZMin:          0,
-		GestureZMax:          0,
-		GestureNumSteps:      0,
-		GestureDuration:      0,
-		GestureInterval:      0,
-		PresetChangeInterval: 0,
-		IdleSecs:             0,
-		ExitTouchCount:       0,
-		ExitTouchSecs:        0,
+		settings:                attractSettings{ModeCheckSecs: 2},
 	}
 
 	// paramFloat/paramInt log (with the param name) and return 0 on error.
@@ -80,17 +101,19 @@ func NewAttractManager() *AttractManager {
 		return v
 	}
 
-	am.GestureInterval = paramFloat("global.attractgestureinterval")
-	am.GestureMinLength = paramFloat("global.attractgestureminlength")
-	am.GestureMaxLength = paramFloat("global.attractgesturemaxlength")
-	am.GestureZMin = paramFloat("global.attractgesturezmin")
-	am.GestureZMax = paramFloat("global.attractgesturezmax")
-	am.GestureNumSteps = paramInt("global.attractgesturenumsteps")
-	am.GestureDuration = paramFloat("global.attractgestureduration")
-	am.PresetChangeInterval = paramFloat("global.attractpresetchangeinterval")
-	am.IdleSecs = paramFloat("global.attractidlesecs")
-	am.ExitTouchCount = paramInt("global.attractexittouches")
-	am.ExitTouchSecs = paramFloat("global.attractexitsecs")
+	am.updateSettings(func(s *attractSettings) {
+		s.GestureInterval = paramFloat("global.attractgestureinterval")
+		s.GestureMinLength = paramFloat("global.attractgestureminlength")
+		s.GestureMaxLength = paramFloat("global.attractgesturemaxlength")
+		s.GestureZMin = paramFloat("global.attractgesturezmin")
+		s.GestureZMax = paramFloat("global.attractgesturezmax")
+		s.GestureNumSteps = paramInt("global.attractgesturenumsteps")
+		s.GestureDuration = paramFloat("global.attractgestureduration")
+		s.PresetChangeInterval = paramFloat("global.attractpresetchangeinterval")
+		s.IdleSecs = paramFloat("global.attractidlesecs")
+		s.ExitTouchCount = paramInt("global.attractexittouches")
+		s.ExitTouchSecs = paramFloat("global.attractexitsecs")
+	})
 
 	return am
 }
@@ -125,7 +148,8 @@ const attractExitSecsDefault = 3.0
 // emits, so the count means what it says.
 func (am *AttractManager) noticeTouch(gid int) bool {
 
-	needed := am.ExitTouchCount
+	cfg := am.Settings()
+	needed := cfg.ExitTouchCount
 	if needed < 1 {
 		needed = 1 // an unset or nonsense parameter behaves as it did before
 	}
@@ -136,7 +160,7 @@ func (am *AttractManager) noticeTouch(gid int) bool {
 	// being able to end attract mode at all. The paramdef's minimum is 0.5, so
 	// this only comes up when the parameter can't be read, which is exactly when
 	// nothing else will catch it.
-	within := am.ExitTouchSecs
+	within := cfg.ExitTouchSecs
 	if within <= 0 {
 		within = attractExitSecsDefault
 	}
@@ -181,7 +205,7 @@ func (am *AttractManager) forgetTouches() {
 }
 
 func (am *AttractManager) SetAttractEnabled(b bool) {
-	am.attractEnabled = b
+	am.updateSettings(func(s *attractSettings) { s.Enabled = b })
 	// Disabling attract mode is also an instruction to leave it. Keeping the
 	// raw mode bit set would make a later "off" request look like a no-op and
 	// could leave the attract video layer soloed indefinitely.
@@ -216,7 +240,9 @@ func (am *AttractManager) SetAttractMode(onoff bool) {
 		am.setAttractMode(false)
 		return
 	}
+	am.attractMutex.RLock()
 	secondsSince := time.Since(am.lastAttractModeChange).Seconds()
+	am.attractMutex.RUnlock()
 	if secondsSince > 1.0 {
 		am.setAttractMode(onoff)
 	} else {
@@ -281,7 +307,9 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 		go TheAttractVideoPlayer().Stop()
 	}
 
+	am.attractMutex.Lock()
 	am.lastAttractModeChange = time.Now()
+	am.attractMutex.Unlock()
 
 	// Tell the GUI, so the attract screen appears and disappears with the
 	// mode. Without this only the API path notified, so attract mode turned
@@ -301,23 +329,26 @@ func (am *AttractManager) checkAttract() {
 		TheAttractVideoPlayer().Advance()
 	}
 
-	if !am.attractEnabled {
+	cfg := am.Settings()
+	if !cfg.Enabled {
 		return
 	}
 
 	// Every so often we check to see if attract mode should be turned on
 	now := time.Now()
+
+	am.attractMutex.Lock()
 	sinceLastAttractModeCheck := now.Sub(am.lastAttractModeCheck).Seconds()
-	if sinceLastAttractModeCheck > am.ModeCheckSecs {
-
+	dueForCheck := sinceLastAttractModeCheck > cfg.ModeCheckSecs
+	idleTooLong := false
+	if dueForCheck {
 		am.lastAttractModeCheck = now
+		idleTooLong = time.Since(am.lastAttractModeChange).Seconds() > cfg.IdleSecs
+	}
+	am.attractMutex.Unlock()
 
-		am.attractMutex.Lock()
-		sinceLastAttractModeChange := time.Since(am.lastAttractModeChange).Seconds()
+	if dueForCheck {
 		ison := am.AttractModeIsOn()
-		idleTooLong := sinceLastAttractModeChange > am.IdleSecs
-		am.attractMutex.Unlock()
-
 		if !ison && idleTooLong {
 			am.setAttractMode(true)
 		}
@@ -330,14 +361,27 @@ func (am *AttractManager) checkAttract() {
 
 func (am *AttractManager) doAttractAction() {
 
-	if !am.attractEnabled || !am.AttractModeIsOn() {
+	cfg := am.Settings()
+	if !cfg.Enabled || !am.AttractModeIsOn() {
 		return
 	}
 
 	now := time.Now()
-	dt := now.Sub(am.lastAttractGestureTime).Seconds()
 
-	if dt > am.GestureInterval {
+	am.attractMutex.Lock()
+	dt := now.Sub(am.lastAttractGestureTime).Seconds()
+	dueForGesture := dt > cfg.GestureInterval
+	if dueForGesture {
+		am.lastAttractGestureTime = now
+	}
+	dp := now.Sub(am.lastAttractPresetChange).Seconds()
+	dueForPreset := dp > cfg.PresetChangeInterval
+	if dueForPreset {
+		am.lastAttractPresetChange = now
+	}
+	am.attractMutex.Unlock()
+
+	if dueForGesture {
 
 		// Start a random gesture
 		am.attractRandMutex.Lock()
@@ -345,22 +389,17 @@ func (am *AttractManager) doAttractAction() {
 		am.attractRandMutex.Unlock()
 
 		tag := patch + ",attract"
-		am.lastAttractGestureTime = now
+		dur := time.Duration(cfg.GestureDuration * float64(time.Second))
 
-		dur := time.Duration(am.GestureDuration * float64(time.Second))
-
-		go theCursorManager.GenerateRandomGesture(tag, am.GestureNumSteps, dur)
+		go theCursorManager.GenerateRandomGesture(tag, cfg.GestureNumSteps, dur)
 	}
 
-	dp := now.Sub(am.lastAttractPresetChange).Seconds()
-	if dp > am.PresetChangeInterval {
+	if dueForPreset {
 		if theQuad == nil {
 			LogWarn("No Quad to change for attract mode")
 		} else {
 			_, err := theQuad.loadQuadRand("quad")
 			LogIfError(err)
 		}
-		am.lastAttractPresetChange = now
 	}
-
 }

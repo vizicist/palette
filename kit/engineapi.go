@@ -59,7 +59,16 @@ func ExecuteAPI(api string, apiargs map[string]string) (result string, err error
 }
 
 // ExecuteAPIFromJSON takes raw JSON (as a string of the form "{...}"") as an API and returns raw JSON
-func ExecuteAPIFromJSON(rawjson string) (string, error) {
+// ExecuteAPIFromJSON runs one API request.
+//
+// The return values are named so the deferred recovery can report a panic as a
+// failure. It used to build a local err and drop it, and because the results
+// were unnamed the function returned ("", nil) after recovering - so every
+// panicking API came back to its caller as HTTP 200 with an empty result, and
+// over NATS as a success. global.debugnil, which exists to panic on purpose,
+// reported success too. That made every other fault in the engine invisible
+// from outside.
+func ExecuteAPIFromJSON(rawjson string) (result string, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -67,8 +76,10 @@ func ExecuteAPIFromJSON(rawjson string) (string, error) {
 			stacktrace := string(debug.Stack())
 			// First to stdout, then to log file
 			fmt.Printf("PANIC: recover in ExecuteAPIFromJson called, r=%+v stack=%v", r, stacktrace)
-			err := fmt.Errorf("PANIC: recover in ExecuteAPIFromJson has been called")
-			LogError(err, "r", r, "stack", stacktrace)
+			panicErr := fmt.Errorf("PANIC recovered in ExecuteAPIFromJSON: %v", r)
+			LogError(panicErr, "r", r, "stack", stacktrace)
+			result = ""
+			err = panicErr
 		}
 	}()
 
@@ -545,14 +556,26 @@ func canonicalGlobalParamName(name string) string {
 }
 
 var attractFloatParamSetters = map[string]func(*AttractManager, float64){
-	"global.attractgestureinterval":      func(am *AttractManager, f float64) { am.GestureInterval = f },
-	"global.attractpresetchangeinterval": func(am *AttractManager, f float64) { am.PresetChangeInterval = f },
-	"global.attractgestureduration":      func(am *AttractManager, f float64) { am.GestureDuration = f },
-	"global.attractgestureminlength":     func(am *AttractManager, f float64) { am.GestureMinLength = f },
-	"global.attractgesturemaxlength":     func(am *AttractManager, f float64) { am.GestureMaxLength = f },
-	"global.attractgesturezmin":          func(am *AttractManager, f float64) { am.GestureZMin = f },
-	"global.attractgesturezmax":          func(am *AttractManager, f float64) { am.GestureZMax = f },
-	"global.attractexitsecs":             func(am *AttractManager, f float64) { am.ExitTouchSecs = f },
+	"global.attractgestureinterval": func(am *AttractManager, f float64) {
+		am.updateSettings(func(s *attractSettings) { s.GestureInterval = f })
+	},
+	"global.attractpresetchangeinterval": func(am *AttractManager, f float64) {
+		am.updateSettings(func(s *attractSettings) { s.PresetChangeInterval = f })
+	},
+	"global.attractgestureduration": func(am *AttractManager, f float64) {
+		am.updateSettings(func(s *attractSettings) { s.GestureDuration = f })
+	},
+	"global.attractgestureminlength": func(am *AttractManager, f float64) {
+		am.updateSettings(func(s *attractSettings) { s.GestureMinLength = f })
+	},
+	"global.attractgesturemaxlength": func(am *AttractManager, f float64) {
+		am.updateSettings(func(s *attractSettings) { s.GestureMaxLength = f })
+	},
+	"global.attractgesturezmin": func(am *AttractManager, f float64) { am.updateSettings(func(s *attractSettings) { s.GestureZMin = f }) },
+	"global.attractgesturezmax": func(am *AttractManager, f float64) { am.updateSettings(func(s *attractSettings) { s.GestureZMax = f }) },
+	"global.attractexitsecs": func(am *AttractManager, f float64) {
+		am.updateSettings(func(s *attractSettings) { s.ExitTouchSecs = f })
+	},
 }
 
 func applyAttractGlobalParam(name string, value string) bool {
@@ -586,7 +609,7 @@ func applyAttractGlobalParam(name string, value string) bool {
 				LogWarn("global.attractidlesecs is too low, forcing to 15")
 				i = 15
 			}
-			theAttractManager.IdleSecs = float64(i)
+			theAttractManager.updateSettings(func(s *attractSettings) { s.IdleSecs = float64(i) })
 		}
 		return true
 	case "global.attractgesturenumsteps":
@@ -595,7 +618,7 @@ func applyAttractGlobalParam(name string, value string) bool {
 			if i < 1 {
 				i = 1
 			}
-			theAttractManager.GestureNumSteps = int(i)
+			theAttractManager.updateSettings(func(s *attractSettings) { s.GestureNumSteps = int(i) })
 		}
 		return true
 	case "global.attractexittouches":
@@ -604,7 +627,7 @@ func applyAttractGlobalParam(name string, value string) bool {
 			if i < 1 {
 				i = 1 // one touch is the least that can end attract mode
 			}
-			theAttractManager.ExitTouchCount = int(i)
+			theAttractManager.updateSettings(func(s *attractSettings) { s.ExitTouchCount = int(i) })
 		}
 		return true
 	}

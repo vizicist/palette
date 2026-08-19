@@ -301,8 +301,8 @@ func (cm *CursorManager) randomAttractGestureEndpoints() (CursorPos, CursorPos) 
 		Y: cm.cursorRand.Float64(),
 	}
 	pos1 := CursorPos{}
-	am := theAttractManager
-	minLength, maxLength := normalizeAttractRange(am.GestureMinLength, am.GestureMaxLength)
+	cfg := theAttractManager.Settings()
+	minLength, maxLength := normalizeAttractRange(cfg.GestureMinLength, cfg.GestureMaxLength)
 	if minLength == maxLength {
 		minLength = 0.0
 		if maxLength == 0.0 {
@@ -318,8 +318,8 @@ func (cm *CursorManager) randomAttractGestureEndpoints() (CursorPos, CursorPos) 
 			pos1.X = 0.0 // try again
 		}
 	}
-	pos0.Z = cm.zRand(am.GestureZMin, am.GestureZMax)
-	pos1.Z = cm.zRand(am.GestureZMin, am.GestureZMax)
+	pos0.Z = cm.zRand(cfg.GestureZMin, cfg.GestureZMax)
+	pos1.Z = cm.zRand(cfg.GestureZMin, cfg.GestureZMax)
 
 	// Occasionally force exactly horizontal (since pitch goes horizontal)
 	if cm.cursorRand.Int()%4 == 0 {

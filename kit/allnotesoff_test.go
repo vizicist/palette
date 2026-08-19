@@ -93,7 +93,7 @@ func attractModeTest(t *testing.T, startOn bool, lastChange time.Time) (*Attract
 	stopped := captureSampleStops(t)
 
 	am := &AttractManager{
-		attractEnabled:        true,
+		settings:              attractSettings{Enabled: true},
 		attractModeIsOn:       &atomic.Bool{},
 		lastAttractModeChange: lastChange,
 	}

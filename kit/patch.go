@@ -596,19 +596,11 @@ func (patch *Patch) loopFade() {
 	theScheduler.FadeEventsWithTag(tag)
 	// LogInfo("loopClear after DeleteEvents")
 
-	theScheduler.pendingMutex.Lock()
-	clearPending := false
-	for _, se := range theScheduler.pendingScheduled {
-		if se.Tag == tag {
-			LogInfo("HEY!, saw pendingSchedule with tag prefix!", "prefix", tag, "se", se)
-			clearPending = true
-		}
-	}
-	if clearPending {
-		// LogInfo("loopClear is clearing pendingScheduled")
-		theScheduler.pendingScheduled = nil
-	}
-	theScheduler.pendingMutex.Unlock()
+	// The pending list is handled per tag inside the scheduler call above.
+	// This used to scan for one event with this patch's tag and then set the
+	// whole pendingScheduled slice to nil, throwing away the pending note-offs,
+	// sample stops and cursor events of the other three patches - and loopClear
+	// runs for every patch on every attract transition.
 }
 
 func (patch *Patch) loopFilter() {
@@ -619,19 +611,11 @@ func (patch *Patch) loopFilter() {
 	theScheduler.FilterEventsWithTag(tag)
 	// LogInfo("loopClear after DeleteEvents")
 
-	theScheduler.pendingMutex.Lock()
-	clearPending := false
-	for _, se := range theScheduler.pendingScheduled {
-		if se.Tag == tag {
-			LogInfo("HEY!, saw pendingSchedule with tag prefix!", "prefix", tag, "se", se)
-			clearPending = true
-		}
-	}
-	if clearPending {
-		// LogInfo("loopClear is clearing pendingScheduled")
-		theScheduler.pendingScheduled = nil
-	}
-	theScheduler.pendingMutex.Unlock()
+	// The pending list is handled per tag inside the scheduler call above.
+	// This used to scan for one event with this patch's tag and then set the
+	// whole pendingScheduled slice to nil, throwing away the pending note-offs,
+	// sample stops and cursor events of the other three patches - and loopClear
+	// runs for every patch on every attract transition.
 }
 
 func (patch *Patch) loopClear() {
@@ -642,19 +626,11 @@ func (patch *Patch) loopClear() {
 	theScheduler.DeleteEventsWithTag(tag)
 	// LogInfo("loopClear after DeleteEvents")
 
-	theScheduler.pendingMutex.Lock()
-	clearPending := false
-	for _, se := range theScheduler.pendingScheduled {
-		if se.Tag == tag {
-			LogInfo("HEY!, saw pendingSchedule with tag prefix!", "prefix", tag, "se", se)
-			clearPending = true
-		}
-	}
-	if clearPending {
-		// LogInfo("loopClear is clearing pendingScheduled")
-		theScheduler.pendingScheduled = nil
-	}
-	theScheduler.pendingMutex.Unlock()
+	// The pending list is handled per tag inside the scheduler call above.
+	// This used to scan for one event with this patch's tag and then set the
+	// whole pendingScheduled slice to nil, throwing away the pending note-offs,
+	// sample stops and cursor events of the other three patches - and loopClear
+	// runs for every patch on every attract transition.
 
 	/*
 		// XXX - SHOULD BE USING DeleteEventsWhoseGidIs(cidToDelete string)
