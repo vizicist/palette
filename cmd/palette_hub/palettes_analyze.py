@@ -64,6 +64,45 @@ def load_palette_config(script_dir):
 
     return locations, colors
 
+
+def collect_last_seen(palettes_dir, locations):
+    """Return the newest logged contact timestamp for each configured Palette."""
+    last_seen: dict[str, str | None] = {location: None for location in locations}
+
+    for location in locations:
+        location_dir = os.path.join(palettes_dir, location)
+        if not os.path.isdir(location_dir):
+            continue
+
+        newest = None
+        for filename in os.listdir(location_dir):
+            if not filename.endswith('.json'):
+                continue
+
+            filepath = os.path.join(location_dir, filename)
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        try:
+                            time_str = json.loads(line).get('time', '')
+                            if not time_str:
+                                continue
+                            event_time = datetime.fromisoformat(
+                                time_str.replace('Z', '+00:00')
+                            ).astimezone(timezone.utc)
+                            if newest is None or event_time > newest:
+                                newest = event_time
+                        except (json.JSONDecodeError, ValueError, AttributeError):
+                            continue
+            except OSError as e:
+                print(f"Error reading {filepath}: {e}", file=sys.stderr)
+
+        if newest is not None:
+            last_seen[location] = newest.isoformat()
+
+    return last_seen
+
+
 def analyze_day_file(filepath, location, file_date=None):
     """
     Analyze a single day file from a palette location directory.
@@ -288,7 +327,7 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
 
     return results, per_day_time_of_day, per_day_session_durations, all_sessions, palette_colors, per_day_restarts
 
-def generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, restart_data, output_file='palette_analysis.html'):
+def generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, restart_data, last_seen, output_file='palette_analysis.html'):
     """
     Generate an interactive HTML page with the analysis data.
     """
@@ -310,6 +349,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
         'timeOfDayByDate': {},
         'sessionDurationByDate': {},
         'restartsByDate': {},
+        'lastSeen': last_seen,
         'sessions': all_sessions
     }
 
@@ -441,7 +481,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
             padding: 15px;
             background-color: #f9f9f9;
             border-radius: 8px;
-            min-width: 180px;
+            min-width: 340px;
         }}
         /* Responsive: stack chart and legend vertically on narrow screens */
         @media (max-width: 768px) {{
@@ -789,6 +829,20 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
             window.location.href = window.location.pathname;
         }}
 
+        function formatLastSeen(lastSeen) {{
+            if (!lastSeen) return 'Last seen never';
+
+            const seen = new Date(lastSeen);
+            if (Number.isNaN(seen.getTime())) return 'Last seen never';
+
+            const now = new Date();
+            const seenDay = Date.UTC(seen.getFullYear(), seen.getMonth(), seen.getDate());
+            const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+            const daysAgo = Math.max(0, Math.round((today - seenDay) / 86400000));
+            const unit = daysAgo === 1 ? 'day' : 'days';
+            return `Last seen ${{daysAgo}} ${{unit}} ago`;
+        }}
+
         function generatePaletteCheckboxes() {{
             const container = document.getElementById('palette-checkboxes');
             container.innerHTML = '';
@@ -796,26 +850,32 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
             data.palettes.forEach((palette, index) => {{
                 const color = getPaletteColor(palette, index);
                 const label = document.createElement('label');
-                label.style.cssText = 'display: flex; align-items: center; cursor: pointer; padding: 4px 8px; border-radius: 4px; background-color: #fff; border: 1px solid #ddd;';
+                label.style.cssText = 'display: grid; grid-template-columns: auto 12px 1fr max-content; column-gap: 6px; align-items: center; width: 100%; box-sizing: border-box; margin-right: 0; cursor: pointer; padding: 4px 8px; border-radius: 4px; background-color: #fff; border: 1px solid #ddd;';
 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.checked = paletteVisibility[palette];
-                checkbox.style.cssText = 'margin-right: 6px; cursor: pointer;';
+                checkbox.style.cssText = 'margin: 0; cursor: pointer;';
                 checkbox.addEventListener('change', function() {{
                     paletteVisibility[palette] = this.checked;
                     updateChart();
                 }});
 
                 const colorSwatch = document.createElement('span');
-                colorSwatch.style.cssText = `display: inline-block; width: 12px; height: 12px; background-color: ${{color}}; margin-right: 6px; border-radius: 2px;`;
+                colorSwatch.style.cssText = `display: inline-block; width: 12px; height: 12px; background-color: ${{color}}; border-radius: 2px;`;
 
                 const text = document.createElement('span');
                 text.textContent = palette;
 
+                const lastSeen = data.lastSeen[palette];
+                const lastSeenText = document.createElement('span');
+                lastSeenText.style.cssText = 'color: #666; font-size: 11px; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums;';
+                lastSeenText.textContent = formatLastSeen(lastSeen);
+
                 label.appendChild(checkbox);
                 label.appendChild(colorSwatch);
                 label.appendChild(text);
+                label.appendChild(lastSeenText);
                 container.appendChild(label);
             }});
         }}
@@ -856,7 +916,9 @@ def main():
 
     print(f"\nAnalyzed {len(data)} days")
 
-    generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, restart_data, output_file)
+    locations, _ = load_palette_config(script_dir)
+    last_seen = collect_last_seen(palettes_dir, locations)
+    generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, restart_data, last_seen, output_file)
 
     print(f"\nDone! Open {output_file} in your browser.")
     return 0
