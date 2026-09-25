@@ -129,6 +129,7 @@ function syncInitialPageValue(page) {
     UIState.setInitialPage(page);
     if (UIState.initialPage === previous) return;
     applyInitialPageMode();
+    applyShowGoatsButton();
     fitAppTitle();
     if (UIState.activeAdventure === 'space') {
         setAdvancedMode(UIState.advancedMode, false);
@@ -378,9 +379,9 @@ function savedPresetNamesFromList(list) {
 }
 
 // bindPresetButton wires a preset grid button. A single click always loads the
-// preset immediately. In pro2 advanced mode a double click additionally opens
-// the preset action menu (Save As / Move / Rename / Delete); the load from the first
-// click is harmless, so the two gestures don't need to be kept apart.
+// preset immediately. In pro/pro2 advanced mode a double click additionally
+// opens the preset action menu (Save As / Move / Rename / Delete); the load from
+// the first click is harmless, so the two gestures don't need to be kept apart.
 function bindPresetButton(btn) {
     const name = btn.dataset.name;
     btn.addEventListener('click', () => loadPreset(name));
@@ -390,10 +391,10 @@ function bindPresetButton(btn) {
 }
 
 // presetActionsAvailable reports whether the double-click preset action menu
-// should be offered. It's an advanced-mode editing affordance of the pro2
-// front page (and goat, its initial clone).
+// should be offered. It's an advanced-mode editing affordance of the pro,
+// pro2, and goat front pages.
 function presetActionsAvailable() {
-    return (UIState.initialPage === 'pro2' || UIState.initialPage === 'goat') && UIState.advancedMode;
+    return UIState.initialPage !== 'bss' && UIState.advancedMode;
 }
 
 // presetActionItems builds the action menu for the current category. Save As,
@@ -1570,7 +1571,7 @@ function statusShowGoatsButton(status) {
 function applyShowGoatsButton() {
     const btn = document.getElementById('btn-show-goats');
     if (btn) {
-        btn.classList.toggle('hidden', !UIState.showGoatsButton);
+        btn.classList.toggle('hidden', !UIState.showGoatsButton || UIState.initialPage !== 'goat');
     }
 }
 

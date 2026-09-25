@@ -78,6 +78,7 @@ export const UIState = {
     // default theme's directory.
     showThemes: true,
     // Whether the Show Goats button is offered, from global.showgoatsbutton.
+    // The renderer additionally limits it to global.mode=goat.
     showGoatsButton: true,
     // Whether attract mode is on, as the engine last reported it. Kept because
     // what the GUI shows for it depends on several other things that change
