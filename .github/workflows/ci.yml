@@ -57,6 +57,8 @@ jobs:
         with:
           go-version-file: go.mod
           check-latest: true
+      - name: Install Linux build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libgl1-mesa-dev xorg-dev
       - name: Install staticcheck
         run: go install honnef.co/go/tools/cmd/staticcheck@v0.7.0
       - run: staticcheck ./...
@@ -70,6 +72,8 @@ jobs:
         with:
           go-version-file: go.mod
           check-latest: true
+      - name: Install Linux build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libgl1-mesa-dev xorg-dev
       - name: Install govulncheck
         run: go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
       # This is what would have caught the six reachable standard-library
