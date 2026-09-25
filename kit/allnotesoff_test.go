@@ -118,6 +118,7 @@ func TestLeavingAttractModeStopsSamplePlayback(t *testing.T) {
 // A note left hanging as someone walks away would otherwise keep sounding
 // underneath the attract screen.
 func TestEnteringAttractModeStopsSamplePlayback(t *testing.T) {
+	captureBiduleResets(t)
 	// Backdated so the throttle on turning attract mode on has elapsed.
 	am, stopped := attractModeTest(t, false, time.Now().Add(-5*time.Second))
 

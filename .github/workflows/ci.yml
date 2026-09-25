@@ -32,6 +32,10 @@ jobs:
           go-version-file: go.mod
           check-latest: true
 
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libgl1-mesa-dev xorg-dev
+
       - name: Build every command
         run: go build ./...
 
@@ -54,7 +58,7 @@ jobs:
           go-version-file: go.mod
           check-latest: true
       - name: Install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+        run: go install honnef.co/go/tools/cmd/staticcheck@v0.7.0
       - run: staticcheck ./...
 
   govulncheck:
@@ -67,7 +71,7 @@ jobs:
           go-version-file: go.mod
           check-latest: true
       - name: Install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
       # This is what would have caught the six reachable standard-library
       # advisories that sat in the module's Go version unnoticed.
       - run: govulncheck ./...

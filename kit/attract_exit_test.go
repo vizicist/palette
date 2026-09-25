@@ -81,6 +81,7 @@ func TestAttractModeTurningOnIsStillThrottled(t *testing.T) {
 }
 
 func TestAttractModeTurnsOnOnceThrottleHasElapsed(t *testing.T) {
+	captureBiduleResets(t)
 	old := theAttractManager
 	defer func() { theAttractManager = old }()
 	InitLog("")
@@ -101,6 +102,7 @@ func TestAttractModeTurnsOnOnceThrottleHasElapsed(t *testing.T) {
 // global.attractenabled controls automatic idle entry, but Show Goats enters
 // attract mode explicitly and must work with that setting off.
 func TestManualAttractModeWorksWhileAutomaticModeIsDisabled(t *testing.T) {
+	captureBiduleResets(t)
 	old := theAttractManager
 	defer func() { theAttractManager = old }()
 	InitLog("")

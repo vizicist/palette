@@ -302,7 +302,12 @@ func (am *AttractManager) setAttractMode(onoff bool) {
 	// output for as long as attract mode lasts. Both calls reach Resolume over
 	// the network, so they run off the tick like the Bidule reset.
 	if onoff {
-		go TheAttractVideoPlayer().Start()
+		// Check before launching the goroutine. Besides avoiding needless work
+		// when video playback is unavailable, this keeps the goroutine from
+		// outliving lightweight callers (notably tests) that have no engine.
+		if attractVideosEnabled() {
+			go TheAttractVideoPlayer().Start()
+		}
 	} else {
 		go TheAttractVideoPlayer().Stop()
 	}
