@@ -240,6 +240,7 @@ func TestAttractVideoAdvanceGUILeavesThePlaylistAlone(t *testing.T) {
 }
 
 func TestAttractVideoStopGUIEndsThePlay(t *testing.T) {
+	InitLog("")
 	p := &AttractVideoPlayer{playing: true, dest: attractVideoDestGUI}
 
 	p.Stop()
