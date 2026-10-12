@@ -8,7 +8,9 @@ palettesdir="$SCRIPT_DIR/palettes"
 # in headless launchd jobs on macOS (TCC/Network Volumes), which blocks future
 # hourly runs behind daily_update.lock.  Deploy to the NAS over SSH instead.
 localout="$SCRIPT_DIR/spacepalette_usage_index.html.tmp"
-webcacheout="/Users/tjt/webcache/timthompson.com/html/spacepalette/usage/index.html"
+# Local emergency copy of the site: /srv/viz/webcache on Linux (vizcentral), ~/webcache on macOS.
+if [ -d /srv/viz/webcache ]; then webcachedir=/srv/viz/webcache; else webcachedir="$HOME/webcache"; fi
+webcacheout="$webcachedir/timthompson.com/html/spacepalette/usage/index.html"
 naspath="/volume1/nosuch/www/timthompson.com/html/spacepalette/usage/index.html"
 
 python3 "$SCRIPT_DIR/palettes_analyze.py" "$palettesdir" "$localout"
