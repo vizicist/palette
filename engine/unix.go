@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package engine
@@ -8,6 +9,17 @@ import (
 	"os/exec"
 	"syscall"
 )
+
+func StartExecutable(executable string, background bool, stdoutWriter io.Writer, stderrWriter io.Writer, args ...string) error {
+	return Spawn(executable, background, stdoutWriter, stderrWriter, args...)
+}
+
+func StopExecutable(executable string) {
+	stdout := &NoWriter{}
+	stderr := &NoWriter{}
+	// ignore errors
+	_ = Spawn("c:\\windows\\system32\\taskkill.exe", false, stdout, stderr, "/F", "/IM", executable)
+}
 
 // Spawn executes something.  If background is true, it doesn't block
 func Spawn(executable string, background bool, stdout io.Writer, stderr io.Writer, args ...string) error {
@@ -49,4 +61,16 @@ func StartDeviceInput() {
 func KillProcess(exe string) {
 	log.Printf("WARNING - KillProcess in unix.go not tested: exe=%s\n", exe)
 	Spawn("pkill", false, noWriter, noWriter, exe)
+}
+
+// RealStartCursorInput starts anything needed to provide device inputs
+func RealStartCursorInput(callback CursorDeviceCallbackFunc) {
+
+	log.Printf("RealStartCursorInput: NEEDS WORK\n")
+	// err := LoadMorphs()
+	// if err != nil {
+	// 	log.Printf("StartDeviceInput: LoadMorphs err=%s\n", err)
+	// }
+	//
+	// go StartMorph(callback, 1.0)
 }
