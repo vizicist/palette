@@ -1,6 +1,6 @@
 module github.com/vizicist/palette
 
-go 1.26.9
+go 1.26.10
 
 require (
 	fyne.io/fyne/v2 v2.4.3
