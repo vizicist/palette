@@ -320,6 +320,10 @@ func (e *Engine) StartOscListener(port int) {
 // jsonAPIHandler wraps an API handler with the common JSON-response boilerplate:
 // it sets the content-type, runs handler, and writes the body with a 200 status
 // on success or a 400 status (with an error body) on failure.
+//
+// It does no access checking of its own: the /api and /nats/api routes wrap it
+// in engineAPIHandler (enginehttpsecurity.go), which refuses requests a browser
+// makes on a web page's behalf before the body is read.
 func jsonAPIHandler(handler func(req *http.Request) (string, error)) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, req *http.Request) {
 		responseWriter.Header().Set("Content-Type", "application/json")
@@ -391,7 +395,7 @@ func (e *Engine) StartHTTP(port int) {
 	// installation that replaces one gets the new artwork everywhere.
 	http.Handle("/shapes/", http.StripPrefix("/shapes/", http.FileServer(http.Dir(ShapesDir()))))
 
-	http.HandleFunc("/api", jsonAPIHandler(func(req *http.Request) (string, error) {
+	http.HandleFunc("/api", engineAPIHandler(func(req *http.Request) (string, error) {
 		if req.Method != "POST" {
 			return "", fmt.Errorf("HTTP server unable to handle method=%s", req.Method)
 		}
@@ -406,7 +410,7 @@ func (e *Engine) StartHTTP(port int) {
 		return ResultResponse(resp), nil
 	}))
 
-	http.HandleFunc("/nats/api", jsonAPIHandler(func(req *http.Request) (string, error) {
+	http.HandleFunc("/nats/api", engineAPIHandler(func(req *http.Request) (string, error) {
 		if req.Method != "POST" {
 			return "", fmt.Errorf("NATS API proxy unable to handle method=%s", req.Method)
 		}
