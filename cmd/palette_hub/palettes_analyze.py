@@ -109,13 +109,16 @@ def analyze_day_file(filepath, location, file_date=None):
     The file contains engine log entries with "msg" field indicating event type.
     file_date is the date string from the filename (e.g. '2026-02-06') used to
     attribute sessions to the correct local date (since timestamps are UTC).
-    Returns tuple: (palette_loads dict, time_of_day_loads dict, session_durations dict, sessions list, restart_count int)
+    Returns tuple: (palette_loads dict, time_of_day_loads dict,
+    session_durations dict, sessions list, restart_count int,
+    preset_loads dict)
     """
     palette_loads = defaultdict(int)
     time_of_day_loads = defaultdict(lambda: defaultdict(int))
     session_durations = defaultdict(float)
     sessions = []
     restart_count = 0
+    preset_loads = defaultdict(int)
 
     # Track attract mode state (default: True, palette starts in attract mode)
     attract_mode_on = True
@@ -131,7 +134,8 @@ def analyze_day_file(filepath, location, file_date=None):
     last_event_time = None
 
     if not os.path.exists(filepath):
-        return palette_loads, time_of_day_loads, session_durations, sessions, restart_count
+        return (palette_loads, time_of_day_loads, session_durations, sessions,
+                restart_count, preset_loads)
 
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -213,6 +217,8 @@ def analyze_day_file(filepath, location, file_date=None):
                         if not attract_mode_on:
                             palette_loads[location] += 1
                             session_load_count += 1
+                            if filename:
+                                preset_loads[filename] += 1
 
                             # Extract hour from timestamp (in local time for display)
                             if time_str:
@@ -250,22 +256,26 @@ def analyze_day_file(filepath, location, file_date=None):
                     'file_date': file_date
                 })
 
-    return palette_loads, time_of_day_loads, session_durations, sessions, restart_count
+    return (palette_loads, time_of_day_loads, session_durations, sessions,
+            restart_count, preset_loads)
 
 def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
     """
     Analyze all palette directories under palettes_dir.
     Each subdirectory is a location with date-named JSON files.
-    Returns tuple: (daily_data, per_day_time_of_day_data, per_day_session_durations, all_sessions, palette_colors, per_day_restarts)
+    Returns tuple: (daily_data, per_day_time_of_day_data,
+    per_day_session_durations, all_sessions, per_day_preset_loads,
+    palette_colors, per_day_restarts)
     """
     if not os.path.exists(palettes_dir):
         print(f"Error: Directory '{palettes_dir}' not found")
-        return {}, {}, {}, [], {}, {}
+        return {}, {}, {}, [], {}, {}, {}
 
     results = {}
     per_day_time_of_day = {}
     per_day_session_durations = {}
     per_day_restarts = {}
+    per_day_preset_loads = {}
     all_sessions = []
 
     # Get locations and colors from palettes.json
@@ -274,7 +284,7 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
     locations, palette_colors = load_palette_config(script_dir)
     if not locations:
         print("Error: No locations found in palettes.json")
-        return {}, {}, {}, [], {}, {}
+        return {}, {}, {}, [], {}, {}, {}
 
     for location in locations:
         location_dir = os.path.join(palettes_dir, location)
@@ -286,7 +296,10 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
             filepath = os.path.join(location_dir, filename)
             date_str = filename.replace('.json', '')
 
-            palette_loads, time_of_day_loads, _session_durations, sessions, restart_count = analyze_day_file(filepath, location, date_str)
+            (palette_loads, time_of_day_loads, _session_durations,
+             sessions, restart_count, preset_loads) = analyze_day_file(
+                filepath, location, date_str
+            )
 
             # Aggregate restart counts by date
             if restart_count > 0:
@@ -312,6 +325,15 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
                         per_day_time_of_day[date_str][palette][hour] = \
                             per_day_time_of_day[date_str][palette].get(hour, 0) + count
 
+            # Store preset popularity by date and Palette location so the
+            # report's existing date and location filters can be applied.
+            if preset_loads:
+                if date_str not in per_day_preset_loads:
+                    per_day_preset_loads[date_str] = {}
+                location_presets = per_day_preset_loads[date_str].setdefault(location, {})
+                for preset, count in preset_loads.items():
+                    location_presets[preset] = location_presets.get(preset, 0) + count
+
             # Process sessions - use file_date to match loads attribution
             for session in sessions:
                 session_date = session.get('file_date', session['start_time'].split('T')[0])
@@ -325,9 +347,13 @@ def analyze_all_palettes(palettes_dir='palettes', script_dir=None):
     for date in per_day_session_durations:
         per_day_session_durations[date] = dict(per_day_session_durations[date])
 
-    return results, per_day_time_of_day, per_day_session_durations, all_sessions, palette_colors, per_day_restarts
+    return (results, per_day_time_of_day, per_day_session_durations,
+            all_sessions, per_day_preset_loads, palette_colors,
+            per_day_restarts)
 
-def generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, restart_data, last_seen, output_file='palette_analysis.html'):
+def generate_html(data, time_of_day_data, session_duration_data, all_sessions,
+                  preset_load_data, palette_colors, restart_data, last_seen,
+                  output_file='palette_analysis.html'):
     """
     Generate an interactive HTML page with the analysis data.
     """
@@ -348,6 +374,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
         'loads': {},
         'timeOfDayByDate': {},
         'sessionDurationByDate': {},
+        'presetLoadsByDate': preset_load_data,
         'restartsByDate': {},
         'lastSeen': last_seen,
         'sessions': all_sessions
@@ -425,6 +452,13 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
         }}
         #summary {{
             margin-top: 30px;
+        }}
+        #popular-presets {{
+            margin-top: 30px;
+        }}
+        #popular-presets-chart {{
+            width: 100%;
+            height: 520px;
         }}
         .last-updated {{
             margin-top: 30px;
@@ -539,6 +573,12 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
             </div>
         </div>
 
+        <div id="popular-presets">
+            <h2>Most Popular Presets</h2>
+            <p style="color: #666; margin-top: -8px;">Top 15 presets for the selected date range and Palette locations.</p>
+            <div id="popular-presets-chart"></div>
+        </div>
+
         <div id="summary">
             <h2>Summary Table</h2>
             <table id="summary-table">
@@ -621,6 +661,65 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
             }}
         }}
 
+        function updatePopularPresets() {{
+            const filteredDates = getFilteredDates();
+            const totals = {{}};
+            const countsByPalette = {{}};
+
+            for (const palette of data.palettes) {{
+                if (!paletteVisibility[palette]) continue;
+                countsByPalette[palette] = {{}};
+                for (const date of filteredDates) {{
+                    const presets = data.presetLoadsByDate[date]?.[palette] || {{}};
+                    for (const [preset, count] of Object.entries(presets)) {{
+                        totals[preset] = (totals[preset] || 0) + count;
+                        countsByPalette[palette][preset] = (countsByPalette[palette][preset] || 0) + count;
+                    }}
+                }}
+            }}
+
+            const topPresets = Object.keys(totals)
+                .sort((a, b) => totals[b] - totals[a] || a.localeCompare(b))
+                .slice(0, 15);
+
+            const traces = [];
+            data.palettes.forEach((palette, index) => {{
+                if (!paletteVisibility[palette] || !countsByPalette[palette]) return;
+                const counts = topPresets.map(preset => countsByPalette[palette][preset] || 0);
+                if (!counts.some(count => count > 0)) return;
+                traces.push({{
+                    x: counts,
+                    y: topPresets,
+                    name: palette,
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: {{ color: getPaletteColor(palette, index) }},
+                    hovertemplate: '%{{y}}<br>' + palette + ': %{{x}} loads<extra></extra>'
+                }});
+            }});
+
+            const hasData = topPresets.length > 0;
+            const layout = {{
+                margin: {{ l: 180, r: 30, t: 20, b: 50 }},
+                xaxis: {{ title: 'Number of Loads', fixedrange: true }},
+                yaxis: {{ autorange: 'reversed', fixedrange: true, automargin: true }},
+                barmode: 'stack',
+                showlegend: false,
+                dragmode: false,
+                annotations: hasData ? [] : [{{
+                    text: 'No preset loads in the selected range.',
+                    x: 0.5,
+                    y: 0.5,
+                    xref: 'paper',
+                    yref: 'paper',
+                    showarrow: false,
+                    font: {{ color: '#666', size: 16 }}
+                }}]
+            }};
+
+            Plotly.react('popular-presets-chart', traces, layout, {{responsive: true, displayModeBar: false}});
+        }}
+
         function getFilteredDates() {{
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
@@ -656,6 +755,7 @@ def generate_html(data, time_of_day_data, session_duration_data, all_sessions, p
                 sessionList.style.display = 'none';
             }}
             updateSummary();
+            updatePopularPresets();
         }}
 
         function updateDailyChart() {{
@@ -908,7 +1008,10 @@ def main():
     print("Space Palette Usage Analysis")
     print("=" * 50)
 
-    data, time_of_day_data, session_duration_data, all_sessions, palette_colors, restart_data = analyze_all_palettes(palettes_dir, script_dir)
+    (data, time_of_day_data, session_duration_data, all_sessions,
+     preset_load_data, palette_colors, restart_data) = analyze_all_palettes(
+        palettes_dir, script_dir
+    )
 
     if not data:
         print("No data found to analyze.")
@@ -918,7 +1021,9 @@ def main():
 
     locations, _ = load_palette_config(script_dir)
     last_seen = collect_last_seen(palettes_dir, locations)
-    generate_html(data, time_of_day_data, session_duration_data, all_sessions, palette_colors, restart_data, last_seen, output_file)
+    generate_html(data, time_of_day_data, session_duration_data, all_sessions,
+                  preset_load_data, palette_colors, restart_data, last_seen,
+                  output_file)
 
     print(f"\nDone! Open {output_file} in your browser.")
     return 0
