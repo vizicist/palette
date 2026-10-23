@@ -280,6 +280,23 @@ func EnvLookup(key string) string {
 	return os.Getenv(key)
 }
 
+// WriteEnvFile replaces the env file at path with env, readable by its owner
+// only.
+//
+// The file holds every credential the engine has - the hub NATS password,
+// OBS_PASSWORD, YOUTUBE_REFRESH_TOKEN - and godotenv.Write, which used to do
+// this, creates it with os.Create, so it came out 0644 and any account on the
+// machine could read it. WriteFileAtomic creates the file fresh and renames it
+// into place, so an existing 0644 file is replaced by a 0600 one the next time
+// anything is saved.
+func WriteEnvFile(path string, env map[string]string) error {
+	content, err := godotenv.Marshal(env)
+	if err != nil {
+		return fmt.Errorf("WriteEnvFile: %w", err)
+	}
+	return WriteFileAtomic(path, []byte(content+"\n"), 0600)
+}
+
 // FileExists returns true if path exists and is a regular file (not a
 // directory). Any stat error — not just not-exist — is treated as "doesn't
 // exist" rather than dereferencing a nil FileInfo.

@@ -403,7 +403,7 @@ func cmdEnv(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("not enough arguments to env command")
 		}
 		myenv[args[2]] = args[3]
-		err = godotenv.Write(myenv, path)
+		err = kit.WriteEnvFile(path, myenv)
 		if err != nil {
 			return nil, err
 		}

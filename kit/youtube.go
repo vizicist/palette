@@ -347,5 +347,5 @@ func saveEnvValue(key, value string) error {
 		myenv = map[string]string{}
 	}
 	myenv[key] = value
-	return godotenv.Write(myenv, path)
+	return WriteEnvFile(path, myenv)
 }

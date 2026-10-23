@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+
+	"github.com/vizicist/palette/internal/localhttp"
 )
 
 type Server struct {
@@ -32,9 +34,26 @@ func ServerFromService(service *Service, staticDir string) Server {
 	}
 }
 
+// Handler serves the UI at "/" and the control API under /api/.
+//
+// The API endpoints are GETs with query parameters, so a page in any browser
+// on this machine could drive them with a bare <img> tag, and with DNS
+// rebinding read the replies as well; the loopback bind in service.go does not
+// stop a browser that is itself on this machine. Every API request therefore
+// goes through localhttp.Middleware, which refuses anything whose Host is not
+// an IP literal or localhost, whose Origin is somewhere else, or that the
+// browser itself labels cross-site. The UI's own fetches are same-origin and
+// pass unchanged.
 func (s Server) Handler() http.Handler {
+	api := http.NewServeMux()
+	s.registerAPI(api)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handleIndex)
+	mux.Handle("/api/", localhttp.Middleware(false, api))
+	return mux
+}
+
+func (s Server) registerAPI(mux *http.ServeMux) {
 	mux.HandleFunc("/api/files", s.handleFiles)
 	mux.HandleFunc("/api/media", s.handleMedia)
 	mux.HandleFunc("/api/state", s.handleState)
@@ -53,7 +72,6 @@ func (s Server) Handler() http.Handler {
 	mux.HandleFunc("/api/stop_all", s.handleStopAll)
 	mux.HandleFunc("/api/preview_on", s.handlePreviewOn)
 	mux.HandleFunc("/api/preview_off", s.handlePreviewOff)
-	return mux
 }
 
 func (s Server) handleIndex(w http.ResponseWriter, r *http.Request) {
