@@ -22,4 +22,4 @@ The main branch here is intended to be stable.  The dev branch is for active dev
 
 - <a href=doc/building_macos.md>Building and running the engine on macOS</a>
 
-- <a href=doc/addingeffect.md>How to add a new FFGL effect to the Palette.</a>
+- <a href=doc/addingeffect.md>Adding Resolume effects to Palette</a>
