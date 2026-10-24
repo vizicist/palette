@@ -838,7 +838,29 @@
 					<RenderPass storage="0" name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1655159518210" baseType="Effect" index="1">
 						<View name="View" folded="1" bCanBeDisabled="0" bCanBeRemoved="0"/>
 					</RenderPass>
-					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1655159518333" baseType="DryWetEffect" index="2">
+					<RenderPass storage="0" name="Bloom" type="DryWetEffect" uniqueTypeId="6980402605" uniqueId="1792873590990" baseType="DryWetEffect" index="2">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="Bloom" type="Bloom" uniqueTypeId="6980402605" uniqueId="1792873590975" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Amount" T="DOUBLE" default="1" value="0.3499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Threshold" T="DOUBLE" default="0.9000000000000000222" value="0.8499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Size" T="DOUBLE" default="0.25" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873590994"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873590996" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1655159518333" baseType="DryWetEffect" index="3">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -863,7 +885,65 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518338" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1655159518340" baseType="DryWetEffect" index="3">
+					<RenderPass storage="0" name="Colorize" type="DryWetEffect" uniqueTypeId="A103" uniqueId="1792873591077" baseType="DryWetEffect" index="4">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.3499999999999999778">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Colorize" type="Colorize" uniqueTypeId="A103" uniqueId="1792873591059" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294946649" channelmode="2" paletteEnabled="1" color="4294946649" interpolated="0">
+									<Params name="Channels">
+										<ParamRange name="Red" T="DOUBLE" default="1" value="0.34901961684226989746">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Green" T="DOUBLE" default="0" value="0.68627452850341796875">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Blue" T="DOUBLE" default="0" value="1">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Hue" T="DOUBLE" default="0" value="0.58032125234603881836">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Saturation" T="DOUBLE" default="1" value="0.65098035335540771484">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+									</Params>
+								</ParamColor>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="Contrast" T="DOUBLE" default="0.20000000298023223877" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591081"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591083" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="DelayRGB" type="DryWetEffect" uniqueTypeId="A152" uniqueId="1792873591047" baseType="DryWetEffect" index="5">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="DelayRGB" type="DelayRGB" uniqueTypeId="A152" uniqueId="1792873591041" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="G delay" altName="Delay G" T="DOUBLE" default="0.14999999999999999445" value="0.050000000000000002776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B delay" altName="Delay B" T="DOUBLE" default="0.2999999999999999889" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591051"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591053" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1655159518340" baseType="DryWetEffect" index="6">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -882,7 +962,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518345" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1655159518347" baseType="DryWetEffect" index="4">
+					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1655159518347" baseType="DryWetEffect" index="7">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -902,7 +982,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518352" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1655159518354" baseType="DryWetEffect" index="5">
+					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1655159518354" baseType="DryWetEffect" index="8">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -957,7 +1037,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1655159518359" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1655159518361" baseType="DryWetEffect" index="6">
+					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1655159518361" baseType="DryWetEffect" index="9">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -991,7 +1071,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1655159518366" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1655159518368" baseType="DryWetEffect" index="7">
+					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1655159518368" baseType="DryWetEffect" index="10">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1021,7 +1101,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518373" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1682288168544" baseType="DryWetEffect" index="8">
+					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1682288168544" baseType="DryWetEffect" index="11">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1043,7 +1123,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168550" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869776949" baseType="DryWetEffect" index="9">
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869776949" baseType="DryWetEffect" index="12">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1053,7 +1133,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869776955" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1655159518375" baseType="DryWetEffect" index="10">
+					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1655159518375" baseType="DryWetEffect" index="13">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1089,7 +1169,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1655159518380" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1679437249034" baseType="DryWetEffect" index="11">
+					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1679437249034" baseType="DryWetEffect" index="14">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1165,7 +1245,26 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1679437249055" baseType="DryWetEffect" index="12">
+					<RenderPass storage="0" name="LoRezEffect" type="DryWetEffect" uniqueTypeId="A142" uniqueId="1792873591095" baseType="DryWetEffect" index="15">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="LoRezEffect" type="LoRezEffect" uniqueTypeId="A142" uniqueId="1792873591089" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Pixel Size" T="DOUBLE" default="0" value="0.040000000000000000833">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Bit Reduction" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591099"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591101" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1679437249055" baseType="DryWetEffect" index="16">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1194,7 +1293,7 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1655159518382" baseType="DryWetEffect" index="13">
+					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1655159518382" baseType="DryWetEffect" index="17">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1233,7 +1332,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1655159518387" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1655159518389" baseType="DryWetEffect" index="14">
+					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1655159518389" baseType="DryWetEffect" index="18">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1243,7 +1342,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518394" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1679437249126" baseType="DryWetEffect" index="15">
+					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1679437249126" baseType="DryWetEffect" index="19">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1265,7 +1364,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1679437249132" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1655159518396" baseType="DryWetEffect" index="16">
+					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1655159518396" baseType="DryWetEffect" index="20">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1281,7 +1380,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518401" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1682288168702" baseType="DryWetEffect" index="17">
+					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1682288168702" baseType="DryWetEffect" index="21">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1300,7 +1399,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168708" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1679437249193" baseType="DryWetEffect" index="18">
+					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1679437249193" baseType="DryWetEffect" index="22">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1334,7 +1433,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1679437249199" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1682288168723" baseType="DryWetEffect" index="19">
+					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1682288168723" baseType="DryWetEffect" index="23">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1353,7 +1452,30 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168729" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1682288168757" baseType="DryWetEffect" index="20">
+					<RenderPass storage="0" name="ShiftRGB" type="DryWetEffect" uniqueTypeId="A153" uniqueId="1792873591029" baseType="DryWetEffect" index="24">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="ShiftRGB" type="ShiftRGB" uniqueTypeId="A153" uniqueId="1792873591002" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Distance" T="DOUBLE" default="1" value="0.25">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="R" T="DOUBLE" default="0" value="-0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B" T="DOUBLE" default="0" value="0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591033"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591035" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1682288168757" baseType="DryWetEffect" index="25">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1383,7 +1505,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168763" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1655159518403" baseType="DryWetEffect" index="21">
+					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1655159518403" baseType="DryWetEffect" index="26">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1399,7 +1521,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518408" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1682288168774" baseType="DryWetEffect" index="22">
+					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1682288168774" baseType="DryWetEffect" index="27">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1415,7 +1537,38 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168780" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1655159518410" baseType="DryWetEffect" index="23">
+					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873591120" baseType="DryWetEffect" index="28">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.2999999999999999889">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873591107" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591124"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591126" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1655159518410" baseType="DryWetEffect" index="29">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1451,7 +1604,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518415" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1682288168794" baseType="DryWetEffect" index="24">
+					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1682288168794" baseType="DryWetEffect" index="30">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1476,7 +1629,29 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168800" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1655159518417" baseType="DryWetEffect" index="25">
+					<RenderPass storage="0" name="Bloom" type="DryWetEffect" uniqueTypeId="6980402605" uniqueId="1792873591147" baseType="DryWetEffect" index="31">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="Bloom" type="Bloom" uniqueTypeId="6980402605" uniqueId="1792873591132" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Amount" T="DOUBLE" default="1" value="0.3499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Threshold" T="DOUBLE" default="0.9000000000000000222" value="0.8499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Size" T="DOUBLE" default="0.25" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591151"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591153" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1655159518417" baseType="DryWetEffect" index="32">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1501,7 +1676,65 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518422" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1655159518424" baseType="DryWetEffect" index="26">
+					<RenderPass storage="0" name="Colorize" type="DryWetEffect" uniqueTypeId="A103" uniqueId="1792873591240" baseType="DryWetEffect" index="33">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.3499999999999999778">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Colorize" type="Colorize" uniqueTypeId="A103" uniqueId="1792873591222" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294946649" channelmode="2" paletteEnabled="1" color="4294946649" interpolated="0">
+									<Params name="Channels">
+										<ParamRange name="Red" T="DOUBLE" default="1" value="0.34901961684226989746">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Green" T="DOUBLE" default="0" value="0.68627452850341796875">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Blue" T="DOUBLE" default="0" value="1">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Hue" T="DOUBLE" default="0" value="0.58032125234603881836">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Saturation" T="DOUBLE" default="1" value="0.65098035335540771484">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+									</Params>
+								</ParamColor>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="Contrast" T="DOUBLE" default="0.20000000298023223877" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591244"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591246" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="DelayRGB" type="DryWetEffect" uniqueTypeId="A152" uniqueId="1792873591210" baseType="DryWetEffect" index="34">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="DelayRGB" type="DelayRGB" uniqueTypeId="A152" uniqueId="1792873591204" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="G delay" altName="Delay G" T="DOUBLE" default="0.14999999999999999445" value="0.050000000000000002776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B delay" altName="Delay B" T="DOUBLE" default="0.2999999999999999889" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591214"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591216" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1655159518424" baseType="DryWetEffect" index="35">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1520,7 +1753,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518429" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1655159518431" baseType="DryWetEffect" index="27">
+					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1655159518431" baseType="DryWetEffect" index="36">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1540,7 +1773,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518436" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1655159518438" baseType="DryWetEffect" index="28">
+					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1655159518438" baseType="DryWetEffect" index="37">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1556,7 +1789,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518443" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1655159518445" baseType="DryWetEffect" index="29">
+					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1655159518445" baseType="DryWetEffect" index="38">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1590,7 +1823,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1655159518450" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1655159518452" baseType="DryWetEffect" index="30">
+					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1655159518452" baseType="DryWetEffect" index="39">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1600,7 +1833,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518457" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1679437249004" baseType="DryWetEffect" index="31">
+					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1679437249004" baseType="DryWetEffect" index="40">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1622,7 +1855,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1679437249010" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869776968" baseType="DryWetEffect" index="32">
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869776968" baseType="DryWetEffect" index="41">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1632,7 +1865,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869776974" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1655159518459" baseType="DryWetEffect" index="33">
+					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1655159518459" baseType="DryWetEffect" index="42">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1671,7 +1904,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1655159518464" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1682288168574" baseType="DryWetEffect" index="34">
+					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1682288168574" baseType="DryWetEffect" index="43">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1705,7 +1938,26 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168580" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1682288168595" baseType="DryWetEffect" index="35">
+					<RenderPass storage="0" name="LoRezEffect" type="DryWetEffect" uniqueTypeId="A142" uniqueId="1792873591258" baseType="DryWetEffect" index="44">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="LoRezEffect" type="LoRezEffect" uniqueTypeId="A142" uniqueId="1792873591252" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Pixel Size" T="DOUBLE" default="0" value="0.040000000000000000833">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Bit Reduction" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591262"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591264" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1682288168595" baseType="DryWetEffect" index="45">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1728,7 +1980,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168601" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1655159518466" baseType="DryWetEffect" index="36">
+					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1655159518466" baseType="DryWetEffect" index="46">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1747,7 +1999,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518471" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1655159518473" baseType="DryWetEffect" index="37">
+					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1655159518473" baseType="DryWetEffect" index="47">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1757,7 +2009,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518478" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1682288168611" baseType="DryWetEffect" index="38">
+					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1682288168611" baseType="DryWetEffect" index="48">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1779,7 +2031,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168617" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1655159518480" baseType="DryWetEffect" index="39">
+					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1655159518480" baseType="DryWetEffect" index="49">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1795,7 +2047,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518485" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1679437249144" baseType="DryWetEffect" index="40">
+					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1679437249144" baseType="DryWetEffect" index="50">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1817,7 +2069,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1682288168039" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1682288168638" baseType="DryWetEffect" index="41">
+					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1682288168638" baseType="DryWetEffect" index="51">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1848,7 +2100,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168644" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1682288168110" baseType="DryWetEffect" index="42">
+					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1682288168110" baseType="DryWetEffect" index="52">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1870,7 +2122,30 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168163" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1682288168359" baseType="DryWetEffect" index="43">
+					<RenderPass storage="0" name="ShiftRGB" type="DryWetEffect" uniqueTypeId="A153" uniqueId="1792873591186" baseType="DryWetEffect" index="53">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="ShiftRGB" type="ShiftRGB" uniqueTypeId="A153" uniqueId="1792873591159" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Distance" T="DOUBLE" default="1" value="0.25">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="R" T="DOUBLE" default="0" value="-0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B" T="DOUBLE" default="0" value="0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591190"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591192" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1682288168359" baseType="DryWetEffect" index="54">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1900,7 +2175,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168365" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1655159518487" baseType="DryWetEffect" index="44">
+					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1655159518487" baseType="DryWetEffect" index="55">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1916,7 +2191,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1655159518492" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1679437249413" baseType="DryWetEffect" index="45">
+					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1679437249413" baseType="DryWetEffect" index="56">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1938,7 +2213,38 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1655159518494" baseType="DryWetEffect" index="46">
+					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873591283" baseType="DryWetEffect" index="57">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.2999999999999999889">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873591270" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591287"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591289" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1655159518494" baseType="DryWetEffect" index="58">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -1963,7 +2269,7 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1679437249531" baseType="DryWetEffect" index="47">
+					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1679437249531" baseType="DryWetEffect" index="59">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2521,7 +2827,29 @@
 					<RenderPass storage="0" name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1683234745475" baseType="Effect" index="1">
 						<View name="View" folded="1" bCanBeDisabled="0" bCanBeRemoved="0"/>
 					</RenderPass>
-					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683234745477" baseType="DryWetEffect" index="2">
+					<RenderPass storage="0" name="Bloom" type="DryWetEffect" uniqueTypeId="6980402605" uniqueId="1792873591310" baseType="DryWetEffect" index="2">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="Bloom" type="Bloom" uniqueTypeId="6980402605" uniqueId="1792873591295" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Amount" T="DOUBLE" default="1" value="0.3499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Threshold" T="DOUBLE" default="0.9000000000000000222" value="0.8499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Size" T="DOUBLE" default="0.25" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591314"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591316" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683234745477" baseType="DryWetEffect" index="3">
 						<View name="View" folded="1"/>
 						<RenderPass name="Blur" type="Blur" uniqueTypeId="A140" uniqueId="1683234745479" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -2543,7 +2871,65 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745482" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683234745484" baseType="DryWetEffect" index="3">
+					<RenderPass storage="0" name="Colorize" type="DryWetEffect" uniqueTypeId="A103" uniqueId="1792873591481" baseType="DryWetEffect" index="4">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.3499999999999999778">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Colorize" type="Colorize" uniqueTypeId="A103" uniqueId="1792873591463" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294946649" channelmode="2" paletteEnabled="1" color="4294946649" interpolated="0">
+									<Params name="Channels">
+										<ParamRange name="Red" T="DOUBLE" default="1" value="0.34901961684226989746">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Green" T="DOUBLE" default="0" value="0.68627452850341796875">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Blue" T="DOUBLE" default="0" value="1">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Hue" T="DOUBLE" default="0" value="0.58032125234603881836">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Saturation" T="DOUBLE" default="1" value="0.65098035335540771484">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+									</Params>
+								</ParamColor>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="Contrast" T="DOUBLE" default="0.20000000298023223877" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591485"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591487" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="DelayRGB" type="DryWetEffect" uniqueTypeId="A152" uniqueId="1792873591433" baseType="DryWetEffect" index="5">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="DelayRGB" type="DelayRGB" uniqueTypeId="A152" uniqueId="1792873591427" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="G delay" altName="Delay G" T="DOUBLE" default="0.14999999999999999445" value="0.050000000000000002776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B delay" altName="Delay B" T="DOUBLE" default="0.2999999999999999889" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591437"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591439" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683234745484" baseType="DryWetEffect" index="6">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2562,7 +2948,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745489" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683234745491" baseType="DryWetEffect" index="4">
+					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683234745491" baseType="DryWetEffect" index="7">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2582,7 +2968,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745496" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683234745498" baseType="DryWetEffect" index="5">
+					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683234745498" baseType="DryWetEffect" index="8">
 						<View name="View" folded="1"/>
 						<RenderPass name="Fragment" type="Fragment" uniqueTypeId="sy08" uniqueId="1683234745500" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -2637,7 +3023,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683234745503" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683234745505" baseType="DryWetEffect" index="6">
+					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683234745505" baseType="DryWetEffect" index="9">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2671,7 +3057,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683234745510" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683234745519" baseType="DryWetEffect" index="7">
+					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683234745519" baseType="DryWetEffect" index="10">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2701,7 +3087,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745524" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683234745512" baseType="DryWetEffect" index="8">
+					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683234745512" baseType="DryWetEffect" index="11">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2723,7 +3109,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745517" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869776987" baseType="DryWetEffect" index="9">
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869776987" baseType="DryWetEffect" index="12">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2733,7 +3119,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869776993" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683234745526" baseType="DryWetEffect" index="10">
+					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683234745526" baseType="DryWetEffect" index="13">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2769,7 +3155,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683234745531" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683234745533" baseType="DryWetEffect" index="11">
+					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683234745533" baseType="DryWetEffect" index="14">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2845,7 +3231,26 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683234745540" baseType="DryWetEffect" index="12">
+					<RenderPass storage="0" name="LoRezEffect" type="DryWetEffect" uniqueTypeId="A142" uniqueId="1792873591529" baseType="DryWetEffect" index="15">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="LoRezEffect" type="LoRezEffect" uniqueTypeId="A142" uniqueId="1792873591523" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Pixel Size" T="DOUBLE" default="0" value="0.040000000000000000833">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Bit Reduction" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591533"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591535" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683234745540" baseType="DryWetEffect" index="16">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2874,7 +3279,7 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683234745547" baseType="DryWetEffect" index="13">
+					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683234745547" baseType="DryWetEffect" index="17">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2913,7 +3318,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683234745552" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683234745554" baseType="DryWetEffect" index="14">
+					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683234745554" baseType="DryWetEffect" index="18">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2923,7 +3328,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745559" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683234745561" baseType="DryWetEffect" index="15">
+					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683234745561" baseType="DryWetEffect" index="19">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2945,7 +3350,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745566" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683234745568" baseType="DryWetEffect" index="16">
+					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683234745568" baseType="DryWetEffect" index="20">
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueTypeId="A109" uniqueId="1683234745570" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -2958,7 +3363,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745573" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683234745575" baseType="DryWetEffect" index="17">
+					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683234745575" baseType="DryWetEffect" index="21">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -2977,7 +3382,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745580" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683234745582" baseType="DryWetEffect" index="18">
+					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683234745582" baseType="DryWetEffect" index="22">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3011,7 +3416,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745587" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683234745589" baseType="DryWetEffect" index="19">
+					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683234745589" baseType="DryWetEffect" index="23">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3030,7 +3435,30 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745594" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683234745596" baseType="DryWetEffect" index="20">
+					<RenderPass storage="0" name="ShiftRGB" type="DryWetEffect" uniqueTypeId="A153" uniqueId="1792873591376" baseType="DryWetEffect" index="24">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="ShiftRGB" type="ShiftRGB" uniqueTypeId="A153" uniqueId="1792873591349" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Distance" T="DOUBLE" default="1" value="0.25">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="R" T="DOUBLE" default="0" value="-0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B" T="DOUBLE" default="0" value="0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591380"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591382" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683234745596" baseType="DryWetEffect" index="25">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3060,7 +3488,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745601" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683234745603" baseType="DryWetEffect" index="21">
+					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683234745603" baseType="DryWetEffect" index="26">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3076,7 +3504,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745608" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683234745610" baseType="DryWetEffect" index="22">
+					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683234745610" baseType="DryWetEffect" index="27">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3092,7 +3520,38 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745615" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683234745617" baseType="DryWetEffect" index="23">
+					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873591572" baseType="DryWetEffect" index="28">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.2999999999999999889">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873591559" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591576"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591578" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683234745617" baseType="DryWetEffect" index="29">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3127,7 +3586,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745622" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683234745624" baseType="DryWetEffect" index="24">
+					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683234745624" baseType="DryWetEffect" index="30">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3152,7 +3611,29 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745629" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683234745631" baseType="DryWetEffect" index="25">
+					<RenderPass storage="0" name="Bloom" type="DryWetEffect" uniqueTypeId="6980402605" uniqueId="1792873591337" baseType="DryWetEffect" index="31">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="Bloom" type="Bloom" uniqueTypeId="6980402605" uniqueId="1792873591322" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Amount" T="DOUBLE" default="1" value="0.3499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Threshold" T="DOUBLE" default="0.9000000000000000222" value="0.8499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Size" T="DOUBLE" default="0.25" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591341"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591343" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683234745631" baseType="DryWetEffect" index="32">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3177,7 +3658,65 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745636" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683234745638" baseType="DryWetEffect" index="26">
+					<RenderPass storage="0" name="Colorize" type="DryWetEffect" uniqueTypeId="A103" uniqueId="1792873591511" baseType="DryWetEffect" index="33">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.3499999999999999778">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Colorize" type="Colorize" uniqueTypeId="A103" uniqueId="1792873591493" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294946649" channelmode="2" paletteEnabled="1" color="4294946649" interpolated="0">
+									<Params name="Channels">
+										<ParamRange name="Red" T="DOUBLE" default="1" value="0.34901961684226989746">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Green" T="DOUBLE" default="0" value="0.68627452850341796875">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Blue" T="DOUBLE" default="0" value="1">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Hue" T="DOUBLE" default="0" value="0.58032125234603881836">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Saturation" T="DOUBLE" default="1" value="0.65098035335540771484">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+									</Params>
+								</ParamColor>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="Contrast" T="DOUBLE" default="0.20000000298023223877" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591515"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591517" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="DelayRGB" type="DryWetEffect" uniqueTypeId="A152" uniqueId="1792873591451" baseType="DryWetEffect" index="34">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="DelayRGB" type="DelayRGB" uniqueTypeId="A152" uniqueId="1792873591445" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="G delay" altName="Delay G" T="DOUBLE" default="0.14999999999999999445" value="0.050000000000000002776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B delay" altName="Delay B" T="DOUBLE" default="0.2999999999999999889" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591455"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591457" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683234745638" baseType="DryWetEffect" index="35">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3196,7 +3735,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745643" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683234745645" baseType="DryWetEffect" index="27">
+					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683234745645" baseType="DryWetEffect" index="36">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3216,7 +3755,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745650" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683234745652" baseType="DryWetEffect" index="28">
+					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683234745652" baseType="DryWetEffect" index="37">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3232,7 +3771,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745657" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683234745659" baseType="DryWetEffect" index="29">
+					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683234745659" baseType="DryWetEffect" index="38">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3266,7 +3805,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683234745664" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683234745673" baseType="DryWetEffect" index="30">
+					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683234745673" baseType="DryWetEffect" index="39">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3276,7 +3815,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745678" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683234745666" baseType="DryWetEffect" index="31">
+					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683234745666" baseType="DryWetEffect" index="40">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3298,7 +3837,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745671" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777006" baseType="DryWetEffect" index="32">
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777006" baseType="DryWetEffect" index="41">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3308,7 +3847,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869777012" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683234745680" baseType="DryWetEffect" index="33">
+					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683234745680" baseType="DryWetEffect" index="42">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3347,7 +3886,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683234745685" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683234745687" baseType="DryWetEffect" index="34">
+					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683234745687" baseType="DryWetEffect" index="43">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3381,7 +3920,26 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745692" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683234745694" baseType="DryWetEffect" index="35">
+					<RenderPass storage="0" name="LoRezEffect" type="DryWetEffect" uniqueTypeId="A142" uniqueId="1792873591547" baseType="DryWetEffect" index="44">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="LoRezEffect" type="LoRezEffect" uniqueTypeId="A142" uniqueId="1792873591541" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Pixel Size" T="DOUBLE" default="0" value="0.040000000000000000833">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Bit Reduction" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591551"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591553" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683234745694" baseType="DryWetEffect" index="45">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3404,7 +3962,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745699" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683234745701" baseType="DryWetEffect" index="36">
+					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683234745701" baseType="DryWetEffect" index="46">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3423,7 +3981,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745706" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683234745708" baseType="DryWetEffect" index="37">
+					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683234745708" baseType="DryWetEffect" index="47">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3433,7 +3991,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745713" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683234745715" baseType="DryWetEffect" index="38">
+					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683234745715" baseType="DryWetEffect" index="48">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3455,7 +4013,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745720" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683234745722" baseType="DryWetEffect" index="39">
+					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683234745722" baseType="DryWetEffect" index="49">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3471,7 +4029,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745727" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683234745729" baseType="DryWetEffect" index="40">
+					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683234745729" baseType="DryWetEffect" index="50">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3493,7 +4051,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683234745734" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683234745736" baseType="DryWetEffect" index="41">
+					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683234745736" baseType="DryWetEffect" index="51">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3524,7 +4082,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745741" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683234745743" baseType="DryWetEffect" index="42">
+					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683234745743" baseType="DryWetEffect" index="52">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3546,7 +4104,30 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745748" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683234745750" baseType="DryWetEffect" index="43">
+					<RenderPass storage="0" name="ShiftRGB" type="DryWetEffect" uniqueTypeId="A153" uniqueId="1792873591415" baseType="DryWetEffect" index="53">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="ShiftRGB" type="ShiftRGB" uniqueTypeId="A153" uniqueId="1792873591388" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Distance" T="DOUBLE" default="1" value="0.25">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="R" T="DOUBLE" default="0" value="-0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B" T="DOUBLE" default="0" value="0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591419"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591421" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683234745750" baseType="DryWetEffect" index="54">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3576,7 +4157,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745755" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683234745757" baseType="DryWetEffect" index="44">
+					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683234745757" baseType="DryWetEffect" index="55">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3592,7 +4173,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745762" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683234745764" baseType="DryWetEffect" index="45">
+					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683234745764" baseType="DryWetEffect" index="56">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3614,7 +4195,38 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683234745771" baseType="DryWetEffect" index="46">
+					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873591597" baseType="DryWetEffect" index="57">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.2999999999999999889">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873591584" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591601"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591603" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683234745771" baseType="DryWetEffect" index="58">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -3639,7 +4251,7 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683234745778" baseType="DryWetEffect" index="47">
+					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683234745778" baseType="DryWetEffect" index="59">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4204,7 +4816,29 @@
 					<RenderPass storage="0" name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1683235114816" baseType="Effect" index="1">
 						<View name="View" folded="1" bCanBeDisabled="0" bCanBeRemoved="0"/>
 					</RenderPass>
-					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683235114818" baseType="DryWetEffect" index="2">
+					<RenderPass storage="0" name="Bloom" type="DryWetEffect" uniqueTypeId="6980402605" uniqueId="1792873591624" baseType="DryWetEffect" index="2">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="Bloom" type="Bloom" uniqueTypeId="6980402605" uniqueId="1792873591609" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Amount" T="DOUBLE" default="1" value="0.3499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Threshold" T="DOUBLE" default="0.9000000000000000222" value="0.8499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Size" T="DOUBLE" default="0.25" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591628"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591630" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683235114818" baseType="DryWetEffect" index="3">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4229,7 +4863,65 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114823" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683235114825" baseType="DryWetEffect" index="3">
+					<RenderPass storage="0" name="Colorize" type="DryWetEffect" uniqueTypeId="A103" uniqueId="1792873591795" baseType="DryWetEffect" index="4">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.3499999999999999778">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Colorize" type="Colorize" uniqueTypeId="A103" uniqueId="1792873591777" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294946649" channelmode="2" paletteEnabled="1" color="4294946649" interpolated="0">
+									<Params name="Channels">
+										<ParamRange name="Red" T="DOUBLE" default="1" value="0.34901961684226989746">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Green" T="DOUBLE" default="0" value="0.68627452850341796875">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Blue" T="DOUBLE" default="0" value="1">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Hue" T="DOUBLE" default="0" value="0.58032125234603881836">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Saturation" T="DOUBLE" default="1" value="0.65098035335540771484">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+									</Params>
+								</ParamColor>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="Contrast" T="DOUBLE" default="0.20000000298023223877" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591799"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591801" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="DelayRGB" type="DryWetEffect" uniqueTypeId="A152" uniqueId="1792873591747" baseType="DryWetEffect" index="5">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="DelayRGB" type="DelayRGB" uniqueTypeId="A152" uniqueId="1792873591741" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="G delay" altName="Delay G" T="DOUBLE" default="0.14999999999999999445" value="0.050000000000000002776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B delay" altName="Delay B" T="DOUBLE" default="0.2999999999999999889" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591751"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591753" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683235114825" baseType="DryWetEffect" index="6">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4248,7 +4940,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114830" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683235114832" baseType="DryWetEffect" index="4">
+					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683235114832" baseType="DryWetEffect" index="7">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4268,7 +4960,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114837" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683235114839" baseType="DryWetEffect" index="5">
+					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683235114839" baseType="DryWetEffect" index="8">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4323,7 +5015,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235114844" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683235114846" baseType="DryWetEffect" index="6">
+					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683235114846" baseType="DryWetEffect" index="9">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4357,7 +5049,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235114851" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683235114860" baseType="DryWetEffect" index="7">
+					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683235114860" baseType="DryWetEffect" index="10">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4387,7 +5079,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114865" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683235114853" baseType="DryWetEffect" index="8">
+					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683235114853" baseType="DryWetEffect" index="11">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4409,7 +5101,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114858" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777025" baseType="DryWetEffect" index="9">
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777025" baseType="DryWetEffect" index="12">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4419,7 +5111,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869777031" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235114867" baseType="DryWetEffect" index="10">
+					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235114867" baseType="DryWetEffect" index="13">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4455,7 +5147,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235114872" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683235114874" baseType="DryWetEffect" index="11">
+					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683235114874" baseType="DryWetEffect" index="14">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4531,7 +5223,26 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683235114881" baseType="DryWetEffect" index="12">
+					<RenderPass storage="0" name="LoRezEffect" type="DryWetEffect" uniqueTypeId="A142" uniqueId="1792873591843" baseType="DryWetEffect" index="15">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="LoRezEffect" type="LoRezEffect" uniqueTypeId="A142" uniqueId="1792873591837" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Pixel Size" T="DOUBLE" default="0" value="0.040000000000000000833">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Bit Reduction" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591847"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591849" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683235114881" baseType="DryWetEffect" index="16">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4560,7 +5271,7 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683235114888" baseType="DryWetEffect" index="13">
+					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683235114888" baseType="DryWetEffect" index="17">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4599,7 +5310,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235114893" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683235114895" baseType="DryWetEffect" index="14">
+					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683235114895" baseType="DryWetEffect" index="18">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4609,7 +5320,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114900" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683235114902" baseType="DryWetEffect" index="15">
+					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683235114902" baseType="DryWetEffect" index="19">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4631,7 +5342,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114907" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683235114909" baseType="DryWetEffect" index="16">
+					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683235114909" baseType="DryWetEffect" index="20">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4647,7 +5358,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114914" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683235114916" baseType="DryWetEffect" index="17">
+					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683235114916" baseType="DryWetEffect" index="21">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4666,7 +5377,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114921" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683235114923" baseType="DryWetEffect" index="18">
+					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683235114923" baseType="DryWetEffect" index="22">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4700,7 +5411,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114928" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683235114930" baseType="DryWetEffect" index="19">
+					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683235114930" baseType="DryWetEffect" index="23">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4719,7 +5430,30 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114935" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683235114937" baseType="DryWetEffect" index="20">
+					<RenderPass storage="0" name="ShiftRGB" type="DryWetEffect" uniqueTypeId="A153" uniqueId="1792873591690" baseType="DryWetEffect" index="24">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="ShiftRGB" type="ShiftRGB" uniqueTypeId="A153" uniqueId="1792873591663" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Distance" T="DOUBLE" default="1" value="0.25">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="R" T="DOUBLE" default="0" value="-0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B" T="DOUBLE" default="0" value="0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591694"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591696" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683235114937" baseType="DryWetEffect" index="25">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4749,7 +5483,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114942" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683235114944" baseType="DryWetEffect" index="21">
+					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683235114944" baseType="DryWetEffect" index="26">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4765,7 +5499,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114949" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683235114951" baseType="DryWetEffect" index="22">
+					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683235114951" baseType="DryWetEffect" index="27">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4781,7 +5515,38 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114956" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683235114958" baseType="DryWetEffect" index="23">
+					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873591886" baseType="DryWetEffect" index="28">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.2999999999999999889">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873591873" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591890"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591892" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683235114958" baseType="DryWetEffect" index="29">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4816,7 +5581,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114963" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683235114965" baseType="DryWetEffect" index="24">
+					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683235114965" baseType="DryWetEffect" index="30">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4841,7 +5606,29 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114970" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683235114972" baseType="DryWetEffect" index="25">
+					<RenderPass storage="0" name="Bloom" type="DryWetEffect" uniqueTypeId="6980402605" uniqueId="1792873591651" baseType="DryWetEffect" index="31">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="Bloom" type="Bloom" uniqueTypeId="6980402605" uniqueId="1792873591636" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Amount" T="DOUBLE" default="1" value="0.3499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Threshold" T="DOUBLE" default="0.9000000000000000222" value="0.8499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Size" T="DOUBLE" default="0.25" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591655"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591657" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683235114972" baseType="DryWetEffect" index="32">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4866,7 +5653,65 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114977" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683235114979" baseType="DryWetEffect" index="26">
+					<RenderPass storage="0" name="Colorize" type="DryWetEffect" uniqueTypeId="A103" uniqueId="1792873591825" baseType="DryWetEffect" index="33">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.3499999999999999778">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Colorize" type="Colorize" uniqueTypeId="A103" uniqueId="1792873591807" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294946649" channelmode="2" paletteEnabled="1" color="4294946649" interpolated="0">
+									<Params name="Channels">
+										<ParamRange name="Red" T="DOUBLE" default="1" value="0.34901961684226989746">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Green" T="DOUBLE" default="0" value="0.68627452850341796875">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Blue" T="DOUBLE" default="0" value="1">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Hue" T="DOUBLE" default="0" value="0.58032125234603881836">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Saturation" T="DOUBLE" default="1" value="0.65098035335540771484">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+									</Params>
+								</ParamColor>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="Contrast" T="DOUBLE" default="0.20000000298023223877" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591829"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591831" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="DelayRGB" type="DryWetEffect" uniqueTypeId="A152" uniqueId="1792873591765" baseType="DryWetEffect" index="34">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="DelayRGB" type="DelayRGB" uniqueTypeId="A152" uniqueId="1792873591759" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="G delay" altName="Delay G" T="DOUBLE" default="0.14999999999999999445" value="0.050000000000000002776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B delay" altName="Delay B" T="DOUBLE" default="0.2999999999999999889" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591769"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591771" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683235114979" baseType="DryWetEffect" index="35">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4885,7 +5730,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114984" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683235114986" baseType="DryWetEffect" index="27">
+					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683235114986" baseType="DryWetEffect" index="36">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4905,7 +5750,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114991" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683235114993" baseType="DryWetEffect" index="28">
+					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683235114993" baseType="DryWetEffect" index="37">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4921,7 +5766,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114998" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683235115000" baseType="DryWetEffect" index="29">
+					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683235115000" baseType="DryWetEffect" index="38">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4955,7 +5800,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235115005" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683235115014" baseType="DryWetEffect" index="30">
+					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683235115014" baseType="DryWetEffect" index="39">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4965,7 +5810,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115019" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683235115007" baseType="DryWetEffect" index="31">
+					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683235115007" baseType="DryWetEffect" index="40">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4987,7 +5832,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115012" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777044" baseType="DryWetEffect" index="32">
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777044" baseType="DryWetEffect" index="41">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -4997,7 +5842,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869777050" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235115021" baseType="DryWetEffect" index="33">
+					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235115021" baseType="DryWetEffect" index="42">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5036,7 +5881,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235115026" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683235115028" baseType="DryWetEffect" index="34">
+					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683235115028" baseType="DryWetEffect" index="43">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5070,7 +5915,26 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115033" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683235115035" baseType="DryWetEffect" index="35">
+					<RenderPass storage="0" name="LoRezEffect" type="DryWetEffect" uniqueTypeId="A142" uniqueId="1792873591861" baseType="DryWetEffect" index="44">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="LoRezEffect" type="LoRezEffect" uniqueTypeId="A142" uniqueId="1792873591855" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Pixel Size" T="DOUBLE" default="0" value="0.040000000000000000833">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Bit Reduction" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591865"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591867" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683235115035" baseType="DryWetEffect" index="45">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5093,7 +5957,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115040" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683235115042" baseType="DryWetEffect" index="36">
+					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683235115042" baseType="DryWetEffect" index="46">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5112,7 +5976,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115047" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683235115049" baseType="DryWetEffect" index="37">
+					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683235115049" baseType="DryWetEffect" index="47">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5122,7 +5986,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115054" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683235115056" baseType="DryWetEffect" index="38">
+					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683235115056" baseType="DryWetEffect" index="48">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5144,7 +6008,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115061" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683235115063" baseType="DryWetEffect" index="39">
+					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683235115063" baseType="DryWetEffect" index="49">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5160,7 +6024,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115068" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683235115070" baseType="DryWetEffect" index="40">
+					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683235115070" baseType="DryWetEffect" index="50">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5182,7 +6046,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235115075" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683235115077" baseType="DryWetEffect" index="41">
+					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683235115077" baseType="DryWetEffect" index="51">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5213,7 +6077,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115082" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683235115084" baseType="DryWetEffect" index="42">
+					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683235115084" baseType="DryWetEffect" index="52">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5235,7 +6099,30 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115089" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683235115091" baseType="DryWetEffect" index="43">
+					<RenderPass storage="0" name="ShiftRGB" type="DryWetEffect" uniqueTypeId="A153" uniqueId="1792873591729" baseType="DryWetEffect" index="53">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="ShiftRGB" type="ShiftRGB" uniqueTypeId="A153" uniqueId="1792873591702" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Distance" T="DOUBLE" default="1" value="0.25">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="R" T="DOUBLE" default="0" value="-0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B" T="DOUBLE" default="0" value="0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591733"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591735" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683235115091" baseType="DryWetEffect" index="54">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5265,7 +6152,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115096" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683235115098" baseType="DryWetEffect" index="44">
+					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683235115098" baseType="DryWetEffect" index="55">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5281,7 +6168,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115103" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683235115105" baseType="DryWetEffect" index="45">
+					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683235115105" baseType="DryWetEffect" index="56">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5303,7 +6190,38 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683235115112" baseType="DryWetEffect" index="46">
+					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873591911" baseType="DryWetEffect" index="57">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.2999999999999999889">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873591898" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591915"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591917" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683235115112" baseType="DryWetEffect" index="58">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5328,7 +6246,7 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683235115119" baseType="DryWetEffect" index="47">
+					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683235115119" baseType="DryWetEffect" index="59">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5893,7 +6811,29 @@
 					<RenderPass storage="0" name="Transform" type="TransformEffect" uniqueTypeId="17122039101699797593" uniqueId="1683235197489" baseType="Effect" index="1">
 						<View name="View" folded="1" bCanBeDisabled="0" bCanBeRemoved="0"/>
 					</RenderPass>
-					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683235197491" baseType="DryWetEffect" index="2">
+					<RenderPass storage="0" name="Bloom" type="DryWetEffect" uniqueTypeId="6980402605" uniqueId="1792873591938" baseType="DryWetEffect" index="2">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="Bloom" type="Bloom" uniqueTypeId="6980402605" uniqueId="1792873591923" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Amount" T="DOUBLE" default="1" value="0.3499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Threshold" T="DOUBLE" default="0.9000000000000000222" value="0.8499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Size" T="DOUBLE" default="0.25" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591942"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591944" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683235197491" baseType="DryWetEffect" index="3">
 						<View name="View" folded="1"/>
 						<RenderPass name="Blur" type="Blur" uniqueTypeId="A140" uniqueId="1683235197493" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -5915,7 +6855,65 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197496" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683235197498" baseType="DryWetEffect" index="3">
+					<RenderPass storage="0" name="Colorize" type="DryWetEffect" uniqueTypeId="A103" uniqueId="1792873592109" baseType="DryWetEffect" index="4">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.3499999999999999778">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Colorize" type="Colorize" uniqueTypeId="A103" uniqueId="1792873592091" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294946649" channelmode="2" paletteEnabled="1" color="4294946649" interpolated="0">
+									<Params name="Channels">
+										<ParamRange name="Red" T="DOUBLE" default="1" value="0.34901961684226989746">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Green" T="DOUBLE" default="0" value="0.68627452850341796875">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Blue" T="DOUBLE" default="0" value="1">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Hue" T="DOUBLE" default="0" value="0.58032125234603881836">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Saturation" T="DOUBLE" default="1" value="0.65098035335540771484">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+									</Params>
+								</ParamColor>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="Contrast" T="DOUBLE" default="0.20000000298023223877" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873592113"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873592115" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="DelayRGB" type="DryWetEffect" uniqueTypeId="A152" uniqueId="1792873592061" baseType="DryWetEffect" index="5">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="DelayRGB" type="DelayRGB" uniqueTypeId="A152" uniqueId="1792873592055" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="G delay" altName="Delay G" T="DOUBLE" default="0.14999999999999999445" value="0.050000000000000002776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B delay" altName="Delay B" T="DOUBLE" default="0.2999999999999999889" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873592065"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873592067" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683235197498" baseType="DryWetEffect" index="6">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5934,7 +6932,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197503" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683235197505" baseType="DryWetEffect" index="4">
+					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683235197505" baseType="DryWetEffect" index="7">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -5954,7 +6952,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197510" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683235197512" baseType="DryWetEffect" index="5">
+					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683235197512" baseType="DryWetEffect" index="8">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6009,7 +7007,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235197517" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683235197519" baseType="DryWetEffect" index="6">
+					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683235197519" baseType="DryWetEffect" index="9">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6043,7 +7041,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235197524" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683235197533" baseType="DryWetEffect" index="7">
+					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683235197533" baseType="DryWetEffect" index="10">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6073,7 +7071,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197538" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683235197526" baseType="DryWetEffect" index="8">
+					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683235197526" baseType="DryWetEffect" index="11">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6095,7 +7093,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197531" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777063" baseType="DryWetEffect" index="9">
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777063" baseType="DryWetEffect" index="12">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6105,7 +7103,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869777069" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235197540" baseType="DryWetEffect" index="10">
+					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235197540" baseType="DryWetEffect" index="13">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6141,7 +7139,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235197545" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683235197547" baseType="DryWetEffect" index="11">
+					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683235197547" baseType="DryWetEffect" index="14">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6217,7 +7215,26 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683235197554" baseType="DryWetEffect" index="12">
+					<RenderPass storage="0" name="LoRezEffect" type="DryWetEffect" uniqueTypeId="A142" uniqueId="1792873592157" baseType="DryWetEffect" index="15">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="LoRezEffect" type="LoRezEffect" uniqueTypeId="A142" uniqueId="1792873592151" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Pixel Size" T="DOUBLE" default="0" value="0.040000000000000000833">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Bit Reduction" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873592161"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873592163" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683235197554" baseType="DryWetEffect" index="16">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6246,7 +7263,7 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683235197561" baseType="DryWetEffect" index="13">
+					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683235197561" baseType="DryWetEffect" index="17">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6285,7 +7302,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235197566" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683235197568" baseType="DryWetEffect" index="14">
+					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683235197568" baseType="DryWetEffect" index="18">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6295,7 +7312,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197573" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683235197575" baseType="DryWetEffect" index="15">
+					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683235197575" baseType="DryWetEffect" index="19">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6317,7 +7334,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197580" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683235197582" baseType="DryWetEffect" index="16">
+					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683235197582" baseType="DryWetEffect" index="20">
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueTypeId="A109" uniqueId="1683235197584" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -6330,7 +7347,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197587" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683235197589" baseType="DryWetEffect" index="17">
+					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683235197589" baseType="DryWetEffect" index="21">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6349,7 +7366,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197594" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683235197596" baseType="DryWetEffect" index="18">
+					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683235197596" baseType="DryWetEffect" index="22">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6383,7 +7400,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197601" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683235197603" baseType="DryWetEffect" index="19">
+					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683235197603" baseType="DryWetEffect" index="23">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6402,7 +7419,30 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197608" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683235197610" baseType="DryWetEffect" index="20">
+					<RenderPass storage="0" name="ShiftRGB" type="DryWetEffect" uniqueTypeId="A153" uniqueId="1792873592004" baseType="DryWetEffect" index="24">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="ShiftRGB" type="ShiftRGB" uniqueTypeId="A153" uniqueId="1792873591977" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Distance" T="DOUBLE" default="1" value="0.25">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="R" T="DOUBLE" default="0" value="-0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B" T="DOUBLE" default="0" value="0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873592008"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873592010" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683235197610" baseType="DryWetEffect" index="25">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6432,7 +7472,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197615" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683235197617" baseType="DryWetEffect" index="21">
+					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683235197617" baseType="DryWetEffect" index="26">
 						<View name="View" folded="1"/>
 						<RenderPass name="Trails" type="Trails" uniqueTypeId="A111" uniqueId="1683235197619" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -6445,7 +7485,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197622" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683235197624" baseType="DryWetEffect" index="22">
+					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683235197624" baseType="DryWetEffect" index="27">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6461,7 +7501,38 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197629" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683235197631" baseType="DryWetEffect" index="23">
+					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873592200" baseType="DryWetEffect" index="28">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.2999999999999999889">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873592187" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873592204"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873592206" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683235197631" baseType="DryWetEffect" index="29">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6497,7 +7568,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197636" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683235197638" baseType="DryWetEffect" index="24">
+					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683235197638" baseType="DryWetEffect" index="30">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6522,7 +7593,29 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197643" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683235197645" baseType="DryWetEffect" index="25">
+					<RenderPass storage="0" name="Bloom" type="DryWetEffect" uniqueTypeId="6980402605" uniqueId="1792873591965" baseType="DryWetEffect" index="31">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="Bloom" type="Bloom" uniqueTypeId="6980402605" uniqueId="1792873591950" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Amount" T="DOUBLE" default="1" value="0.3499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Threshold" T="DOUBLE" default="0.9000000000000000222" value="0.8499999999999999778">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Size" T="DOUBLE" default="0.25" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873591969"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873591971" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683235197645" baseType="DryWetEffect" index="32">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6547,7 +7640,65 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197650" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683235197652" baseType="DryWetEffect" index="26">
+					<RenderPass storage="0" name="Colorize" type="DryWetEffect" uniqueTypeId="A103" uniqueId="1792873592139" baseType="DryWetEffect" index="33">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.3499999999999999778">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Colorize" type="Colorize" uniqueTypeId="A103" uniqueId="1792873592121" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294946649" channelmode="2" paletteEnabled="1" color="4294946649" interpolated="0">
+									<Params name="Channels">
+										<ParamRange name="Red" T="DOUBLE" default="1" value="0.34901961684226989746">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Green" T="DOUBLE" default="0" value="0.68627452850341796875">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Blue" T="DOUBLE" default="0" value="1">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Hue" T="DOUBLE" default="0" value="0.58032125234603881836">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+										<ParamRange name="Saturation" T="DOUBLE" default="1" value="0.65098035335540771484">
+											<PhaseSourceStatic name="PhaseSourceStatic"/>
+										</ParamRange>
+									</Params>
+								</ParamColor>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="Contrast" T="DOUBLE" default="0.20000000298023223877" value="0.2000000000000000111">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873592143"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873592145" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="DelayRGB" type="DryWetEffect" uniqueTypeId="A152" uniqueId="1792873592079" baseType="DryWetEffect" index="34">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="DelayRGB" type="DelayRGB" uniqueTypeId="A152" uniqueId="1792873592073" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="G delay" altName="Delay G" T="DOUBLE" default="0.14999999999999999445" value="0.050000000000000002776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B delay" altName="Delay B" T="DOUBLE" default="0.2999999999999999889" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873592083"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873592085" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683235197652" baseType="DryWetEffect" index="35">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6566,7 +7717,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197657" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683235197659" baseType="DryWetEffect" index="27">
+					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683235197659" baseType="DryWetEffect" index="36">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6586,7 +7737,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197664" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683235197666" baseType="DryWetEffect" index="28">
+					<RenderPass storage="0" name="Fragment" type="DryWetEffect" uniqueTypeId="sy08" uniqueId="1683235197666" baseType="DryWetEffect" index="37">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6602,7 +7753,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197671" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683235197673" baseType="DryWetEffect" index="29">
+					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683235197673" baseType="DryWetEffect" index="38">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6636,7 +7787,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235197678" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683235197687" baseType="DryWetEffect" index="30">
+					<RenderPass storage="0" name="HueRotate" type="DryWetEffect" uniqueTypeId="A128" uniqueId="1683235197687" baseType="DryWetEffect" index="39">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6646,7 +7797,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197692" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683235197680" baseType="DryWetEffect" index="31">
+					<RenderPass storage="0" name="InfiniteZoom" type="DryWetEffect" uniqueTypeId="P205" uniqueId="1683235197680" baseType="DryWetEffect" index="40">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6668,7 +7819,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197685" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777082" baseType="DryWetEffect" index="32">
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777082" baseType="DryWetEffect" index="41">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6678,7 +7829,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869777088" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235197694" baseType="DryWetEffect" index="33">
+					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235197694" baseType="DryWetEffect" index="42">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6717,7 +7868,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235197699" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683235197701" baseType="DryWetEffect" index="34">
+					<RenderPass storage="0" name="LinearCloner" type="DryWetEffect" uniqueTypeId="9611534302831352414" uniqueId="1683235197701" baseType="DryWetEffect" index="43">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6751,7 +7902,26 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197706" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683235197708" baseType="DryWetEffect" index="35">
+					<RenderPass storage="0" name="LoRezEffect" type="DryWetEffect" uniqueTypeId="A142" uniqueId="1792873592175" baseType="DryWetEffect" index="44">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="LoRezEffect" type="LoRezEffect" uniqueTypeId="A142" uniqueId="1792873592169" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Pixel Size" T="DOUBLE" default="0" value="0.040000000000000000833">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Bit Reduction" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873592179"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873592181" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="MetaShape" type="DryWetEffect" uniqueTypeId="844752394952286288" uniqueId="1683235197708" baseType="DryWetEffect" index="45">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6774,7 +7944,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197713" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683235197715" baseType="DryWetEffect" index="36">
+					<RenderPass storage="0" name="Mirror" type="DryWetEffect" uniqueTypeId="A108" uniqueId="1683235197715" baseType="DryWetEffect" index="46">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6793,7 +7963,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197720" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683235197722" baseType="DryWetEffect" index="37">
+					<RenderPass storage="0" name="MirrorQuad" type="DryWetEffect" uniqueTypeId="A180" uniqueId="1683235197722" baseType="DryWetEffect" index="47">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6803,7 +7973,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197727" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683235197729" baseType="DryWetEffect" index="38">
+					<RenderPass storage="0" name="PolarKaleido" type="DryWetEffect" uniqueTypeId="A190" uniqueId="1683235197729" baseType="DryWetEffect" index="48">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6825,7 +7995,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197734" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683235197736" baseType="DryWetEffect" index="39">
+					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683235197736" baseType="DryWetEffect" index="49">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6841,7 +8011,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197741" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683235197743" baseType="DryWetEffect" index="40">
+					<RenderPass storage="0" name="RadialBlur" type="DryWetEffect" uniqueTypeId="sy03" uniqueId="1683235197743" baseType="DryWetEffect" index="50">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6863,7 +8033,7 @@
 							<RenderPass name="Add" type="Add" uniqueTypeId="A005" uniqueId="1683235197748" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683235197750" baseType="DryWetEffect" index="41">
+					<RenderPass storage="0" name="RadialCloner" type="DryWetEffect" uniqueTypeId="15777305184926876320" uniqueId="1683235197750" baseType="DryWetEffect" index="51">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6894,7 +8064,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197755" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683235197757" baseType="DryWetEffect" index="42">
+					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683235197757" baseType="DryWetEffect" index="52">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6916,7 +8086,30 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197762" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683235197764" baseType="DryWetEffect" index="43">
+					<RenderPass storage="0" name="ShiftRGB" type="DryWetEffect" uniqueTypeId="A153" uniqueId="1792873592043" baseType="DryWetEffect" index="53">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="ShiftRGB" type="ShiftRGB" uniqueTypeId="A153" uniqueId="1792873592016" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Distance" T="DOUBLE" default="1" value="0.25">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamChoice name="Mode" T="INT32" default="0" value="1" storeChoices="0"/>
+								<ParamRange name="R" T="DOUBLE" default="0" value="-0.040000000000000028588">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="B" T="DOUBLE" default="0" value="0.040000000000000035527">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873592047"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873592049" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Threshold" type="DryWetEffect" uniqueTypeId="A106" uniqueId="1683235197764" baseType="DryWetEffect" index="54">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6946,7 +8139,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197769" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683235197771" baseType="DryWetEffect" index="44">
+					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683235197771" baseType="DryWetEffect" index="55">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6962,7 +8155,7 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197776" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683235197778" baseType="DryWetEffect" index="45">
+					<RenderPass storage="0" name="Triangulate" type="DryWetEffect" uniqueTypeId="A182" uniqueId="1683235197778" baseType="DryWetEffect" index="56">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -6984,7 +8177,38 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683235197785" baseType="DryWetEffect" index="46">
+					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873592225" baseType="DryWetEffect" index="57">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.2999999999999999889">
+								<PhaseSourceStatic name="PhaseSourceStatic"/>
+							</ParamRange>
+						</Params>
+						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873592212" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000000000000555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.52000000000000001776">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.020000000000000000416">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792873592229"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792873592231" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="Twisted" type="DryWetEffect" uniqueTypeId="A122" uniqueId="1683235197785" baseType="DryWetEffect" index="58">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -7009,7 +8233,7 @@
 							</RenderPass>
 						</ChoosableMixer>
 					</RenderPass>
-					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683235197792" baseType="DryWetEffect" index="47">
+					<RenderPass storage="0" name="WaveWarp" type="DryWetEffect" uniqueTypeId="MWWP" uniqueId="1683235197792" baseType="DryWetEffect" index="59">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
@@ -7424,4 +8648,3 @@
 		<Note text_size_multiplier="2" text_color_index="4" text=""/>
 	</Notes>
 </Composition>
-

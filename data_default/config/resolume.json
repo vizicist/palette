@@ -2,6 +2,25 @@
   "host": "127.0.0.1",
   "port": 7000,
   "effects": {
+    "bloom": {
+      "on": {
+        "addr": "/bloom/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/bloom/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/bloom/opacity",
+        "amount": "/bloom/effect/amount",
+        "threshold": "/bloom/effect/threshold",
+        "knee": "/bloom/effect/knee",
+        "iterations": "/bloom/effect/iterations",
+        "size": "/bloom/effect/size",
+        "gaussian": "/bloom/effect/gaussian"
+      }
+    },
     "blur": {
       "on": {
         "addr": "/blur/bypassed",
@@ -16,6 +35,44 @@
         "blurydistance": "/blur/effect/blurydistance",
         "quality": "/blur/effect/quality",
         "gaussian": "/blur/effect/gaussian"
+      }
+    },
+    "colorize": {
+      "on": {
+        "addr": "/colorize/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/colorize/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/colorize/opacity",
+        "mode": "/colorize/effect/mode",
+        "weighted": "/colorize/effect/weighted",
+        "greyskeep": "/colorize/effect/greyskeep",
+        "greystolerance": "/colorize/effect/greystolerance",
+        "invert": "/colorize/effect/invert",
+        "contrast": "/colorize/effect/contrast",
+        "hue": "/colorize/effect/color/hue",
+        "saturation": "/colorize/effect/color/saturation",
+        "brightness": "/colorize/effect/color/brightness"
+      }
+    },
+    "delayrgb": {
+      "on": {
+        "addr": "/delayrgb/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/delayrgb/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/delayrgb/opacity",
+        "rdelay": "/delayrgb/effect/rdelay",
+        "gdelay": "/delayrgb/effect/gdelay",
+        "bdelay": "/delayrgb/effect/bdelay"
       }
     },
     "displace": {
@@ -184,6 +241,22 @@
         "masterrotation": "/linearcloner/effect/masterrotation"
       }
     },
+    "lorezeffect": {
+      "on": {
+        "addr": "/lorezeffect/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/lorezeffect/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/lorezeffect/opacity",
+        "pixelsize": "/lorezeffect/effect/pixelsize",
+        "bitreduction": "/lorezeffect/effect/bitreduction",
+        "dither": "/lorezeffect/effect/dither"
+      }
+    },
     "metashape": {
       "on": {
         "addr": "/metashape/bypassed",
@@ -313,6 +386,25 @@
         "amplitudev": "/ripples/effect/amplitudev"
       }
     },
+    "shiftrgb": {
+      "on": {
+        "addr": "/shiftrgb/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/shiftrgb/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/shiftrgb/opacity",
+        "distance": "/shiftrgb/effect/distance",
+        "mode": "/shiftrgb/effect/mode",
+        "r": "/shiftrgb/effect/r",
+        "g": "/shiftrgb/effect/g",
+        "b": "/shiftrgb/effect/b",
+        "blackbg": "/shiftrgb/effect/blackbg"
+      }
+    },
     "threshold": {
       "on": {
         "addr": "/threshold/bypassed",
@@ -353,6 +445,29 @@
       },
       "params": {
         "threshold": "/triangulate/effect/threshold"
+      }
+    },
+    "tunnel": {
+      "on": {
+        "addr": "/tunnel/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/tunnel/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/tunnel/opacity",
+        "position": "/tunnel/effect/position",
+        "speed": "/tunnel/effect/speed",
+        "twist": "/tunnel/effect/twist",
+        "kaleidoscope": "/tunnel/effect/kaleidoscope",
+        "rotation": "/tunnel/effect/rotation",
+        "turnh": "/tunnel/effect/turnh",
+        "turnv": "/tunnel/effect/turnv",
+        "wobbleh": "/tunnel/effect/wobbleh",
+        "wobblev": "/tunnel/effect/wobblev",
+        "blackbg": "/tunnel/effect/blackbg"
       }
     },
     "twisted": {

@@ -85,6 +85,44 @@ Test the two instances separately. With full inversion settings and opacity,
 two inversions can cancel each other, making working controls appear to have
 no effect. Keep the second instance bypassed while checking the first.
 
+## Additional built-in effects
+
+The following effects are also registered and included twice on clip 1 of
+each A/B/C/D layer in both standard compositions. Their enable switches
+default to false, and none of their controls participate in Rand. Existing
+effects keep their processing order; these additions occupy their alphabetical
+positions in each effect group.
+
+| Effect | Palette key | Controls in addition to enable and opacity |
+| --- | --- | --- |
+| Bloom | `bloom` | Amount, threshold, knee, iterations, size, Gaussian |
+| Shift RGB | `shiftrgb` | Distance, mode, R/G/B offsets, black background |
+| Delay RGB | `delayrgb` | R/G/B delays |
+| Colorize | `colorize` | Hue, saturation, brightness, mode, weighted, keep greys, greys tolerance, invert, contrast |
+| LoRez | `lorezeffect` | Pixel size, bit reduction, dither |
+| Tunnel | `tunnel` | Position, speed, twist, kaleidoscope, rotation, horizontal/vertical turn and wobble, black background |
+
+Float controls use normalized OSC values from 0 to 1, not necessarily the
+units displayed by Resolume. Shift RGB's R/G/B offsets are neutral at 0.5;
+Bloom iterations 0, 0.25, 0.5, 0.75, and 1 select one through five passes.
+Mode controls send integer choice indexes: Shift RGB uses 0=Shift X,
+1=Shift Y, 2=Rotate X, 3=Rotate Y, 4=Rotate Z, 5=Zoom; Colorize uses
+0=Color and 1=Palette.
+
+Colorize's hue, saturation, and brightness map to the individual
+`/colorize/effect/color/hue`, `/saturation`, and `/brightness` sub-controls.
+They adjust the chosen color in Color mode; the existing Resolume color
+palette is retained for Palette mode. No packed OSC color or engine change
+is needed. LoRez's native OSC identifier is `lorezeffect`, not its displayed
+name `LoRez`; the second instance is `lorezeffect2`.
+
+The initial settings use a restrained bloom, small RGB offsets/delays,
+partial-opacity Colorize and Tunnel, and light LoRez degradation. The effects
+remain bypassed until enabled. Every exposed control and both bypass states
+have been checked through OSC with REST readback on all 48 new instances.
+After installing changed config and saving the composition, run
+`palette restart` to reload the definitions and restart Resolume as well.
+
 ## 1. Install the effect and prepare the composition
 
 For a built-in effect, no plugin installation is needed. For a third-party
