@@ -116,6 +116,22 @@
         "numslices": "/infinitezoom/effect/numslices"
       }
     },
+    "invertrgb": {
+      "on": {
+        "addr": "/invertrgb/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/invertrgb/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/invertrgb/opacity",
+        "r": "/invertrgb/effect/r",
+        "g": "/invertrgb/effect/g",
+        "b": "/invertrgb/effect/b"
+      }
+    },
     "kaleidoscope": {
       "on": {
         "addr": "/kaleidoscope/bypassed",

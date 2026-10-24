@@ -1069,6 +1069,16 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1682288168550" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869776949" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="InvertRGB" type="InvertRGB" uniqueTypeId="A105" uniqueId="1792869776942" baseType="Effect" dwType="Effect"/>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792869776953"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869776955" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
 					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1655159518375" baseType="DryWetEffect">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
@@ -1700,6 +1710,16 @@
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1759098192714"/>
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1679437249010" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869776968" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="InvertRGB" type="InvertRGB" uniqueTypeId="A105" uniqueId="1792869776961" baseType="Effect" dwType="Effect"/>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792869776972"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869776974" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1655159518459" baseType="DryWetEffect">
@@ -2848,6 +2868,16 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745517" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869776987" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="InvertRGB" type="InvertRGB" uniqueTypeId="A105" uniqueId="1792869776980" baseType="Effect" dwType="Effect"/>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792869776991"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869776993" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
 					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683234745526" baseType="DryWetEffect">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
@@ -3479,6 +3509,16 @@
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1759098192432"/>
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683234745671" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777006" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="InvertRGB" type="InvertRGB" uniqueTypeId="A105" uniqueId="1792869776999" baseType="Effect" dwType="Effect"/>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792869777010"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869777012" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683234745680" baseType="DryWetEffect">
@@ -4634,6 +4674,16 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235114858" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777025" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="InvertRGB" type="InvertRGB" uniqueTypeId="A105" uniqueId="1792869777018" baseType="Effect" dwType="Effect"/>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792869777029"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869777031" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
 					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235114867" baseType="DryWetEffect">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
@@ -5265,6 +5315,16 @@
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1759098193499"/>
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235115012" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777044" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="InvertRGB" type="InvertRGB" uniqueTypeId="A105" uniqueId="1792869777037" baseType="Effect" dwType="Effect"/>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792869777048"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869777050" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235115021" baseType="DryWetEffect">
@@ -6420,6 +6480,16 @@
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197531" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777063" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="InvertRGB" type="InvertRGB" uniqueTypeId="A105" uniqueId="1792869777056" baseType="Effect" dwType="Effect"/>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792869777067"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869777069" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
 					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235197540" baseType="DryWetEffect">
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
@@ -7050,6 +7120,16 @@
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1759098192690"/>
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197685" baseType="Mixer"/>
+						</ChoosableMixer>
+					</RenderPass>
+					<RenderPass storage="0" name="InvertRGB" type="DryWetEffect" uniqueTypeId="A105" uniqueId="1792869777082" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
+						<RenderPass name="InvertRGB" type="InvertRGB" uniqueTypeId="A105" uniqueId="1792869777075" baseType="Effect" dwType="Effect"/>
+						<ChoosableMixer name="Mixer">
+							<VideoMixerStateID uniqueId="1792869777086"/>
+							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1792869777088" baseType="Mixer"/>
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Kaleidoscope" type="DryWetEffect" uniqueTypeId="sy02" uniqueId="1683235197694" baseType="DryWetEffect">

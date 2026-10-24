@@ -352,18 +352,11 @@ func WriteFileAtomic(path string, data []byte, perm os.FileMode) error {
 		LogIfError(os.Remove(tmpName))
 		return fmt.Errorf("WriteFileAtomic: %w", err)
 	}
-	// Windows won't rename onto an existing file the way Unix does, so the
-	// target is removed first. That is the one instant where a reader could find
-	// nothing there - far smaller than the window os.WriteFile leaves open, and
-	// the alternative (ReplaceFile) isn't reachable without more syscall
-	// plumbing than this is worth.
-	if runtime.GOOS == "windows" && PathExists(path) {
-		if err := os.Remove(path); err != nil {
-			LogIfError(os.Remove(tmpName))
-			return fmt.Errorf("WriteFileAtomic: %w", err)
-		}
-	}
-	if err := os.Rename(tmpName, path); err != nil {
+	// Go's Windows rename already replaces an existing file. Deleting the
+	// target first creates a missing-file/delete-pending race between saves.
+	// Keep the old file until replacement succeeds, retrying brief Windows
+	// sharing locks held by readers or another save.
+	if err := replaceFile(tmpName, path); err != nil {
 		LogIfError(os.Remove(tmpName))
 		return fmt.Errorf("WriteFileAtomic: %w", err)
 	}

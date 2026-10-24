@@ -49,28 +49,41 @@ An effect such as Goo is defined once as `effect.goo` and
 Write the unnumbered definitions only. The two runtime controls target the
 first and second instances in the clip's effect chain.
 
-## Recommended first test: Invert RGB
+## Included example: Invert RGB
 
-Use Resolume's built-in **Invert RGB** effect as the first addition. At the time
-of this review, it is absent from Palette's `resolume.json`, effect parameter
-definitions, and all three shipped compositions. It avoids third-party plugin
-installation and gives clear visual feedback when enabled. Resolume uses it
-with an opacity control in its own
-[control tutorial](https://resolume.com/support/en/keyboard-shortcuts).
+Resolume's built-in **Invert RGB** effect is registered in `paramdefs.json`
+and `resolume.json`. `PaletteDefault.avc` and `PaletteDefaultSP.avc` include
+two instances on clip 1 of each A/B/C/D layer, after Infinite Zoom in each
+effect group. No third-party plugin installation or binary rebuild is needed.
+The legacy `PaletteKora.avc` layout is not updated; see its routing limitation
+below.
 
-Start with one instance on clip 1 of patch A. Register its bypass toggle and
-opacity control, inspect their actual OSC identifiers and types in Resolume,
-and verify both from Palette before adding the second instance and repeating
-on B/C/D. Follow the naming rules below; do not assume the display name
-"Invert RGB" gives the exact OSC identifier. Keep the toggle's initial value
-false and leave it out of Rand until manual control is working.
+The native effect class is `InvertRGB` (`A105`); its OSC identifiers are
+`invertrgb` and `invertrgb2`. Each instance exposes these Palette controls:
+
+| Definition | Initial value | OSC suffix for instance 1 |
+| --- | --- | --- |
+| `effect.invertrgb` | `false` (bypassed) | `/invertrgb/bypassed` (0 enables, 1 bypasses) |
+| `effect.invertrgb:opacity` | `1.0` | `/invertrgb/opacity` |
+| `effect.invertrgb:r` | `1.0` | `/invertrgb/effect/r` |
+| `effect.invertrgb:g` | `1.0` | `/invertrgb/effect/g` |
+| `effect.invertrgb:b` | `1.0` | `/invertrgb/effect/b` |
+
+The numeric controls are floats in the range 0–1. Opacity belongs to the
+outer effect, so its address does **not** include `/effect/`. Alpha inversion
+is left at Resolume's default of zero. The toggle and controls have no Rand
+fields, so randomization leaves them unchanged. Both numbered instances are
+generated automatically, just like Goo above.
+
+After deploying the JSON files and composition and restarting the engine,
+test A with `palette patchset A effect.1-invertrgb true`, then restore bypass
+with `palette patchset A effect.1-invertrgb false`. Use `effect.2-invertrgb`
+for the second instance. Bypass, opacity, and all three RGB channels have been
+checked through OSC against Resolume's REST readback on all eight instances.
 
 Test the two instances separately. With full inversion settings and opacity,
 two inversions can cancel each other, making working controls appear to have
 no effect. Keep the second instance bypassed while checking the first.
-
-This is a proposed test case, not an implemented addition: this documentation
-change does not install or register Invert RGB or modify any composition.
 
 ## 1. Install the effect and prepare the composition
 

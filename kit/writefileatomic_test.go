@@ -1,9 +1,11 @@
 package kit
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -22,8 +24,7 @@ func TestWriteFileAtomicCreates(t *testing.T) {
 	}
 }
 
-// Replacing an existing file is the case that matters, and the one that needs
-// the extra step on Windows, where rename won't overwrite.
+// Replacing an existing file must publish just the new contents.
 func TestWriteFileAtomicReplaces(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "existing.json")
 	if err := os.WriteFile(path, []byte("old contents, longer than the new"), 0644); err != nil {
@@ -77,5 +78,59 @@ func TestWriteFileAtomicMissingDirectory(t *testing.T) {
 	}
 	if PathExists(path) {
 		t.Fatal("a failed write should leave nothing behind")
+	}
+}
+
+// Slider requests and all-patch changes can save the same working preset at
+// once. Every save must succeed and publish a complete document.
+func TestWriteFileAtomicConcurrentWriters(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "_Current.json")
+	if err := WriteFileAtomic(path, []byte("initial"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	const writers, rounds = 8, 25
+	start := make(chan struct{})
+	errs := make(chan error, writers)
+	var wg sync.WaitGroup
+	for writer := 0; writer < writers; writer++ {
+		wg.Add(1)
+		go func(writer int) {
+			defer wg.Done()
+			<-start
+			for round := 0; round < rounds; round++ {
+				data := []byte(strings.Repeat(fmt.Sprintf("writer %d round %d\n", writer, round), 100))
+				if err := WriteFileAtomic(path, data, 0644); err != nil {
+					errs <- err
+					return
+				}
+			}
+		}(writer)
+	}
+	close(start)
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		t.Error(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	if len(lines) != 100 {
+		t.Fatalf("incomplete save: got %d lines, want 100", len(lines))
+	}
+	for _, line := range lines {
+		if line != lines[0] {
+			t.Fatal("saved file contains data from different writers")
+		}
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("save left %d files, want just the working preset", len(entries))
 	}
 }

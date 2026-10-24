@@ -29,6 +29,7 @@ type Quad struct {
 	started   bool
 	rand      *rand.Rand
 	randMutex sync.Mutex
+	saveMutex sync.Mutex
 }
 
 func NewQuad() *Quad {
@@ -495,6 +496,11 @@ func (quad *Quad) saveQuad(quadName string) error {
 // quad category directory. In practice this is always the master quad directory
 // (named presets and _Current); theme directories only ever hold links.
 func (quad *Quad) saveQuadToDir(category string, quadName string) error {
+	// A slider can have multiple HTTP requests in flight, and editing all
+	// patches also saves the same _Current file. Lock before taking the
+	// snapshot so an older snapshot cannot overwrite a newer completed save.
+	quad.saveMutex.Lock()
+	defer quad.saveMutex.Unlock()
 
 	path, err := WritableSavedFilePath(category, quadName, ".json")
 	if err != nil {

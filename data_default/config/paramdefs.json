@@ -43,6 +43,12 @@
 "effect.infinitezoom:alpha": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
 "effect.infinitezoom:numslices": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.5", "comment": "#" },
 
+"effect.invertrgb": {"valuetype": "bool", "min": "false", "max": "true", "init": "false", "comment": "# Enable Invert RGB" },
+"effect.invertrgb:opacity": {"valuetype": "float", "min": "0.0", "max": "1.0", "init": "1.0", "comment": "# Invert RGB opacity" },
+"effect.invertrgb:r": {"valuetype": "float", "min": "0.0", "max": "1.0", "init": "1.0", "comment": "# Red inversion" },
+"effect.invertrgb:g": {"valuetype": "float", "min": "0.0", "max": "1.0", "init": "1.0", "comment": "# Green inversion" },
+"effect.invertrgb:b": {"valuetype": "float", "min": "0.0", "max": "1.0", "init": "1.0", "comment": "# Blue inversion" },
+
 "effect.kaleidoscope": {"valuetype": "bool", "min": "false", "max": "true", "randmax": "0.05", "init": "false", "comment": "#" },
 "effect.kaleidoscope:angles": {"valuetype": "float", "min": "0.0", "max": "1.0", "randmin":"0.1", "randmax":"1.0", "init": "0.3", "comment": "#" },
 "effect.kaleidoscope:rotation": {"valuetype": "float", "min": "0.0", "max": "1.0",  "init": "0.0", "comment": "#" },
