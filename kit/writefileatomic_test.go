@@ -43,8 +43,7 @@ func TestWriteFileAtomicReplaces(t *testing.T) {
 	}
 }
 
-// Rewriting the same file over and over is what the feedback database does -
-// every Like or Avoid press - so nothing may be left behind.
+// Repeated atomic writes must leave no temporary files behind.
 func TestWriteFileAtomicLeavesNoTempFiles(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "db.json")

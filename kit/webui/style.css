@@ -1531,11 +1531,11 @@ body:not(.touch-input) #controls button:hover {
     white-space: nowrap;
 }
 
-.interest-readout.interest-avoid {
+.interest-readout.interest-rejected {
     color: #ffd9a0;
 }
 
-.interest-readout.interest-like {
+.interest-readout.interest-accepted {
     color: #b3ffb3;
 }
 

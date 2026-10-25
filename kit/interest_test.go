@@ -125,29 +125,3 @@ func TestListCaptureMonitors(t *testing.T) {
 	}
 	t.Logf("capture monitors: %s", list)
 }
-
-func TestAutoFeedbackWeighsLess(t *testing.T) {
-	setupFeedbackTest(t)
-
-	// The same avoided set, recorded automatically in one category and by
-	// button press in another; the auto example must produce a smaller
-	// badness. (Categories are independent stores, which makes them a
-	// convenient way to compare the two sources in isolation.)
-	params := exampleParams("0.05", "5.0")
-	if err := AddRandFeedbackSource("cat_auto", "avoid", params, "auto"); err != nil {
-		t.Fatal(err)
-	}
-	if err := AddRandFeedback("cat_user", "avoid", params); err != nil {
-		t.Fatal(err)
-	}
-
-	autoBadness := badnessOf(t, params, "cat_auto")
-	userBadness := badnessOf(t, params, "cat_user")
-
-	if autoBadness >= userBadness {
-		t.Errorf("auto example should weigh less: auto=%f user=%f", autoBadness, userBadness)
-	}
-	if autoBadness <= 0 {
-		t.Errorf("auto example should still contribute: auto=%f", autoBadness)
-	}
-}

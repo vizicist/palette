@@ -1,20 +1,12 @@
 package kit
 
 // Automatic "interestingness" evaluation of the visual output, used to
-// train the learned Rand feature (randfeedback.go) without button presses.
+// filter random patches by their response to cursor gestures.
 //
-// After Rand is applied, StartInterestEvaluation generates random cursor
-// gestures for a few seconds (Palette only draws when someone plays, so
-// synthetic input guarantees there is output to judge) while sampling the
-// Resolume output monitor at low rate. Each sample is scored with cheap
-// classical image statistics - no output and all-one-color output score
-// near zero, edge-rich varied output scores near one - and the aggregate
-// decides whether the parameter set that Rand produced gets recorded as
-// an automatic "avoid" or "like" example.
-//
-// Automatic examples are stored with Source "auto" and carry less weight
-// than button presses (see feedbackExampleWeight), so human judgment
-// stays authoritative.
+// After Rand is applied, StartInterestEvaluation draws known strokes while
+// sampling the Resolume output. New activity must follow the strokes' positions
+// to score well. General image richness is a small bonus, so controllable
+// painting is preferred over unrelated, busy animation.
 
 import (
 	"encoding/json"
@@ -28,22 +20,12 @@ import (
 const (
 	// Size of the downscaled capture the metrics run on.
 	interestCaptureSize = 128
-	// How long to generate gestures and sample the output.
-	interestEvalSeconds = 2.5
-	// Delay before the first sample, letting sprites appear.
-	interestWarmupSeconds = 0.75
-	// Time between samples.
-	interestSampleSeconds = 0.5
-	// Duration and step count of each generated gesture.
-	interestGestureSeconds = 0.8
-	interestGestureSteps   = 12
-	// Defaults for the auto-label thresholds, used when the
-	// global.interestavoid / global.interestlike params are unavailable.
-	// An aggregate score below the avoid threshold records an automatic
-	// "avoid"; above the like threshold an automatic "like"; the band in
-	// between records nothing.
-	interestAvoidDefault = 0.15
-	interestLikeDefault  = 0.80
+	// Measure background animation, then allow the new cursor position to
+	// render before capturing its response. Twelve probes take a few seconds.
+	interestQuietDelay    = 100 * time.Millisecond
+	interestResponseDelay = 300 * time.Millisecond
+	// Default minimum painting score for accepting a random patch.
+	interestLevelDefault = 0.80
 )
 
 // InterestMetrics holds the sub-metrics and combined score of one sample.
@@ -159,14 +141,17 @@ func computeInterestMetrics(luma []float64, w int, h int, prev []float64) Intere
 // The most recent evaluation result, readable via the global.interest_score
 // API.
 type interestResult struct {
-	Category string          `json:"category"`
-	Patch    string          `json:"patch"`
-	Time     string          `json:"time"`
-	Samples  int             `json:"samples"`
-	Score    float64         `json:"score"`
-	Verdict  string          `json:"verdict"` // avoid, like, or none
-	Last     InterestMetrics `json:"last"`
-	Error    string          `json:"error,omitempty"`
+	Category   string          `json:"category"`
+	Patch      string          `json:"patch"`
+	Time       string          `json:"time"`
+	Samples    int             `json:"samples"`
+	Score      float64         `json:"score"`
+	Last       InterestMetrics `json:"last"`
+	Appearance float64         `json:"appearance"`
+	Painting   PaintingMetrics `json:"painting"`
+	Level      float64         `json:"level"`
+	Accepted   bool            `json:"accepted"`
+	Error      string          `json:"error,omitempty"`
 }
 
 var (
@@ -198,11 +183,10 @@ func setInterestResult(r *interestResult) {
 }
 
 // StartInterestEvaluation kicks off an asynchronous evaluation of the
-// current output for a patch and category: generate random gestures for a
-// few seconds, sample the output monitor, score it, and feed the verdict
-// back into the Rand feedback database. patch may be "*" to spread the
-// gestures over all four patches (they share params after a Rand in
-// all-patches mode).
+// current output for a patch and category: draw controlled strokes, sample
+// their spatial response on the output monitor, and report acceptance.
+// patch may be "*" to spread the gestures over all four patches (they share
+// params after a Rand in all-patches mode).
 func StartInterestEvaluation(patch string, category string) error {
 
 	enabled, err := GetParamBool("global.interesteval")
@@ -210,8 +194,7 @@ func StartInterestEvaluation(patch string, category string) error {
 		return nil
 	}
 
-	// Snapshot the params being judged NOW; the evaluation labels this
-	// snapshot even if the user changes params while it runs.
+	// Validate the requested patch and category before starting the probes.
 	paramPatch := patch
 	if paramPatch == "*" {
 		paramPatch = "A"
@@ -220,57 +203,58 @@ func StartInterestEvaluation(patch string, category string) error {
 	if !ok {
 		return fmt.Errorf("StartInterestEvaluation: no such patch %s", paramPatch)
 	}
-	snapshot := map[string]string{}
+	hasCategory := false
 	prefix := category + "."
 	for _, nm := range p.ParamNames() {
 		if len(nm) > len(prefix) && nm[:len(prefix)] == prefix {
-			snapshot[nm] = p.Get(nm)
+			hasCategory = true
+			break
 		}
 	}
-	if len(snapshot) == 0 {
+	if !hasCategory {
 		return fmt.Errorf("StartInterestEvaluation: no params for category %s", category)
 	}
 
 	gen := interestGeneration.Add(1)
-	go runInterestEvaluation(gen, patch, category, snapshot)
+	go runInterestEvaluation(gen, patch, category)
 	return nil
 }
 
-func runInterestEvaluation(gen int64, patch string, category string, snapshot map[string]string) {
+func runInterestEvaluation(gen int64, patch string, category string) {
 
 	superseded := func() bool { return interestGeneration.Load() != gen }
-
-	// Gesture generator: synthetic input so there is something to judge.
-	go func() {
-		deadline := time.Now().Add(time.Duration(interestEvalSeconds * float64(time.Second)))
-		for time.Now().Before(deadline) && !superseded() {
-			gesturePatch := patch
-			if patch == "*" {
-				gesturePatch = string("ABCD"[time.Now().UnixNano()%4])
-			}
-			theCursorManager.GenerateRandomGesture(gesturePatch+",interest",
-				interestGestureSteps,
-				time.Duration(interestGestureSeconds*float64(time.Second)))
-		}
-	}()
-
-	time.Sleep(time.Duration(interestWarmupSeconds * float64(time.Second)))
 
 	monitor := -1
 	if v, err := GetParamInt("global.interestmonitor"); err == nil {
 		monitor = v
 	}
 
-	var prev []float64
 	var last InterestMetrics
-	total := 0.0
+	var painting PaintingMetrics
+	total, appearance := 0.0, 0.0
 	samples := 0
-	deadline := time.Now().Add(time.Duration((interestEvalSeconds - interestWarmupSeconds) * float64(time.Second)))
-	for time.Now().Before(deadline) {
+	transform := currentInterestCursorTransform()
+	for index, stroke := range interestPaintingStrokes() {
 		if superseded() {
 			return
 		}
-		luma, err := CaptureMonitorLuma(monitor, interestCaptureSize, interestCaptureSize)
+		gesturePatch := patch
+		if patch == "*" {
+			gesturePatch = string("ABCD"[index])
+		}
+		err := samplePaintingStroke(gesturePatch, stroke, monitor, transform, superseded,
+			func(frame InterestMetrics, response PaintingMetrics) {
+				last = frame
+				appearance += frame.Score
+				painting.Response += response.Response
+				painting.Localization += response.Localization
+				painting.Score += response.Score
+				total += paintingInterestScore(frame.Score, response)
+				samples++
+			})
+		if superseded() {
+			return
+		}
 		if err != nil {
 			LogWarn("interest evaluation: capture failed", "err", err)
 			setInterestResult(&interestResult{
@@ -279,49 +263,104 @@ func runInterestEvaluation(gen int64, patch string, category string, snapshot ma
 			})
 			return
 		}
-		last = computeInterestMetrics(luma, interestCaptureSize, interestCaptureSize, prev)
-		prev = luma
-		total += last.Score
-		samples++
-		time.Sleep(time.Duration(interestSampleSeconds * float64(time.Second)))
 	}
 
 	if superseded() || samples == 0 {
 		return
 	}
 	score := total / float64(samples)
-
-	// Thresholds are user-tunable global params; avoid is checked first,
-	// so a score of exactly 0 with an avoid threshold of 0 records
-	// nothing (0 disables avoid, 1 disables like).
-	avoidThreshold := interestAvoidDefault
-	if v, err := GetParamFloat("global.interestavoid"); err == nil {
-		avoidThreshold = v
+	appearance /= float64(samples)
+	painting.Response /= float64(samples)
+	painting.Localization /= float64(samples)
+	painting.Score /= float64(samples)
+	level := interestLevelDefault
+	if v, err := GetParamFloat("global.interestlevel"); err == nil {
+		level = v
 	}
-	likeThreshold := interestLikeDefault
-	if v, err := GetParamFloat("global.interestlike"); err == nil {
-		likeThreshold = v
-	}
-
-	verdict := "none"
-	if score < avoidThreshold {
-		verdict = "avoid"
-	} else if score > likeThreshold {
-		verdict = "like"
-	}
+	accepted := acceptsPaintingScore(score, level)
 
 	LogInfo("interest evaluation", "patch", patch, "category", category,
-		"score", score, "samples", samples, "verdict", verdict)
+		"score", score, "painting", painting.Score, "appearance", appearance,
+		"samples", samples, "level", level, "accepted", accepted)
 
 	setInterestResult(&interestResult{
 		Category: category, Patch: patch,
 		Time:    time.Now().Format(time.RFC3339),
-		Samples: samples, Score: score, Verdict: verdict, Last: last,
+		Samples: samples, Score: score, Last: last,
+		Appearance: appearance, Painting: painting,
+		Level: level, Accepted: accepted,
 	})
+}
 
-	if verdict != "none" && !superseded() {
-		if err := AddRandFeedbackSource(category, verdict, snapshot, "auto"); err != nil {
-			LogWarn("interest evaluation: feedback failed", "err", err)
-		}
+// Capture a quiet interval and a response interval at each cursor position. A
+// stroke always releases its cursor, including on capture failure or when a
+// newer evaluation supersedes it, so a canceled Rand cannot leave notes held.
+func samplePaintingStroke(patch string, stroke [3]CursorPos, monitor int, transform interestCursorTransform,
+	superseded func() bool, sample func(InterestMetrics, PaintingMetrics)) error {
+
+	cm := theCursorManager
+	// Start each probe stroke on fresh graphics. Otherwise repeated tests of
+	// persistent paint find an already-covered canvas and mistake overpainting
+	// the same pixels for a patch that does not respond to the cursor.
+	if p := Patchs[patch]; p != nil {
+		p.clearGraphics()
 	}
+	time.Sleep(150 * time.Millisecond)
+	gid := cm.UniqueGID()
+	tag := patch + ",interest"
+	var current CursorPos
+	active := false
+	defer func() {
+		if active {
+			cm.ExecuteCursorEvent(NewCursorEvent(gid, tag, "up", current))
+		}
+	}()
+	capture := func() ([]float64, error) {
+		return CaptureMonitorLuma(monitor, interestCaptureSize, interestCaptureSize)
+	}
+	previous := transform.screenPosition(stroke[0])
+	for index, pos := range stroke {
+		if superseded() {
+			return nil
+		}
+		quiet, err := capture()
+		if err != nil {
+			return err
+		}
+		time.Sleep(interestQuietDelay)
+		before, err := capture()
+		if err != nil {
+			return err
+		}
+		if superseded() {
+			return nil
+		}
+		event := "drag"
+		if index == 0 {
+			event = "down"
+		}
+		current, active = pos, true
+		cm.ExecuteCursorEvent(NewCursorEvent(gid, tag, event, pos))
+		time.Sleep(interestResponseDelay)
+		if superseded() {
+			return nil
+		}
+		after, err := capture()
+		if err != nil {
+			return err
+		}
+		idle := make([]float64, len(before))
+		for i := range idle {
+			idle[i] = math.Abs(before[i]-quiet[i]) * float64(interestResponseDelay) / float64(interestQuietDelay)
+		}
+		expected := transform.screenPosition(pos)
+		frame := computeInterestMetrics(after, interestCaptureSize, interestCaptureSize, before)
+		response := computePaintingMetrics(before, after, idle, interestCaptureSize, interestCaptureSize, previous, expected)
+		LogOfType("cursor", "painting spatial response", "expectedX", expected.X, "expectedY", expected.Y,
+			"observedX", response.centerX, "observedY", response.centerY,
+			"response", response.Response, "localization", response.Localization)
+		sample(frame, response)
+		previous = expected
+	}
+	return nil
 }

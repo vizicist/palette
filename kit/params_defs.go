@@ -48,9 +48,10 @@ type ParamDefBool struct {
 }
 
 type ParamDefString struct {
-	values  []string
-	randmax string // if set, always use this value for rand
-	hasRand bool   // true if randmax was specified
+	values      []string
+	randchoices []string // optional subset for random selection; values stays complete
+	randmax     string   // if set, always use this value for rand
+	hasRand     bool     // true if randmax or randchoices was specified
 }
 
 type ParamsMap map[string]any
@@ -275,7 +276,40 @@ func sortShapeNames(names []string) {
 	})
 }
 
-// LoadParamDefs initializes the list of parameters
+// parseStringRandChoices validates an optional random-only subset of an enum.
+func parseStringRandChoices(jmap map[string]any, values []string) ([]string, error) {
+	raw, present := jmap["randchoices"]
+	if !present {
+		return nil, nil
+	}
+	items, ok := raw.([]any)
+	if !ok || len(items) == 0 {
+		return nil, fmt.Errorf("randchoices must be a nonempty array of strings")
+	}
+	valid := make(map[string]bool, len(values))
+	for _, value := range values {
+		valid[value] = true
+	}
+	seen := make(map[string]bool, len(items))
+	choices := make([]string, 0, len(items))
+	for _, item := range items {
+		choice, ok := item.(string)
+		if !ok {
+			return nil, fmt.Errorf("randchoices contains a non-string value")
+		}
+		if !valid[choice] {
+			return nil, fmt.Errorf("randchoices contains unknown option %q", choice)
+		}
+		if seen[choice] {
+			return nil, fmt.Errorf("randchoices contains duplicate option %q", choice)
+		}
+		seen[choice] = true
+		choices = append(choices, choice)
+	}
+	return choices, nil
+}
+
+// LoadParamDefs initializes the list of parameters.
 func LoadParamDefs() error {
 
 	ParamDefs = make(map[string]ParamDef)
@@ -411,17 +445,22 @@ func LoadParamDefs() error {
 			// is actually an "enum" type name
 			enumName := min
 			values := ParamEnums[enumName]
+			choices, err := parseStringRandChoices(jmap, values)
+			if err != nil {
+				return fmt.Errorf("LoadParamDefs: param %s: %w", name, err)
+			}
 			// randmax for string is a specific value to always use
 			randmax := ""
-			hasRand := false
+			hasRand := choices != nil
 			if rm, ok := jmap["randmax"].(string); ok {
 				randmax = rm
 				hasRand = true
 			}
 			pd.TypedParamDef = ParamDefString{
-				values:  values,
-				randmax: randmax,
-				hasRand: hasRand,
+				values:      values,
+				randchoices: choices,
+				randmax:     randmax,
+				hasRand:     hasRand,
 			}
 		}
 
@@ -471,7 +510,7 @@ func ParamInitValuesForCategory(category string) (string, error) {
 }
 
 // RandomValueForParam generates a random value for a parameter based on its definition.
-// Returns empty string if the parameter has no randmin/randmax specified.
+// Returns an empty string if the parameter has no randomization settings.
 func RandomValueForParam(def ParamDef) string {
 	switch td := def.TypedParamDef.(type) {
 	case ParamDefFloat:
@@ -507,21 +546,23 @@ func RandomValueForParam(def ParamDef) string {
 		if td.randmax != "" {
 			return td.randmax
 		}
-		if len(td.values) == 0 {
+		choices := td.values
+		if td.randchoices != nil {
+			choices = td.randchoices
+		}
+		if len(choices) == 0 {
 			return ""
 		}
-		return td.values[rand.Intn(len(td.values))]
+		return choices[rand.Intn(len(choices))]
 	default:
 		return ""
 	}
 }
 
 // ParamRandomValuesForCategory returns a JSON object mapping param names to random values.
-// Only includes params that have randmin/randmax specified in their definition.
+// Only includes params with randomization settings in their definition.
 func ParamRandomValuesForCategory(category string) (string, error) {
-	// Candidates are drawn from the plain rand distribution, then one is
-	// chosen using the learned Like/Avoid feedback (see randfeedback.go).
-	randMap := PickRandomParamsForCategory(category)
+	randMap := randomParamsOnce(category)
 	jsonBytes, err := json.Marshal(randMap)
 	if err != nil {
 		return "", fmt.Errorf("ParamRandomValuesForCategory: %w", err)

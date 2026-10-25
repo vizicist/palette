@@ -214,9 +214,9 @@
 "stepper.samplesplitter_synth": {"valuetype":"string", "min":"synth", "max":"synth", "init":"P_16_C_01", "comment":"# Stepper samplesplitter MIDI destination" },
 
 "global.interesteval": {"valuetype":"bool", "min":"false", "max":"true", "init":"true", "comment":"# auto-evaluate output after Rand" },
+"global.interestlevel": {"valuetype":"float", "min":"0.0", "max":"1.0", "init":"0.80", "comment":"# Interesting level: minimum painting score for accepting random patches; lower is more permissive" },
+"global.randeffectcount": {"valuetype":"int", "min":"0", "max":"10", "init":"6", "comment":"# Number of distinct effect plugins in a random patch; capped at the available plugins" },
 "global.interestmonitor": {"valuetype":"int", "min":"-1", "max":"8", "init":"-1", "comment":"# monitor to capture, -1 = auto (largest non-primary)" },
-"global.interestavoid": {"valuetype":"float", "min":"0.0", "max":"1.0", "init":"0.15", "comment":"# auto-avoid when interest score is below this; 0 disables" },
-"global.interestlike": {"valuetype":"float", "min":"0.0", "max":"1.0", "init":"0.80", "comment":"# auto-like when interest score is above this; 1 disables" },
 
 "global.attractenabled": {"valuetype":"bool", "min":"false", "max":"true", "init":"false", "comment":"# enable attract mode" },
 "global.attractidlesecs": {"valuetype":"int", "min":"20", "max":"3600", "init":"40", "comment":"# Attract timeout" },
@@ -352,7 +352,7 @@
 "visual.rotangspeed": {"valuetype":"float", "min":"-120.0", "max":"120.0", "randmin":"-120.0", "randmax":"120.0", "init":"0.0", "comment":"#" },
 "visual.rotauto": {"valuetype":"bool", "min":"false", "max":"true", "randmax":"0.5", "init":"false", "comment":"#" },
 "visual.saturation": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.75", "randmax":"1.0", "init":"1.0", "comment":"#" },
-"visual.shape": {"valuetype":"string", "min":"shape", "max":"shape", "randmax":"", "init":"square", "comment":"# empty randmax = Rand picks any shape" },
+"visual.shape": {"valuetype":"string", "min":"shape", "max":"shape", "randmax":"", "randchoices":["line", "circle", "square", "triangle"], "init":"square", "comment":"# Rand uses randchoices; manual selection keeps all shapes" },
 "visual.shapesides": {"valuetype":"int", "min":"1", "max":"24", "randmin":"3", "randmax":"9", "init":"5", "comment":"# points/petals/arms/teeth, depends on shape" },
 "visual.shapedetail": {"valuetype":"float", "min":"0.0", "max":"1.0", "randmin":"0.2", "randmax":"0.8", "init":"0.5", "comment":"# secondary shape control, depends on shape" },
 "visual.sizefinal": {"valuetype":"float", "min":"0.0", "max":"10.0", "randmin":"0.0", "randmax":"4.0", "init":"0.4", "comment":"#" },

@@ -1037,8 +1037,8 @@ async function loadParams() {
     }
 }
 
-// Categories whose Rand results can be trained with Like/Avoid feedback.
-const feedbackCategories = ['misc', 'sound', 'visual', 'effect'];
+// Parameter categories with space for Rand's evaluation readout.
+const interestCategories = ['misc', 'sound', 'visual', 'effect'];
 
 // Init/Rand only make sense where there are params to act on; Save As is
 // offered even on the categories with none (Quad, Patch), since it saves
@@ -1052,7 +1052,7 @@ function paramHeaderHtml({ includeInitRand = false, includeSaveAs = false } = {}
     if (includeSaveAs) {
         html += '<button class="param-header-btn" id="btn-param-saveas">Save As</button>';
     }
-    if (includeInitRand && feedbackCategories.includes(UIState.currentCategory)) {
+    if (includeInitRand && interestCategories.includes(UIState.currentCategory)) {
         // Filled in by doRand as automatic evaluations complete;
         // re-rendered from module state so params-view reloads don't
         // lose the number.
@@ -1250,7 +1250,7 @@ async function fetchInterestScore() {
 // taken over.
 async function waitForInterestResult(gen, beforeTime) {
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 24; i++) {
         await sleep(500);
         if (gen !== interestPollGeneration) return null;
         let result;
@@ -1264,7 +1264,7 @@ async function waitForInterestResult(gen, beforeTime) {
     return null;
 }
 
-// How many Rands to try before giving up on reaching auto-like.
+// How many Rands to try before giving up on reaching Interesting level.
 const RAND_MAX_ATTEMPTS = 10;
 
 async function applyRandValues() {
@@ -1278,10 +1278,8 @@ async function applyRandValues() {
 
 // doRand applies random values and, for screen-visible categories, waits
 // for the automatic interestingness evaluation. Anything short of an
-// auto-like verdict triggers another Rand, up to RAND_MAX_ATTEMPTS.
-// Along the way the below-threshold attempts get recorded as automatic
-// avoids, so the retries themselves train the picker. Pressing Rand
-// again supersedes a loop already in progress.
+// acceptance level triggers another Rand, up to RAND_MAX_ATTEMPTS.
+// Pressing Rand again supersedes a loop already in progress.
 async function doRand() {
     const category = UIState.currentCategory;
     const evalCategory =
@@ -1307,7 +1305,7 @@ async function doRand() {
             await reloadParamsPreservingScroll();
             if (!evalCategory) return;
 
-            setInterestReadout(`interest: evaluating… (try ${attempt})`, '', category);
+            setInterestReadout(`painting: evaluating (try ${attempt})`, '', category);
             const result = await waitForInterestResult(gen, beforeTime);
             if (gen !== interestPollGeneration) return; // a newer Rand took over
             if (result === null) {
@@ -1317,20 +1315,21 @@ async function doRand() {
                 return;
             }
             if (result.error) {
-                setInterestReadout('interest: unavailable', '', category);
+                setInterestReadout('painting: unavailable', '', category);
                 return;
             }
 
             const score = Number(result.score).toFixed(2);
-            if (result.verdict === 'like') {
+            const accepted = result.accepted === true;
+            if (accepted) {
                 const tries = attempt > 1 ? `, try ${attempt}` : '';
-                setInterestReadout(`interest: ${score} (auto-like${tries})`, 'interest-like', category);
+                setInterestReadout(`painting: ${score} (accepted${tries})`, 'interest-accepted', category);
                 return;
             }
-            setInterestReadout(`interest: ${score} — re-randing`,
-                result.verdict === 'avoid' ? 'interest-avoid' : '', category);
+            setInterestReadout(`painting: ${score} — re-randing`,
+                'interest-rejected', category);
         }
-        setInterestReadout(`interest: no auto-like in ${RAND_MAX_ATTEMPTS} tries`, '', category);
+        setInterestReadout(`painting: none accepted in ${RAND_MAX_ATTEMPTS} tries`, '', category);
     } catch (err) {
         console.error('Failed to randomize params:', err);
         showToast('Rand failed: ' + err.message);
@@ -1365,7 +1364,7 @@ function setupParamHeaderButtons() {
     }
 
     // Rand button - randomize all params, re-randing until the automatic
-    // evaluation reaches auto-like (see doRand)
+    // evaluation reaches the configured acceptance level (see doRand)
     const randBtn = document.getElementById('btn-param-rand');
     if (randBtn) {
         randBtn.addEventListener('click', () => doRand());
