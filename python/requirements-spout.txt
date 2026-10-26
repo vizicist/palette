@@ -1,0 +1,4 @@
+# Windows; use 64-bit CPython 3.13 (SpoutGL has no Python 3.14 wheel).
+SpoutGL==0.1.1
+glfw>=2.7.0,<3
+PyOpenGL>=3.1.7,<4
