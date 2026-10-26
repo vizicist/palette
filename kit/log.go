@@ -18,7 +18,9 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var theLog *zap.SugaredLogger
+// Keep logging safe before InitLog runs. This also gives tests a non-nil
+// logger to restore when they temporarily replace the package logger.
+var theLog = zap.NewNop().Sugar()
 var time0 = time.Time{}
 var firstTime = true
 var logMutex sync.Mutex
