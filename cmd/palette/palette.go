@@ -456,19 +456,18 @@ func cmdStop(args []string) (map[string]string, error) {
 	switch arg1 {
 
 	case "", "all":
-		kit.LogInfo("Palette kill is killing everything including monitor.")
-		kit.KillExecutable(kit.MonitorExe)
-		kit.KillAllExceptMonitor()
-		return nil, nil
+		kit.LogInfo("Palette stop is stopping everything including monitor.")
+		if err := kit.KillExecutable(kit.MonitorExe); err != nil {
+			return nil, err
+		}
+		return nil, kit.KillAllExceptMonitor()
 
 	case "monitor":
-		kit.KillExecutable(kit.MonitorExe)
-		return nil, nil
+		return nil, kit.KillExecutable(kit.MonitorExe)
 
 	case "engine":
 		// Don't use kit.exit API, just kill it
-		kit.KillExecutable(kit.EngineExe)
-		return nil, nil
+		return nil, kit.KillExecutable(kit.EngineExe)
 
 	default:
 		// Individual processes are stopped by setting global.process.* to false.

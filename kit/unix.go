@@ -3,6 +3,7 @@
 package kit
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -48,16 +49,24 @@ func StartDeviceInput() {
 }
 
 // KillProcess kills a process (synchronously)
-func KillExecutable(exe string) {
+func KillExecutable(exe string) (err error) {
+	defer func() { LogIfError(err) }()
 	exe = isolateExe(exe)
 	if exe == "" {
-		LogWarn("KillExecutable: empty name?")
-		return
+		return fmt.Errorf("KillExecutable: empty executable name")
 	}
 	LogInfo("KillExecutable", "exe", exe)
+	var failures []error
 	for _, candidate := range executableNameCandidates(exe) {
-		_ = exec.Command("pkill", "-x", candidate).Run()
+		if output, killErr := exec.Command("pkill", "-x", candidate).CombinedOutput(); killErr != nil {
+			var exitErr *exec.ExitError
+			if errors.As(killErr, &exitErr) && exitErr.ExitCode() == 1 {
+				continue // No matching process.
+			}
+			failures = append(failures, fmt.Errorf("stop %s: %w: %s", candidate, killErr, strings.TrimSpace(string(output))))
+		}
 	}
+	return errors.Join(failures...)
 }
 
 func IsSamplesplitterRunning() (bool, error) {

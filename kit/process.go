@@ -1,6 +1,7 @@
 package kit
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -131,13 +132,36 @@ func SyncSamplesplitterProcessForMode() {
 	}
 }
 
-func KillAllExceptMonitor() {
+func KillAllExceptMonitor() error {
 	LogInfo("KillAll")
-	// XXX - Unfortunate that this is hard-coded.
-	// KillExecutable(KeykitExe)
-	KillExecutable(MmttExe)
-	KillExecutable(BiduleExe)
-	KillExecutable(ResolumeExe)
+	// Stop the engine before its applications so it cannot restart them.
+	if err := KillExecutable(EngineExe); err != nil {
+		return err
+	}
+	var failures []error
+	stop := func(exe string) {
+		if err := KillExecutable(exe); err != nil {
+			failures = append(failures, err)
+		}
+	}
+	stop(MmttExe)
+	stop(BiduleExe)
+	// Include both editions, even if the currently configured one differs
+	// from the edition that was running when Palette started.
+	resolumeExes := []string{ResolumeExe, executableName("Arena")}
+	if theProcessManager != nil {
+		if info := theProcessManager.info["resolume"]; info != nil && info.Exe != "" {
+			resolumeExes = append(resolumeExes, info.Exe)
+		}
+	}
+	seen := map[string]bool{}
+	for _, exe := range resolumeExes {
+		key := strings.ToLower(exe)
+		if !seen[key] {
+			stop(exe)
+			seen[key] = true
+		}
+	}
 	// For GUI, close only the Palette Control window, not all Chrome windows
 	// If the window doesn't exist, that's fine - don't kill other Chrome windows
 	if CloseWindowByTitle("Palette Control") {
@@ -145,11 +169,11 @@ func KillAllExceptMonitor() {
 	} else {
 		LogInfo("KillAllExceptMonitor: no Palette Control window to close")
 	}
-	KillExecutable(EngineExe)
 	obsGracefulRecordStop()
-	KillExecutable(ObsExe)
+	stop(ObsExe)
 	KillSamplesplitter()
-	KillExecutable(ChatExe)
+	stop(ChatExe)
+	return errors.Join(failures...)
 }
 
 func IsRunning(process string) (bool, error) {

@@ -3,6 +3,7 @@
 package kit
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -11,21 +12,63 @@ import (
 	"sync"
 	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
-func KillExecutable(executable string) {
+// KillExecutable terminates every matching process and waits for it to exit.
+// Use the Windows API so stopping does not depend on taskkill being on PATH.
+func KillExecutable(executable string) (err error) {
+	defer func() { LogIfError(err) }()
 	exe := isolateExe(executable)
-	if executable == "" {
-		LogWarn("KillExecutable: empty name?")
+	if exe == "" {
+		return fmt.Errorf("KillExecutable: empty executable name")
 	}
 	LogInfo("KillExecutable", "executable", executable, "exe", exe)
-	// NOTE: do NOT use taskkill.exe instead of taskkill, it doesn't work.
-	cmd := exec.Command("taskkill", "/F", "/IM", exe)
-	// If the process isn't currently running,
-	// cmd.Run gives an "exit status 128" error,
-	// and doesn't seem like there's any other useful errors,
-	// so just ignore all errors.
-	_ = cmd.Run()
+	snapshot, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPPROCESS, 0)
+	if err != nil {
+		return fmt.Errorf("list processes to stop %s: %w", exe, err)
+	}
+	defer windows.CloseHandle(snapshot)
+	entry := windows.ProcessEntry32{Size: uint32(unsafe.Sizeof(windows.ProcessEntry32{}))}
+	var failures []error
+	for err = windows.Process32First(snapshot, &entry); err == nil; err = windows.Process32Next(snapshot, &entry) {
+		if strings.EqualFold(windows.UTF16ToString(entry.ExeFile[:]), exe) {
+			if stopErr := terminateProcessAndWait(entry.ProcessID); stopErr != nil {
+				failures = append(failures, fmt.Errorf("stop %s (PID %d): %w", exe, entry.ProcessID, stopErr))
+			}
+		}
+	}
+	if !errors.Is(err, windows.ERROR_NO_MORE_FILES) {
+		failures = append(failures, fmt.Errorf("list processes to stop %s: %w", exe, err))
+	}
+	return errors.Join(failures...)
+}
+
+func terminateProcessAndWait(pid uint32) error {
+	handle, err := windows.OpenProcess(windows.PROCESS_TERMINATE|windows.SYNCHRONIZE, false, pid)
+	if errors.Is(err, windows.ERROR_INVALID_PARAMETER) {
+		return nil // Exited since the snapshot was taken.
+	}
+	if err != nil {
+		return err
+	}
+	defer windows.CloseHandle(handle)
+	if err := windows.TerminateProcess(handle, 1); err != nil {
+		// A process that has already exited cannot be terminated again.
+		if state, waitErr := windows.WaitForSingleObject(handle, 0); waitErr == nil && state == windows.WAIT_OBJECT_0 {
+			return nil
+		}
+		return err
+	}
+	state, err := windows.WaitForSingleObject(handle, 5000)
+	if err != nil {
+		return err
+	}
+	if state != windows.WAIT_OBJECT_0 {
+		return fmt.Errorf("process did not exit within 5 seconds (wait result %d)", state)
+	}
+	return nil
 }
 
 func IsSamplesplitterRunning() (bool, error) {
