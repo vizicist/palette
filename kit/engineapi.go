@@ -143,7 +143,10 @@ func globalGUILevel(api string, apiargs map[string]string) (string, error) {
 	if err != nil || level < 0 || level > 2 {
 		return "", fmt.Errorf("global.guilevel requires level=0, 1, or 2")
 	}
-	return "", writeSpoutPerformanceActive(level == 2)
+	if err := writeSpoutPerformanceActive(level == 2); err != nil {
+		return "", err
+	}
+	return "", syncSpoutWindows(level, apiargs)
 }
 
 // globalInterestMonitors lists the capturable monitors and which one an

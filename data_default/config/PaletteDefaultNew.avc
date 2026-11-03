@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Composition name="Composition" uniqueId="1686613394415" numDecks="1" currentDeckIndex="0" numLayers="5" numColumns="5" compositionIsRelative="0">
+<Composition name="Composition" uniqueId="1686613394415" numDecks="1" currentDeckIndex="0" numLayers="5" numColumns="6" compositionIsRelative="0">
 	<versionInfo name="Resolume Avenue" majorVersion="7" minorVersion="22" microVersion="9" revision="47596"/>
 	<CompositionInfo name="PaletteDefaultNew" description="" width="1920" height="1080">
 		<DeckInfo name="AV" id="1499337861242" closed="0"/>
 	</CompositionInfo>
 	<Params name="Params">
 		<Param name="Name" T="STRING" default="" value="PaletteDefaultNew"/>
-		<ParamRange name="Speed" T="DOUBLE" default="1" value="0.99999999999837352327">
+		<ParamRange name="Speed" T="DOUBLE" default="1" value="0.99999999999827027253">
 			<PhaseSourceStatic name="PhaseSourceStatic"/>
 		</ParamRange>
 		<ParamChoice name="Beat Snap" default="1" value="5" storeChoices="0"/>
@@ -26,9 +26,6 @@
 			<FoldState component="/groupedcomponent/renderpasschaincomponent/bright.contrast/" folded="0"/>
 			<FoldState component="/groupedcomponent/renderpasschaincomponent/bright.contrast/view/groupedcomponent/" folded="0"/>
 			<FoldState component="/groupedcomponent/renderpasschaincomponent/transform/" folded="1"/>
-			<FoldState component="/groupedcomponentrenderpasschaincomponentbright.contrast" folded="0"/>
-			<FoldState component="/groupedcomponentrenderpasschaincomponentbright.contrastviewgroupedcomponent" folded="0"/>
-			<FoldState component="/groupedcomponentrenderpasschaincomponenttransform" folded="1"/>
 		</FoldParams>
 	</CompositionView>
 	<AudioTrack name="AudioTrack">
@@ -200,13 +197,20 @@
 	<Layer name="Layer" uniqueId="1543118500944" layerIndex="3">
 		<Params name="Params">
 			<Param name="Name" T="STRING" default="Layer #" value="PaletteD"/>
+			<Param name="Bypassed" T="BOOL" default="0" value="1"/>
 		</Params>
 		<Params name="Dashboard">
 			<ParamRange name="Link 1" altName="Hue" T="DOUBLE" default="0" value="0">
 				<PhaseSourceStatic name="PhaseSourceStatic"/>
 			</ParamRange>
 		</Params>
-		<ClipTransition name="ClipTransition"/>
+		<ClipTransition name="ClipTransition">
+			<Params name="Params">
+				<ParamRange name="Duration" T="DOUBLE" default="0" value="1.0546875">
+					<PhaseSourceStatic name="PhaseSourceStatic"/>
+				</ParamRange>
+			</Params>
+		</ClipTransition>
 		<LayerView name="LayerView" foldedControl="0">
 			<FoldParams name="FoldParams"/>
 		</LayerView>
@@ -341,7 +345,7 @@
 			</ParamRange>
 		</Params>
 	</TempoController>
-	<Deck name="Deck" uniqueId="1499337861242" closed="0" numLayersWithContent="5" numColumnsWithContent="4" numLayers="5" numColumns="5" deckIndex="0">
+	<Deck name="Deck" uniqueId="1499337861242" closed="0" numLayersWithContent="5" numColumnsWithContent="4" numLayers="5" numColumns="6" deckIndex="0">
 		<Params name="Params">
 			<Param name="Name" T="STRING" default="empty" value="AV"/>
 		</Params>
@@ -354,6 +358,7 @@
 		<Column uniqueId="1571349190088" columnIndex="2"/>
 		<Column uniqueId="1655159519032" columnIndex="3"/>
 		<Column uniqueId="1686613403613" columnIndex="4"/>
+		<Column uniqueId="1793745507311" columnIndex="5"/>
 		<Clip name="Clip" uniqueId="1643404540231" layerIndex="0" columnIndex="0">
 			<Params name="Params">
 				<Param name="Name" T="STRING" default="Video Router" value="Palette"/>
@@ -361,9 +366,9 @@
 			</Params>
 			<Transport name="Transport">
 				<Params name="Params">
-					<ParamRange name="Position" T="DOUBLE" default="0" value="4553.139595732674934">
+					<ParamRange name="Position" T="DOUBLE" default="0" value="3123.3455999859434087">
 						<DurationSource name="DurationSource"/>
-						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.91062791914653495873" defaultBeatsDuration="8">
+						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.62466911999718865989" defaultBeatsDuration="8">
 							<Params name="Params">
 								<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
@@ -816,6 +821,11 @@
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/wavewarp/1view/groupedcomponent/" folded="0"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/wavewarp/9" folded="1"/>
 					<FoldState component="/groupedcomponent/renderpasschaincomponent/wavewarp/9view/groupedcomponent/" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentautomask" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentautomask41" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentbendoscope" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentbendoscope40" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentbloom" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentbloom23" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentbloom23viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentbloom24" folded="0"/>
@@ -826,6 +836,7 @@
 					<FoldState component="/groupedcomponentrenderpasschaincomponentbloom26viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentbloom27" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentbloom27viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentbloom39" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentblur23" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentblur23viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentblur24" folded="1"/>
@@ -834,6 +845,7 @@
 					<FoldState component="/groupedcomponentrenderpasschaincomponentblur25viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentblur26" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentblur26viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentcolorize" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentcolorize24" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentcolorize24colorparamcolorcomponent" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentcolorize24keepgreys" folded="1"/>
@@ -842,10 +854,19 @@
 					<FoldState component="/groupedcomponentrenderpasschaincomponentcolorize25colorparamcolorcomponent" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentcolorize25keepgreys" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentcolorize25viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentcolorize37" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentcolorpass" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentcolorpass36" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentcubetiles" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentcubetiles35" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentdelayrgb" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentdelayrgb23" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentdelayrgb23viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentdelayrgb24" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentdelayrgb24viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentdelayrgb34" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentdilate" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentdilate33" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentdisplace22" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentdisplace22viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentdisplace23" folded="1"/>
@@ -858,6 +879,8 @@
 					<FoldState component="/groupedcomponentrenderpasschaincomponentedgedetection22usecolor" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentedgedetection22usecolorcolorparamcolorcomponent" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentedgedetection22viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentfisheye" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentfisheye30" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentfragment20" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentfragment20viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentfragment21" folded="1"/>
@@ -866,6 +889,8 @@
 					<FoldState component="/groupedcomponentrenderpasschaincomponentgoo19viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentgoo20" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentgoo20viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentheat" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentheat27" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponenthuerotate18" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponenthuerotate18viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponenthuerotate19" folded="1"/>
@@ -874,28 +899,38 @@
 					<FoldState component="/groupedcomponentrenderpasschaincomponentinfinitezoom17viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentinfinitezoom18" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentinfinitezoom18viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentinvertrgb" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentinvertrgb16" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentinvertrgb16viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentinvertrgb17" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentinvertrgb17viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentinvertrgb24" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentkaleidoscope15" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentkaleidoscope15viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentkaleidoscope16" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentkaleidoscope16viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentkuwahara" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentkuwahara22" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentlinearcloner14" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentlinearcloner14delay" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentlinearcloner14viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentlinearcloner15" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentlinearcloner15delay" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentlinearcloner15viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentlorez" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentlorez14" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentlorez14viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentlorez20" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentmetashape13" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentmetashape13viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentmirror12" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentmirror12viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentmirrorquad11" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentmirrorquad11viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentpalette" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentparticlesystem" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentparticlesystem16" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentpointgrid15" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentpolarkaleido10" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentpolarkaleido10viewgroupedcomponent" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentposterize9" folded="1"/>
@@ -905,11 +940,16 @@
 					<FoldState component="/groupedcomponentrenderpasschaincomponentradialcloner7" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentradialcloner7delay" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentradialcloner7viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentrecolor" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentrecolor10" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentripples6" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentripples6viewgroupedcomponent" folded="0"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentshiftglitch8" folded="1"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentshiftrgb5" folded="0"/>
 					<FoldState component="/groupedcomponentrenderpasschaincomponentshiftrgb5viewgroupedcomponent" folded="0"/>
-					<FoldState component="/groupedcomponentrenderpasschaincomponenttransform" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentshiftrgb7" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponentstripper6" folded="1"/>
+					<FoldState component="/groupedcomponentrenderpasschaincomponenttunnel2" folded="1"/>
 				</FoldParams>
 			</ClipView>
 			<VideoTrack name="VideoTrack">
@@ -927,6 +967,7 @@
 				</Params>
 				<RenderPass name="RenderPassChain">
 					<RenderPass storage="0" name="Palette" type="DryWetEffect" uniqueTypeId="PLTX" uniqueId="1655159518188" baseType="DryWetEffect">
+						<View name="View" folded="1"/>
 						<RenderPass name="Palette" type="FFGLEffect" uniqueTypeId="PLTX" uniqueId="1655159518185" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<Param name="OSC Port" T="STRING" default="" value="3334"/>
@@ -945,6 +986,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="AutoMask" type="AutoMask" uniqueTypeId="A120" uniqueId="1792873596025" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873596026"/>
@@ -955,6 +997,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Bendoscope" type="Bendoscope" uniqueTypeId="A124" uniqueId="1792873596029" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Divisions" T="DOUBLE" default="0.10000000000000000555" value="0.10000000149011611938">
@@ -977,6 +1020,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Bloom" type="Bloom" uniqueTypeId="6980402605" uniqueId="1792873590975" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Amount" T="DOUBLE" default="1" value="0.34999999403953552246">
@@ -1005,9 +1049,6 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1655159518333" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Blur" type="Blur" uniqueTypeId="A140" uniqueId="1655159518335" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -1037,6 +1078,7 @@
 								<PhaseSourceStatic name="PhaseSourceStatic"/>
 							</ParamRange>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Colorize" type="Colorize" uniqueTypeId="A103" uniqueId="1792873591059" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294946649" channelmode="2" paletteEnabled="1" color="4294946649" interpolated="0">
@@ -1078,6 +1120,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="ColorPass" type="ColorPass" uniqueTypeId="A143" uniqueId="1792873596033" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873596034"/>
@@ -1094,6 +1137,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="CubeTiles" type="CubeTiles" uniqueTypeId="A117" uniqueId="1792873596037" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873596038"/>
@@ -1110,6 +1154,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="DelayRGB" type="DelayRGB" uniqueTypeId="A152" uniqueId="1792873591041" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="G delay" altName="Delay G" T="DOUBLE" default="0.14999999999999999445" value="0.050000000745058059692">
@@ -1135,6 +1180,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Dilate" type="Dilate" uniqueTypeId="725725449995" uniqueId="1792873596041" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Size" T="DOUBLE" default="3" value="2.9999980032444000244">
@@ -1154,9 +1200,6 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1655159518340" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Displace" type="Displace" uniqueTypeId="A131" uniqueId="1655159518342" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -1183,7 +1226,7 @@
 								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.92000001668930053711">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="1">
+								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.23999999463558197021">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 								<ParamColor name="Color" T="COLOR" default="4294967295" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0"/>
@@ -1198,6 +1241,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="FishEye" type="FishEye" uniqueTypeId="A123" uniqueId="1792873593745" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873593746"/>
@@ -1221,7 +1265,7 @@
 									<DurationSource name="DurationSource" scale="0.064606741573033713011"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.33000001311302185059">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773471799942">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773469217563">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="0.32303370786516855118" value="0.32303370786516855118">
@@ -1305,6 +1349,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Heat" type="Heat" uniqueTypeId="A107" uniqueId="1792873596045" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873596046"/>
@@ -1324,11 +1369,11 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="HueRotate" type="HueRotate" uniqueTypeId="A128" uniqueId="1655159518370" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0.52477144651820939458">
+								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0.17110980387544050263">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.52477144651820939458">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.17110980387544050263">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589922724732">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589919983869">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -1375,6 +1420,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="InvertRGB" type="InvertRGB" uniqueTypeId="A105" uniqueId="1792869776942" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792869776953"/>
@@ -1397,11 +1443,11 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.68365003068807006503">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.091081233857937995979">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.68365003068807006503">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.091081233857937995979">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203517392093">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203502744088">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -1434,6 +1480,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Kuwahara" type="Kuwahara" uniqueTypeId="8166473902393820" uniqueId="1792873593749" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Radius" T="DOUBLE" default="5" value="5.0000079870223999023">
@@ -1468,11 +1515,11 @@
 								<ParamRange name="Tail Length" T="DOUBLE" default="0.5" value="0">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Start Rotation" T="DOUBLE" default="0" value="151.13271955176935535">
+								<ParamRange name="Start Rotation" T="DOUBLE" default="0" value="112.44044159963840457">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.91981310986602604629">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.81233455999899550903">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999951072471">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999938199435">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -1495,11 +1542,11 @@
 								<ParamRange name="Tail Rotation" T="DOUBLE" default="0" value="50">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Master Rotation" T="DOUBLE" default="0" value="-151.1327195517755797">
+								<ParamRange name="Master Rotation" T="DOUBLE" default="0" value="-112.44044159963790719">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.080186890133956717497">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.18766544000100579548">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999951072471">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999938199435">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -1533,6 +1580,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="LoRezEffect" type="LoRezEffect" uniqueTypeId="A142" uniqueId="1792873591089" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Pixel Size" T="DOUBLE" default="0" value="0.039999999105930328369">
@@ -1597,11 +1645,11 @@
 								<ParamRange name="Y" T="DOUBLE" default="0" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0.51513193109746113763">
+								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0.86089545446248449956">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.51513193109746113763">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.86089545446248449956">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345914026578">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345900248711">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -1639,6 +1687,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="ParticleSystem" type="ParticleSystem" uniqueTypeId="A191" uniqueId="1792873596049" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Lifetime" T="DOUBLE" default="3.5" value="3.4999999403953552246">
@@ -1685,6 +1734,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="PointGrid" type="PointGrid" uniqueTypeId="A148" uniqueId="1792873593753" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873593754"/>
@@ -1727,7 +1777,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueTypeId="A109" uniqueId="1655159518398" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.18999999761581420898">
+								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.090000003576278686523">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -1796,6 +1846,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Recolour" type="Recolour" uniqueTypeId="sy99" uniqueId="1792873596053" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873596054"/>
@@ -1809,19 +1860,16 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1682288168723" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Ripples" type="Ripples" uniqueTypeId="sy05" uniqueId="1682288168712" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Frequency H" T="DOUBLE" default="0.2000000000000000111" value="0.040371999144554138184">
+								<ParamRange name="Frequency H" T="DOUBLE" default="0.2000000000000000111" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Amplitude H" T="DOUBLE" default="0.5" value="0.83362501859664916992">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="Frequency V" T="DOUBLE" default="0.2000000000000000111" value="0.65560400485992431641">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="Amplitude V" T="DOUBLE" default="0.5" value="0.19856299459934234619">
+								<ParamRange name="Frequency V" T="DOUBLE" default="0.2000000000000000111" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -1835,6 +1883,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="ShiftGlitch" type="ShiftGlitch" uniqueTypeId="MBSH" uniqueId="1792873593757" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873593758"/>
@@ -1851,6 +1900,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="ShiftRGB" type="ShiftRGB" uniqueTypeId="A153" uniqueId="1792873591002" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Distance" T="DOUBLE" default="1" value="0.25">
@@ -1879,6 +1929,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Stripper" type="Stripper" uniqueTypeId="sy69" uniqueId="1792873596057" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Number" T="DOUBLE" default="0.10000000000000000555" value="0.10000000149011611938">
@@ -1935,13 +1986,10 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1655159518403" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Trails" type="Trails" uniqueTypeId="A111" uniqueId="1655159518405" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.69999998807907104492">
+								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.55000001192092895508">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -1975,6 +2023,7 @@
 								<PhaseSourceStatic name="PhaseSourceStatic"/>
 							</ParamRange>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873591107" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000149011611938">
@@ -2012,11 +2061,11 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1655159518412" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.28845256630294974221">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.36255330399248225648">
 									<DurationSource name="DurationSource" scale="0.43478260869565216185"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.094690902496784384867">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.26512259918270919545">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010643954364">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010638861216">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="2.1739130434782607537" value="2">
@@ -2072,6 +2121,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="AutoMask" type="AutoMask" uniqueTypeId="A120" uniqueId="1792873596061" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873596062"/>
@@ -2088,6 +2138,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Bendoscope" type="Bendoscope" uniqueTypeId="A124" uniqueId="1792873596065" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Divisions" T="DOUBLE" default="0.10000000000000000555" value="0.10000000149011611938">
@@ -2110,6 +2161,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Bloom" type="Bloom" uniqueTypeId="6980402605" uniqueId="1792873591132" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Amount" T="DOUBLE" default="1" value="0.34999999403953552246">
@@ -2170,6 +2222,7 @@
 								<PhaseSourceStatic name="PhaseSourceStatic"/>
 							</ParamRange>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Colorize" type="Colorize" uniqueTypeId="A103" uniqueId="1792873591222" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamColor name="Color" T="COLOR" default="4278190335" value="4294946649" channelmode="2" paletteEnabled="1" color="4294946649" interpolated="0">
@@ -2211,6 +2264,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="ColorPass" type="ColorPass" uniqueTypeId="A143" uniqueId="1792873596069" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873596070"/>
@@ -2227,6 +2281,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="CubeTiles" type="CubeTiles" uniqueTypeId="A117" uniqueId="1792873596073" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873596074"/>
@@ -2243,6 +2298,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="DelayRGB" type="DelayRGB" uniqueTypeId="A152" uniqueId="1792873591204" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="G delay" altName="Delay G" T="DOUBLE" default="0.14999999999999999445" value="0.050000000745058059692">
@@ -2268,6 +2324,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Dilate" type="Dilate" uniqueTypeId="725725449995" uniqueId="1792873596077" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Size" T="DOUBLE" default="3" value="2.9999980032444000244">
@@ -2307,13 +2364,16 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1655159518431" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="EdgeDetection" type="EdgeDetection" uniqueTypeId="MEDG" uniqueId="1655159518433" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.42386201024055480957">
+								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.92000001668930053711">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.53808498382568359375">
+								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.23999999463558197021">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 								<ParamColor name="Color" T="COLOR" default="4294967295" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0"/>
@@ -2328,6 +2388,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="FishEye" type="FishEye" uniqueTypeId="A123" uniqueId="1792873593761" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873593762"/>
@@ -2396,6 +2457,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Heat" type="Heat" uniqueTypeId="A107" uniqueId="1792873596081" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873596082"/>
@@ -2446,6 +2508,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="InvertRGB" type="InvertRGB" uniqueTypeId="A105" uniqueId="1792869776961" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792869776972"/>
@@ -2468,11 +2531,11 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.2765503167876738333">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.10063994634583746379">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.2765503167876738333">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.10063994634583746379">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797131434337">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797115273653">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -2505,6 +2568,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Kuwahara" type="Kuwahara" uniqueTypeId="8166473902393820" uniqueId="1792873593765" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Radius" T="DOUBLE" default="5" value="5.0000079870223999023">
@@ -2562,6 +2626,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="LoRezEffect" type="LoRezEffect" uniqueTypeId="A142" uniqueId="1792873591252" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Pixel Size" T="DOUBLE" default="0" value="0.039999999105930328369">
@@ -2642,6 +2707,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="ParticleSystem" type="ParticleSystem" uniqueTypeId="A191" uniqueId="1792873596085" baseType="Effect" dwType="Effect">
 							<Params name="Params">
 								<ParamRange name="Lifetime" T="DOUBLE" default="3.5" value="3.4999999403953552246">
@@ -2730,7 +2796,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueTypeId="A109" uniqueId="1655159518482" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.18999999761581420898">
+								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.090000003576278686523">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -2799,6 +2865,7 @@
 						<Params name="Params">
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
+						<View name="View" folded="1"/>
 						<RenderPass name="Recolour" type="Recolour" uniqueTypeId="sy99" uniqueId="1792873596089" baseType="Effect" dwType="Effect"/>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1792873596090"/>
@@ -2944,7 +3011,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Trails" type="Trails" uniqueTypeId="A111" uniqueId="1655159518489" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.69999998807907104492">
+								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.55000001192092895508">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -2979,40 +3046,28 @@
 					</RenderPass>
 					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873591283" baseType="DryWetEffect">
 						<Params name="Params">
-							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.046342000365257263184">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.30000001192092895508">
 								<PhaseSourceStatic name="PhaseSourceStatic"/>
 							</ParamRange>
 						</Params>
 						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873591270" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Position" T="DOUBLE" default="0" value="0.35757300257682800293">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000149011611938">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.05185899883508682251">
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.51999998092651367188">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.9102789759635925293">
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.51999998092651367188">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Kaleidoscope" T="DOUBLE" default="0" value="0.21808899939060211182">
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.019999999552965164185">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Rotation" T="DOUBLE" default="0.5" value="0.1336880028247833252">
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.019999999552965164185">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="TurnH" T="DOUBLE" default="0.5" value="0.75821000337600708008">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="TurnV" T="DOUBLE" default="0.5" value="0.51780402660369873047">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.56395202875137329102">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.91017997264862060547">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<Param name="Black BG" T="BOOL" default="0" value="1"/>
 							</Params>
 						</RenderPass>
 						<ChoosableMixer name="Mixer">
@@ -3033,6 +3088,9 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1655159518496" baseType="Effect" dwType="Effect">
 							<Params name="Params">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.5">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
 								<ParamRange name="Radius" T="DOUBLE" default="0.25" value="0.31000000238418579102">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
@@ -3126,9 +3184,9 @@
 			</Params>
 			<Transport name="Transport">
 				<Params name="Params">
-					<ParamRange name="Position" T="DOUBLE" default="0" value="4553.139595732674934">
+					<ParamRange name="Position" T="DOUBLE" default="0" value="3123.3455999859434087">
 						<DurationSource name="DurationSource"/>
-						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.91062791914653495873" defaultBeatsDuration="8">
+						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.62466911999718865989" defaultBeatsDuration="8">
 							<Params name="Params">
 								<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
@@ -3761,9 +3819,6 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683234745477" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Blur" type="Blur" uniqueTypeId="A140" uniqueId="1683234745479" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -3886,9 +3941,6 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683234745484" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Displace" type="Displace" uniqueTypeId="A131" uniqueId="1683234745486" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -3915,7 +3967,7 @@
 								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.92000001668930053711">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="1">
+								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.23999999463558197021">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 								<ParamColor name="Color" T="COLOR" default="4294967295" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0"/>
@@ -3947,7 +3999,7 @@
 									<DurationSource name="DurationSource" scale="0.064606741573033713011"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.33000001311302185059">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.000000077347154015">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773468959991">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="0.32303370786516855118" value="0.32303370786516855118">
@@ -4044,11 +4096,11 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="HueRotate" type="HueRotate" uniqueTypeId="A128" uniqueId="1683234745521" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0.52233458258564113841">
+								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0.17110980387543781034">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.52233458258564113841">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.17110980387543781034">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589922449951">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589919709088">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -4111,11 +4163,11 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.68235289534908238895">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.091081233857935622877">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.68235289534908238895">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.091081233857935622877">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203515927986">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203501279981">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -4170,11 +4222,11 @@
 								<ParamRange name="Tail Length" T="DOUBLE" default="0.5" value="0">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Start Rotation" T="DOUBLE" default="0" value="146.96792275093582703">
+								<ParamRange name="Start Rotation" T="DOUBLE" default="0" value="112.4404415996325497">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.90824422986371067257">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.81233455999897929978">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999949790164">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999936911577">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -4197,11 +4249,11 @@
 								<ParamRange name="Tail Rotation" T="DOUBLE" default="0" value="50">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Master Rotation" T="DOUBLE" default="0" value="-146.96792275093159219">
+								<ParamRange name="Master Rotation" T="DOUBLE" default="0" value="-112.44044159963341656">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.091755770136301151307">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.18766544000101828549">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999949790164">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999936911577">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -4293,11 +4345,11 @@
 								<ParamRange name="Y" T="DOUBLE" default="0" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0.50036731726747085691">
+								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0.86089545446247239813">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.50036731726747085691">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.86089545446247239813">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345912649902">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345898872034">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -4411,7 +4463,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueTypeId="A109" uniqueId="1683234745570" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.18999999761581420898">
+								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.090000003576278686523">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -4487,19 +4539,16 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683234745589" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Ripples" type="Ripples" uniqueTypeId="sy05" uniqueId="1683234745591" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Frequency H" T="DOUBLE" default="0.2000000000000000111" value="0.040371999144554138184">
+								<ParamRange name="Frequency H" T="DOUBLE" default="0.2000000000000000111" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Amplitude H" T="DOUBLE" default="0.5" value="0.83362501859664916992">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="Frequency V" T="DOUBLE" default="0.2000000000000000111" value="0.65560400485992431641">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="Amplitude V" T="DOUBLE" default="0.5" value="0.19856299459934234619">
+								<ParamRange name="Frequency V" T="DOUBLE" default="0.2000000000000000111" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -4601,13 +4650,10 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683234745603" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Trails" type="Trails" uniqueTypeId="A111" uniqueId="1683234745605" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.69999998807907104492">
+								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.55000001192092895508">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -4672,17 +4718,16 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1683234745619" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.29388196885394402003">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.56679452209445946309">
 									<DurationSource name="DurationSource" scale="0.43478260869565216185"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.10717852836407132378">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.73487740081725694274">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010643446437">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010638350513">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="2.1739130434782607537" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
-											<ParamChoice name="PlayDirection" T="INT32" default="2" value="0" storeChoices="0"/>
 											<ParamChoice name="PlayMode" T="INT32" default="0" value="1" storeChoices="0"/>
 										</Params>
 										<Beats_double name="Beats_double" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1"/>
@@ -4925,13 +4970,16 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683234745645" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="EdgeDetection" type="EdgeDetection" uniqueTypeId="MEDG" uniqueId="1683234745647" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.42386201024055480957">
+								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.92000001668930053711">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.53808498382568359375">
+								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.23999999463558197021">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 								<ParamColor name="Color" T="COLOR" default="4294967295" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0"/>
@@ -5068,11 +5116,11 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.27490445226799237188">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.10063994634583550702">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.27490445226799237188">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.10063994634583550702">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797129817575">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.06194488779711366383">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -5300,7 +5348,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueTypeId="A109" uniqueId="1683234745724" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.18999999761581420898">
+								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.090000003576278686523">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -5496,7 +5544,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Trails" type="Trails" uniqueTypeId="A111" uniqueId="1683234745759" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.69999998807907104492">
+								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.55000001192092895508">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -5531,40 +5579,28 @@
 					</RenderPass>
 					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873591597" baseType="DryWetEffect">
 						<Params name="Params">
-							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.046342000365257263184">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.30000001192092895508">
 								<PhaseSourceStatic name="PhaseSourceStatic"/>
 							</ParamRange>
 						</Params>
 						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873591584" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Position" T="DOUBLE" default="0" value="0.35757300257682800293">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000149011611938">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.05185899883508682251">
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.51999998092651367188">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.9102789759635925293">
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.51999998092651367188">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Kaleidoscope" T="DOUBLE" default="0" value="0.21808899939060211182">
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.019999999552965164185">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Rotation" T="DOUBLE" default="0.5" value="0.1336880028247833252">
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.019999999552965164185">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="TurnH" T="DOUBLE" default="0.5" value="0.75821000337600708008">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="TurnV" T="DOUBLE" default="0.5" value="0.51780402660369873047">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.56395202875137329102">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.91017997264862060547">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<Param name="Black BG" T="BOOL" default="0" value="1"/>
 							</Params>
 						</RenderPass>
 						<ChoosableMixer name="Mixer">
@@ -5585,6 +5621,9 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1683234745773" baseType="Effect" dwType="Effect">
 							<Params name="Params">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.5">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
 								<ParamRange name="Radius" T="DOUBLE" default="0.25" value="0.31000000238418579102">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
@@ -5617,9 +5656,9 @@
 								<ParamRange name="Width" T="DOUBLE" default="0.20000000298023223877" value="0.60000002384185791016">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Angle" T="DOUBLE" default="1" value="0.81861414646671837314">
+								<ParamRange name="Angle" T="DOUBLE" default="1" value="0.95476015830522820149">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.81861414646671837314">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.95476015830522820149">
 										<Params name="Params">
 											<ParamRange name="Speed" T="DOUBLE" default="1" value="4.2807240395541175104">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
@@ -5685,9 +5724,9 @@
 			</Params>
 			<Transport name="Transport">
 				<Params name="Params">
-					<ParamRange name="Position" T="DOUBLE" default="0" value="4553.139595732674934">
+					<ParamRange name="Position" T="DOUBLE" default="0" value="3140.217999985921324">
 						<DurationSource name="DurationSource"/>
-						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.91062791914653495873" defaultBeatsDuration="8">
+						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.62804359999718428753" defaultBeatsDuration="8">
 							<Params name="Params">
 								<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
@@ -6318,9 +6357,6 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683235114818" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Blur" type="Blur" uniqueTypeId="A140" uniqueId="1683235114820" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -6443,9 +6479,6 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683235114825" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Displace" type="Displace" uniqueTypeId="A131" uniqueId="1683235114827" baseType="Effect" dwType="Effect">
 							<Params name="Params">
@@ -6472,7 +6505,7 @@
 								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.92000001668930053711">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="1">
+								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.23999999463558197021">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 								<ParamColor name="Color" T="COLOR" default="4294967295" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0"/>
@@ -6504,7 +6537,7 @@
 									<DurationSource name="DurationSource" scale="0.064606741573033713011"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.33000001311302185059">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773471282578">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773468700199">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="0.32303370786516855118" value="0.32303370786516855118">
@@ -6601,11 +6634,11 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="HueRotate" type="HueRotate" uniqueTypeId="A128" uniqueId="1683235114862" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0.52016801767368503473">
+								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0.17110980387543356374">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.52016801767368503473">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.17110980387543356374">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589922175171">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589919434308">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -6668,11 +6701,11 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.68099284005259663743">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.091081233857933666109">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.68099284005259663743">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.091081233857933666109">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.05606140520351446388">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203499815875">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -6727,11 +6760,11 @@
 								<ParamRange name="Tail Length" T="DOUBLE" default="0.5" value="0">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Start Rotation" T="DOUBLE" default="0" value="142.60110474994110064">
+								<ParamRange name="Start Rotation" T="DOUBLE" default="0" value="112.44044159962294316">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.89611417986094743515">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.8123345599989525434">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999948502305">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999935623718">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -6754,11 +6787,11 @@
 								<ParamRange name="Tail Rotation" T="DOUBLE" default="0" value="50">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Master Rotation" T="DOUBLE" default="0" value="-142.60110474994172591">
+								<ParamRange name="Master Rotation" T="DOUBLE" default="0" value="-112.44044159962218998">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.10388582013905073298">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.18766544000104948275">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999948502305">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999935623718">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -6856,11 +6889,11 @@
 								<ParamRange name="Y" T="DOUBLE" default="0" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0.49001629263502821665">
+								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0.86089545446244031268">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.49001629263502821665">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.86089545446244031268">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345911273225">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345897495357">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -6974,7 +7007,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueTypeId="A109" uniqueId="1683235114911" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.18999999761581420898">
+								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.090000003576278686523">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -7050,19 +7083,16 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683235114930" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Ripples" type="Ripples" uniqueTypeId="sy05" uniqueId="1683235114932" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Frequency H" T="DOUBLE" default="0.2000000000000000111" value="0.040371999144554138184">
+								<ParamRange name="Frequency H" T="DOUBLE" default="0.2000000000000000111" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Amplitude H" T="DOUBLE" default="0.5" value="0.83362501859664916992">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="Frequency V" T="DOUBLE" default="0.2000000000000000111" value="0.65560400485992431641">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="Amplitude V" T="DOUBLE" default="0.5" value="0.19856299459934234619">
+								<ParamRange name="Frequency V" T="DOUBLE" default="0.2000000000000000111" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -7164,13 +7194,10 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683235114944" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Trails" type="Trails" uniqueTypeId="A111" uniqueId="1683235114946" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.69999998807907104492">
+								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.55000001192092895508">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -7235,11 +7262,11 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1683235114960" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.29753894434506916733">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.36255330399250085271">
 									<DurationSource name="DurationSource" scale="0.43478260869565216185"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.11558957199365910151">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.26512259918275199455">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010642935734">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010637842586">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="2.1739130434782607537" value="2">
@@ -7488,13 +7515,16 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="EdgeDetection" type="DryWetEffect" uniqueTypeId="MEDG" uniqueId="1683235114986" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="EdgeDetection" type="EdgeDetection" uniqueTypeId="MEDG" uniqueId="1683235114988" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.42386201024055480957">
+								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.92000001668930053711">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.53808498382568359375">
+								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.23999999463558197021">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 								<ParamColor name="Color" T="COLOR" default="4294967295" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0"/>
@@ -7631,11 +7661,11 @@
 								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.27355535827326521447">
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.10063994634583336985">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.27355535827326521447">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.10063994634583336985">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797128200813">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797112047068">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -7863,7 +7893,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueTypeId="A109" uniqueId="1683235115065" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.18999999761581420898">
+								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.090000003576278686523">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -8059,7 +8089,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Trails" type="Trails" uniqueTypeId="A111" uniqueId="1683235115100" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.69999998807907104492">
+								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.55000001192092895508">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -8094,40 +8124,28 @@
 					</RenderPass>
 					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873591911" baseType="DryWetEffect">
 						<Params name="Params">
-							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.046342000365257263184">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.30000001192092895508">
 								<PhaseSourceStatic name="PhaseSourceStatic"/>
 							</ParamRange>
 						</Params>
 						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873591898" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Position" T="DOUBLE" default="0" value="0.35757300257682800293">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000149011611938">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.05185899883508682251">
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.51999998092651367188">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.9102789759635925293">
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.51999998092651367188">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Kaleidoscope" T="DOUBLE" default="0" value="0.21808899939060211182">
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.019999999552965164185">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Rotation" T="DOUBLE" default="0.5" value="0.1336880028247833252">
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.019999999552965164185">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="TurnH" T="DOUBLE" default="0.5" value="0.75821000337600708008">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="TurnV" T="DOUBLE" default="0.5" value="0.51780402660369873047">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.56395202875137329102">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.91017997264862060547">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<Param name="Black BG" T="BOOL" default="0" value="1"/>
 							</Params>
 						</RenderPass>
 						<ChoosableMixer name="Mixer">
@@ -8148,6 +8166,9 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1683235115114" baseType="Effect" dwType="Effect">
 							<Params name="Params">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.5">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
 								<ParamRange name="Radius" T="DOUBLE" default="0.25" value="0.31000000238418579102">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
@@ -8180,9 +8201,9 @@
 								<ParamRange name="Width" T="DOUBLE" default="0.20000000298023223877" value="0.60000002384185791016">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Angle" T="DOUBLE" default="1" value="0.74265415383104360636">
+								<ParamRange name="Angle" T="DOUBLE" default="1" value="0.95476015830522820149">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.74265415383104360636">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.95476015830522820149">
 										<Params name="Params">
 											<ParamRange name="Speed" T="DOUBLE" default="1" value="4.2807240395541175104">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
@@ -8248,9 +8269,9 @@
 			</Params>
 			<Transport name="Transport">
 				<Params name="Params">
-					<ParamRange name="Position" T="DOUBLE" default="0" value="4569.8062957325910247">
+					<ParamRange name="Position" T="DOUBLE" default="0" value="3140.217999985921324">
 						<DurationSource name="DurationSource"/>
-						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.91396125914651826783" defaultBeatsDuration="8">
+						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.62804359999718428753" defaultBeatsDuration="8">
 							<Params name="Params">
 								<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
@@ -8881,22 +8902,19 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Blur" type="DryWetEffect" uniqueTypeId="A140" uniqueId="1683235197491" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Blur" type="Blur" uniqueTypeId="A140" uniqueId="1683235197493" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Blur X Distance" T="DOUBLE" default="0.050000000745058059692" value="0.10000000149011611938">
+								<ParamRange name="Blur X Distance" T="DOUBLE" default="0.050000000745058059692" value="0.25119000673294067383">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Blur Y Distance" T="DOUBLE" default="0.050000000745058059692" value="0.079999998211860656738">
+								<ParamRange name="Blur Y Distance" T="DOUBLE" default="0.050000000745058059692" value="0.48176899552345275879">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Quality" T="DOUBLE" default="0.15000000596046447754" value="0.28000000119209289551">
+								<ParamRange name="Quality" T="DOUBLE" default="0.15000000596046447754" value="0.98518997430801391602">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Gaussian" T="DOUBLE" default="0.20000000298023223877" value="0.17000000178813934326">
+								<ParamRange name="Gaussian" T="DOUBLE" default="0.20000000298023223877" value="0.152667999267578125">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -9006,16 +9024,16 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Displace" type="DryWetEffect" uniqueTypeId="A131" uniqueId="1683235197498" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Displace" type="Displace" uniqueTypeId="A131" uniqueId="1683235197500" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="X factor" T="DOUBLE" default="0.5" value="0.75999999046325683594">
+								<ParamRange name="X factor" T="DOUBLE" default="0.5" value="0.56568801403045654297">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Y factor" T="DOUBLE" default="0.5" value="0.23999999463558197021">
+								<ParamRange name="Y factor" T="DOUBLE" default="0.5" value="0.61120301485061645508">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Threshold" T="DOUBLE" default="0" value="0.15488800406455993652">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -9032,10 +9050,10 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="EdgeDetection" type="EdgeDetection" uniqueTypeId="MEDG" uniqueId="1683235197507" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.92000001668930053711">
+								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.62971097230911254883">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="1">
+								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.79158699512481689453">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 								<ParamColor name="Color" T="COLOR" default="4294967295" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0"/>
@@ -9063,11 +9081,14 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Fragment" type="Fragment" uniqueTypeId="sy08" uniqueId="1683235197514" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Distance" T="DOUBLE" default="0.33000001311302185059" value="0.021320225566290738201">
+								<ParamRange name="Fragments" T="DOUBLE" default="0.30000001192092895508" value="0.48533600568771362305">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Distance" T="DOUBLE" default="0.33000001311302185059" value="0.050894542523984162563">
 									<DurationSource name="DurationSource" scale="0.064606741573033713011"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.33000001311302185059">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.78775900602340698242">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773471025006">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.0000000773468442627">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="0.32303370786516855118" value="0.32303370786516855118">
@@ -9079,9 +9100,9 @@
 									</PhaseSourceTimeline>
 									<ValueRange name="startStop" min="0" max="0.064606741573033713011"/>
 								</ParamRange>
-								<ParamRange name="Rotation" T="DOUBLE" default="0" value="0">
+								<ParamRange name="Rotation" T="DOUBLE" default="0" value="0.50604397058486938477">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.50604397058486938477">
 										<Params name="Params">
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
@@ -9090,6 +9111,15 @@
 										</Params>
 										<Beats_double name="Beats_double" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1"/>
 									</PhaseSourceTimeline>
+								</ParamRange>
+								<ParamRange name="FragRotationX" T="DOUBLE" default="0.5" value="0.37093499302864074707">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="FragRotationY" T="DOUBLE" default="0.5" value="0.6306679844856262207">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="FragRotationZ" T="DOUBLE" default="0.5" value="0.97418397665023803711">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 								<ParamRange name="FragScale" T="DOUBLE" default="0.5" value="1">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
@@ -9119,22 +9149,22 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Goo" type="Goo" uniqueTypeId="sy06" uniqueId="1683235197521" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Resolution" T="DOUBLE" default="32" value="16">
+								<ParamRange name="Resolution" T="DOUBLE" default="32" value="29">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Speed" T="DOUBLE" default="0.14000000059604644775" value="0.15000000596046447754">
+								<ParamRange name="Speed" T="DOUBLE" default="0.14000000059604644775" value="0.098421998322010040283">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="MaxDistortionX" T="DOUBLE" default="0.14000000059604644775" value="1">
+								<ParamRange name="MaxDistortionX" T="DOUBLE" default="0.14000000059604644775" value="0.48510700464248657227">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="MaxDistortionY" T="DOUBLE" default="0.14000000059604644775" value="1">
+								<ParamRange name="MaxDistortionY" T="DOUBLE" default="0.14000000059604644775" value="0.84982800483703613281">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="MaxDistortionZ" T="DOUBLE" default="0" value="1">
+								<ParamRange name="MaxDistortionZ" T="DOUBLE" default="0" value="0.39608800411224365234">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Shade" T="DOUBLE" default="0" value="1">
+								<ParamRange name="Shade" T="DOUBLE" default="0" value="0.86787301301956176758">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -9164,11 +9194,14 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="HueRotate" type="HueRotate" uniqueTypeId="A128" uniqueId="1683235197535" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0.51799120725235769935">
+								<ParamRange name="Hue Scale" T="DOUBLE" default="1" value="0.5492489933967590332">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0.17146520338654824833">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.51799120725235769935">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.17146520338654824833">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589921900391">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.10531978589919159528">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -9177,6 +9210,9 @@
 										</Params>
 										<Beats_double name="Beats_double" numDetectedBeats="-1" numManualBeats="4" detectedTempo="-1"/>
 									</PhaseSourceTimeline>
+								</ParamRange>
+								<ParamRange name="Sat. Scale" T="DOUBLE" default="0.5" value="0.78159999847412109375">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
 							<AnimationSettings name="AnimationSettings" uniqueId="1683235197536">
@@ -9234,14 +9270,20 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Kaleidoscope" type="Kaleidoscope" uniqueTypeId="sy02" uniqueId="1683235197542" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
+								<ParamRange name="Angles" T="DOUBLE" default="0.30000001192092895508" value="0.16688999533653259277">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.68004092972525320704">
+								<ParamRange name="Rotation" T="DOUBLE" default="0" value="0.74705600738525390625">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.83631098270416259766">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.091270411948562044091">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.68004092972525320704">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.091270411948562044091">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203512999773">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.056061405203498351768">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -9302,11 +9344,11 @@
 								<ParamRange name="Tail Length" T="DOUBLE" default="0.5" value="0">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Start Rotation" T="DOUBLE" default="0" value="139.54474434832303587">
+								<ParamRange name="Start Rotation" T="DOUBLE" default="0" value="113.04784799961697672">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.88762428985645291935">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.81402179999893597984">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999947214446">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999934335859">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -9329,11 +9371,11 @@
 								<ParamRange name="Tail Rotation" T="DOUBLE" default="0" value="50">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Master Rotation" T="DOUBLE" default="0" value="-139.54474434832434326">
+								<ParamRange name="Master Rotation" T="DOUBLE" default="0" value="-113.04784799961701935">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.11237571014354350019">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.18597820000106382587">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999947214446">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.49999999999934335859">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -9431,11 +9473,11 @@
 								<ParamRange name="Y" T="DOUBLE" default="0" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0.48101888187381941497">
+								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0.86268355670269758484">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.48101888187381941497">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.86268355670269758484">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345909896549">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.52988971345896118681">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -9463,7 +9505,12 @@
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
 						<View name="View" folded="1"/>
-						<RenderPass name="MirrorQuad" type="MirrorQuad" uniqueTypeId="A180" uniqueId="1683235197570" baseType="Effect" dwType="Effect"/>
+						<RenderPass name="MirrorQuad" type="MirrorQuad" uniqueTypeId="A180" uniqueId="1683235197570" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<Param name="Flip X" T="BOOL" default="0" value="1"/>
+								<Param name="Flip Y" T="BOOL" default="0" value="1"/>
+							</Params>
+						</RenderPass>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1759098191378"/>
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197573" baseType="Mixer"/>
@@ -9543,13 +9590,10 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Posterize" type="DryWetEffect" uniqueTypeId="A109" uniqueId="1683235197582" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueTypeId="A109" uniqueId="1683235197584" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.18999999761581420898">
+								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.27386799454689025879">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -9625,19 +9669,16 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Ripples" type="DryWetEffect" uniqueTypeId="sy05" uniqueId="1683235197603" baseType="DryWetEffect">
+						<Params name="Params">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Ripples" type="Ripples" uniqueTypeId="sy05" uniqueId="1683235197605" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Frequency H" T="DOUBLE" default="0.2000000000000000111" value="0.040371999144554138184">
+								<ParamRange name="Frequency H" T="DOUBLE" default="0.2000000000000000111" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Amplitude H" T="DOUBLE" default="0.5" value="0.83362501859664916992">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="Frequency V" T="DOUBLE" default="0.2000000000000000111" value="0.65560400485992431641">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="Amplitude V" T="DOUBLE" default="0.5" value="0.19856299459934234619">
+								<ParamRange name="Frequency V" T="DOUBLE" default="0.2000000000000000111" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -9745,7 +9786,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Trails" type="Trails" uniqueTypeId="A111" uniqueId="1683235197619" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.69999998807907104492">
+								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.54909402132034301758">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -9810,11 +9851,11 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1683235197633" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.30087823474697195092">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.36188966944179185026">
 									<DurationSource name="DurationSource" scale="0.43478260869565216185"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.12326993991803550377">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.26359623971612128335">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010642427807">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.19666276010637331884">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="2.1739130434782607537" value="2">
@@ -9827,7 +9868,7 @@
 									</PhaseSourceTimeline>
 									<ValueRange name="startStop" min="0.24728260869565216185" max="0.68206521739130432369"/>
 								</ParamRange>
-								<ParamRange name="Radius" T="DOUBLE" default="0.25" value="0.31000000238418579102">
+								<ParamRange name="Radius" T="DOUBLE" default="0.25" value="0.36353600025177001953">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -9930,16 +9971,16 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Blur" type="Blur" uniqueTypeId="A140" uniqueId="1683235197647" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Blur X Distance" T="DOUBLE" default="0.050000000745058059692" value="0.10000000149011611938">
+								<ParamRange name="Blur X Distance" T="DOUBLE" default="0.050000000745058059692" value="0.26364699006080627441">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Blur Y Distance" T="DOUBLE" default="0.050000000745058059692" value="0.079999998211860656738">
+								<ParamRange name="Blur Y Distance" T="DOUBLE" default="0.050000000745058059692" value="0.86292600631713867188">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Quality" T="DOUBLE" default="0.15000000596046447754" value="0.28000000119209289551">
+								<ParamRange name="Quality" T="DOUBLE" default="0.15000000596046447754" value="0.62245202064514160156">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Gaussian" T="DOUBLE" default="0.20000000298023223877" value="0.17000000178813934326">
+								<ParamRange name="Gaussian" T="DOUBLE" default="0.20000000298023223877" value="0.31493499875068664551">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -10055,10 +10096,13 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Displace" type="Displace" uniqueTypeId="A131" uniqueId="1683235197654" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="X factor" T="DOUBLE" default="0.5" value="0.75999999046325683594">
+								<ParamRange name="X factor" T="DOUBLE" default="0.5" value="0.67283999919891357422">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Y factor" T="DOUBLE" default="0.5" value="0.23999999463558197021">
+								<ParamRange name="Y factor" T="DOUBLE" default="0.5" value="0.66481602191925048828">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Threshold" T="DOUBLE" default="0" value="0.22334900498390197754">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -10072,10 +10116,10 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="EdgeDetection" type="EdgeDetection" uniqueTypeId="MEDG" uniqueId="1683235197661" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.42386201024055480957">
+								<ParamRange name="Mode" T="DOUBLE" default="1" value="0.25609201192855834961">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.53808498382568359375">
+								<ParamRange name="Multiplier" T="DOUBLE" default="0.20000000298023223877" value="0.70052897930145263672">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 								<ParamColor name="Color" T="COLOR" default="4294967295" value="4294967295" channelmode="2" paletteEnabled="0" color="4294967295" interpolated="0"/>
@@ -10103,6 +10147,24 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Fragment" type="Fragment" uniqueTypeId="sy08" uniqueId="1683235197668" baseType="Effect" dwType="Effect">
 							<Params name="Params">
+								<ParamRange name="Fragments" T="DOUBLE" default="0.30000001192092895508" value="0.073173001408576965332">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Distance" T="DOUBLE" default="0.33000001311302185059" value="0.24480700492858886719">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Rotation" T="DOUBLE" default="0" value="0.011211000382900238037">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="FragRotationX" T="DOUBLE" default="0.5" value="0.13056500256061553955">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="FragRotationY" T="DOUBLE" default="0.5" value="0.20162700116634368896">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="FragRotationZ" T="DOUBLE" default="0.5" value="0.61602699756622314453">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
 								<ParamRange name="FragScale" T="DOUBLE" default="0.5" value="1">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
@@ -10114,28 +10176,25 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Goo" type="DryWetEffect" uniqueTypeId="sy06" uniqueId="1683235197673" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Goo" type="Goo" uniqueTypeId="sy06" uniqueId="1683235197675" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Resolution" T="DOUBLE" default="32" value="16">
+								<ParamRange name="Resolution" T="DOUBLE" default="32" value="10">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Speed" T="DOUBLE" default="0.14000000059604644775" value="0.15000000596046447754">
+								<ParamRange name="Speed" T="DOUBLE" default="0.14000000059604644775" value="0.0086160004138946533203">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="MaxDistortionX" T="DOUBLE" default="0.14000000059604644775" value="1">
+								<ParamRange name="MaxDistortionX" T="DOUBLE" default="0.14000000059604644775" value="0.94656199216842651367">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="MaxDistortionY" T="DOUBLE" default="0.14000000059604644775" value="1">
+								<ParamRange name="MaxDistortionY" T="DOUBLE" default="0.14000000059604644775" value="0.562129974365234375">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="MaxDistortionZ" T="DOUBLE" default="0" value="1">
+								<ParamRange name="MaxDistortionZ" T="DOUBLE" default="0" value="0.82306301593780517578">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Shade" T="DOUBLE" default="0" value="1">
+								<ParamRange name="Shade" T="DOUBLE" default="0" value="0.67199999094009399414">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -10163,7 +10222,19 @@
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
 						<View name="View" folded="1"/>
-						<RenderPass name="HueRotate" type="HueRotate" uniqueTypeId="A128" uniqueId="1683235197689" baseType="Effect" dwType="Effect"/>
+						<RenderPass name="HueRotate" type="HueRotate" uniqueTypeId="A128" uniqueId="1683235197689" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<ParamRange name="Hue Scale" T="DOUBLE" default="1" value="0.54905599355697631836">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Hue Rotate" T="DOUBLE" default="0" value="0.64384502172470092773">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Sat. Scale" T="DOUBLE" default="0.5" value="0.52726799249649047852">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+							</Params>
+						</RenderPass>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1759098192609"/>
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197692" baseType="Mixer"/>
@@ -10209,14 +10280,20 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Kaleidoscope" type="Kaleidoscope" uniqueTypeId="sy02" uniqueId="1683235197696" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.57999998331069946289">
+								<ParamRange name="Angles" T="DOUBLE" default="0.30000001192092895508" value="0.45380300283432006836">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.27252294141165600561">
+								<ParamRange name="Rotation" T="DOUBLE" default="0" value="0.24380500614643096924">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Zoom" T="DOUBLE" default="0.5" value="0.071969002485275268555">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Input Rotation" T="DOUBLE" default="0" value="0.1008489781308032629">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.27252294141165600561">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.1008489781308032629">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.06194488779712658405">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="0.061944887797110430305">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
@@ -10352,6 +10429,10 @@
 								<ParamRange name="Y" T="DOUBLE" default="0" value="0.5">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
+								<ParamRange name="In / Out" T="DOUBLE" default="1" value="0.1474590003490447998">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<Param name="Flip Y" T="BOOL" default="0" value="1"/>
 							</Params>
 						</RenderPass>
 						<ChoosableMixer name="Mixer">
@@ -10364,7 +10445,11 @@
 							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
 						</Params>
 						<View name="View" folded="1"/>
-						<RenderPass name="MirrorQuad" type="MirrorQuad" uniqueTypeId="A180" uniqueId="1683235197724" baseType="Effect" dwType="Effect"/>
+						<RenderPass name="MirrorQuad" type="MirrorQuad" uniqueTypeId="A180" uniqueId="1683235197724" baseType="Effect" dwType="Effect">
+							<Params name="Params">
+								<Param name="Flip Y" T="BOOL" default="0" value="1"/>
+							</Params>
+						</RenderPass>
 						<ChoosableMixer name="Mixer">
 							<VideoMixerStateID uniqueId="1759098193099"/>
 							<RenderPass name="Alpha" type="Alpha" uniqueTypeId="A006" uniqueId="1683235197727" baseType="Mixer"/>
@@ -10450,7 +10535,7 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Posterize" type="Posterize" uniqueTypeId="A109" uniqueId="1683235197738" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.18999999761581420898">
+								<ParamRange name="Posterize" T="DOUBLE" default="0.5" value="0.44615599513053894043">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -10640,13 +10725,10 @@
 						</ChoosableMixer>
 					</RenderPass>
 					<RenderPass storage="0" name="Trails" type="DryWetEffect" uniqueTypeId="A111" uniqueId="1683235197771" baseType="DryWetEffect">
-						<Params name="Params">
-							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
-						</Params>
 						<View name="View" folded="1"/>
 						<RenderPass name="Trails" type="Trails" uniqueTypeId="A111" uniqueId="1683235197773" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.69999998807907104492">
+								<ParamRange name="Feedback" T="DOUBLE" default="0.89999997615814208984" value="0.63640898466110229492">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -10681,40 +10763,28 @@
 					</RenderPass>
 					<RenderPass storage="0" name="Tunnel" type="DryWetEffect" uniqueTypeId="sy04" uniqueId="1792873592225" baseType="DryWetEffect">
 						<Params name="Params">
-							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.046342000365257263184">
+							<Param name="Bypassed" altName="Bypass" T="BOOL" default="0" value="1"/>
+							<ParamRange name="Opacity" T="DOUBLE" default="1" value="0.30000001192092895508">
 								<PhaseSourceStatic name="PhaseSourceStatic"/>
 							</ParamRange>
 						</Params>
 						<RenderPass name="Tunnel" type="Tunnel" uniqueTypeId="sy04" uniqueId="1792873592212" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Position" T="DOUBLE" default="0" value="0.35757300257682800293">
+								<ParamRange name="Position" T="DOUBLE" default="0" value="0.10000000149011611938">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.05185899883508682251">
+								<ParamRange name="Speed" T="DOUBLE" default="0.5" value="0.51999998092651367188">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.9102789759635925293">
+								<ParamRange name="Twist" T="DOUBLE" default="0.5" value="0.51999998092651367188">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Kaleidoscope" T="DOUBLE" default="0" value="0.21808899939060211182">
+								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.019999999552965164185">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Rotation" T="DOUBLE" default="0.5" value="0.1336880028247833252">
+								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.019999999552965164185">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="TurnH" T="DOUBLE" default="0.5" value="0.75821000337600708008">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="TurnV" T="DOUBLE" default="0.5" value="0.51780402660369873047">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="WobbleH" T="DOUBLE" default="0" value="0.56395202875137329102">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<ParamRange name="WobbleV" T="DOUBLE" default="0" value="0.91017997264862060547">
-									<PhaseSourceStatic name="PhaseSourceStatic"/>
-								</ParamRange>
-								<Param name="Black BG" T="BOOL" default="0" value="1"/>
 							</Params>
 						</RenderPass>
 						<ChoosableMixer name="Mixer">
@@ -10735,7 +10805,10 @@
 						<View name="View" folded="1"/>
 						<RenderPass name="Twisted" type="Twisted" uniqueTypeId="A122" uniqueId="1683235197787" baseType="Effect" dwType="Effect">
 							<Params name="Params">
-								<ParamRange name="Radius" T="DOUBLE" default="0.25" value="0.31000000238418579102">
+								<ParamRange name="Twirl" T="DOUBLE" default="0.60000002384185791016" value="0.71756100654602050781">
+									<PhaseSourceStatic name="PhaseSourceStatic"/>
+								</ParamRange>
+								<ParamRange name="Radius" T="DOUBLE" default="0.25" value="0.64946502447128295898">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
 							</Params>
@@ -10767,9 +10840,9 @@
 								<ParamRange name="Width" T="DOUBLE" default="0.20000000298023223877" value="0.60000002384185791016">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
 								</ParamRange>
-								<ParamRange name="Angle" T="DOUBLE" default="1" value="0.64277039314092687672">
+								<ParamRange name="Angle" T="DOUBLE" default="1" value="0.96920537596222922083">
 									<DurationSource name="DurationSource"/>
-									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.64277039314092687672">
+									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0.96920537596222922083">
 										<Params name="Params">
 											<ParamRange name="Speed" T="DOUBLE" default="1" value="4.2807240395541175104">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
@@ -10838,9 +10911,9 @@
 			</Params>
 			<Transport name="Transport">
 				<Params name="Params">
-					<ParamRange name="Position" T="DOUBLE" default="0" value="4568.7872957488962129">
+					<ParamRange name="Position" T="DOUBLE" default="0" value="3140.217999985921324">
 						<DurationSource name="DurationSource"/>
-						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.91375745914977923867" defaultBeatsDuration="8">
+						<PhaseSourceTransportTimeline name="PhaseSourceTransportTimeline" phase="0.62804359999718428753" defaultBeatsDuration="8">
 							<Params name="Params">
 								<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="5" value="2">
 									<PhaseSourceStatic name="PhaseSourceStatic"/>
@@ -10856,7 +10929,6 @@
 				<FoldParams name="FoldParams">
 					<FoldState component="/groupedcomponent/textanimator/" folded="1"/>
 					<FoldState component="/groupedcomponent/textanimator/animate/" folded="0"/>
-					<FoldState component="/groupedcomponentrenderpasschaincomponenttransform" folded="0"/>
 				</FoldParams>
 			</ClipView>
 			<VideoTrack name="VideoTrack">
@@ -10916,7 +10988,7 @@
 									<DurationSource name="DurationSource" userDuration="1.4000000000000027978"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.3820077080047508122">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="1.3820077080043942086">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="1.4000000000000027978" value="0.45000000000000106581">
@@ -10933,7 +11005,7 @@
 									<DurationSource name="DurationSource" userDuration="10.930126710198997841" scale="0.33301267101990050801"/>
 									<PhaseSourceTimeline name="PhaseSourceTimeline" phase="0">
 										<Params name="Params">
-											<ParamRange name="Speed" T="DOUBLE" default="1" value="4.2457549193287640321">
+											<ParamRange name="Speed" T="DOUBLE" default="1" value="4.2457549193276635791">
 												<PhaseSourceStatic name="PhaseSourceStatic"/>
 											</ParamRange>
 											<ParamRange name="Max Distance" altName="Distance" T="DOUBLE" default="10.930126710198997841" value="1.6650633550995033172">
@@ -10987,7 +11059,7 @@
 		<Clip name="Clip" uniqueId="1643404540240" layerIndex="3" columnIndex="1"/>
 		<Clip name="Clip" uniqueId="1655769169910" layerIndex="4" columnIndex="1">
 			<PreloadData>
-				<VideoFile value="C:\Users\space\AppData\Local\Palette\data_default\config\sppro_startingup.png"/>
+				<VideoFile value="C:\Users\nosuc\AppData\Local\Palette\data_default\config\sppro_startingup.png"/>
 			</PreloadData>
 			<Params name="Params">
 				<Param name="Name" T="STRING" default="sppro_startingup" value="sppro_startingup"/>
@@ -11038,7 +11110,7 @@
 				</ChoosableMixer>
 				<PrimarySource>
 					<VideoSource name="VideoSource" width="1920" height="1080" type="VideoFormatReaderSource">
-						<VideoFormatReaderSource fileName="C:\Users\space\AppData\Local\Palette\data_default\config\sppro_startingup.png"/>
+						<VideoFormatReaderSource fileName="C:\Users\nosuc\AppData\Local\Palette\data_default\config\sppro_startingup.png"/>
 					</VideoSource>
 				</PrimarySource>
 				<ChoosableMixer name="Blend">
@@ -11052,7 +11124,7 @@
 		<Clip name="Clip" uniqueId="1643404540241" layerIndex="3" columnIndex="2"/>
 		<Clip name="Clip" uniqueId="1655769169911" layerIndex="4" columnIndex="2">
 			<PreloadData>
-				<VideoFile value="C:\Users\space\AppData\Local\Palette\data_default\config\sppro_rebooting.png"/>
+				<VideoFile value="C:\Users\nosuc\AppData\Local\Palette\data_default\config\sppro_rebooting.png"/>
 			</PreloadData>
 			<Params name="Params">
 				<Param name="Name" T="STRING" default="sppro_rebooting" value="sppro_rebooting"/>
@@ -11100,7 +11172,7 @@
 				</ChoosableMixer>
 				<PrimarySource>
 					<VideoSource name="VideoSource" width="1920" height="1080" type="VideoFormatReaderSource">
-						<VideoFormatReaderSource fileName="C:\Users\space\AppData\Local\Palette\data_default\config\sppro_rebooting.png"/>
+						<VideoFormatReaderSource fileName="C:\Users\nosuc\AppData\Local\Palette\data_default\config\sppro_rebooting.png"/>
 					</VideoSource>
 				</PrimarySource>
 				<ChoosableMixer name="Blend">
@@ -11114,7 +11186,7 @@
 		<Clip name="Clip" uniqueId="1655159519144" layerIndex="3" columnIndex="3"/>
 		<Clip name="Clip" uniqueId="1655769169912" layerIndex="4" columnIndex="3">
 			<PreloadData>
-				<VideoFile value="C:\Users\space\AppData\Local\Palette\data_default\config\sppro_restarting.png"/>
+				<VideoFile value="C:\Users\nosuc\AppData\Local\Palette\data_default\config\sppro_restarting.png"/>
 			</PreloadData>
 			<Params name="Params">
 				<Param name="Name" T="STRING" default="sppro_restarting" value="sppro_restarting"/>
@@ -11185,7 +11257,7 @@
 				</ChoosableMixer>
 				<PrimarySource>
 					<VideoSource name="VideoSource" width="1920" height="1080" type="VideoFormatReaderSource">
-						<VideoFormatReaderSource fileName="C:\Users\space\AppData\Local\Palette\data_default\config\sppro_restarting.png"/>
+						<VideoFormatReaderSource fileName="C:\Users\nosuc\AppData\Local\Palette\data_default\config\sppro_restarting.png"/>
 					</VideoSource>
 				</PrimarySource>
 				<ChoosableMixer name="Blend">
@@ -11198,9 +11270,13 @@
 		<Clip name="Clip" uniqueId="1686613403620" layerIndex="2" columnIndex="4"/>
 		<Clip name="Clip" uniqueId="1686613403621" layerIndex="3" columnIndex="4"/>
 		<Clip name="Clip" uniqueId="1686613403622" layerIndex="4" columnIndex="4"/>
+		<Clip name="Clip" uniqueId="1793745507327" layerIndex="0" columnIndex="5"/>
+		<Clip name="Clip" uniqueId="1793745507357" layerIndex="1" columnIndex="5"/>
+		<Clip name="Clip" uniqueId="1793745507387" layerIndex="2" columnIndex="5"/>
+		<Clip name="Clip" uniqueId="1793745507417" layerIndex="3" columnIndex="5"/>
+		<Clip name="Clip" uniqueId="1793745507447" layerIndex="4" columnIndex="5"/>
 	</Deck>
 	<Notes name="Notes">
 		<Note text_size_multiplier="2" text_color_index="4" text=""/>
 	</Notes>
 </Composition>
-

@@ -144,6 +144,7 @@ func KillAllExceptMonitor() error {
 			failures = append(failures, err)
 		}
 	}
+	stop(executableName("palette_spout_receiver"))
 	stop(MmttExe)
 	stop(BiduleExe)
 	// Include both editions, even if the currently configured one differs
@@ -348,6 +349,8 @@ func (pm *ProcessManager) StartRunning(process string) error {
 	// For GUI (Chrome), close existing Palette Control window if present
 	// This ensures we start fresh without killing other Chrome instances
 	if process == "gui" {
+		LogIfError(syncSpoutWindows(0, nil))
+		LogIfError(writeSpoutPerformanceActive(false))
 		if CloseWindowByTitle("Palette Control") {
 			LogInfo("StartRunning: closed existing Palette Control window")
 			// Give Chrome time to fully close before starting new instance
@@ -479,6 +482,8 @@ func (pm *ProcessManager) StopRunning(process string) (err error) {
 
 	// Special handling for GUI - close by window title to avoid killing other Chrome instances
 	if process == "gui" {
+		LogIfError(syncSpoutWindows(0, nil))
+		LogIfError(writeSpoutPerformanceActive(false))
 		if CloseWindowByTitle("Palette Control") {
 			LogInfo("StopRunning: closed GUI window by title")
 		} else {

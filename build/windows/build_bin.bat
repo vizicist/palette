@@ -98,6 +98,30 @@ copy %PALETTE_SOURCE%\build\windows\vc15\bin\pthreadvc2.dll %ship%\ffgl >nul
 copy %PALETTE_SOURCE%\build\windows\vc15\bin\msvcr100.dll %ship%\ffgl >nul
 popd
 
+echo ================ Building Spout receiver
+rem SpoutGL ships a 64-bit CPython 3.13 wheel. Freeze the receiver so the
+rem installed Palette does not depend on a separately installed Python.
+set "SPOUT_PYTHON=%PALETTE_SPOUT_PYTHON_EXE%"
+if "%SPOUT_PYTHON%" == "" for /f "delims=" %%i in ('py -3.13 -c "import sys; print(sys.executable)" 2^>nul') do set "SPOUT_PYTHON=%%i"
+if not exist "%SPOUT_PYTHON%" (
+	echo A 64-bit Python 3.13 installation is required to build the Spout receiver.
+	echo Set PALETTE_SPOUT_PYTHON_EXE to its python.exe or install Python 3.13.
+	goto getout
+)
+"%SPOUT_PYTHON%" -c "import sys, struct; sys.exit(sys.version_info[:2] != (3, 13) or struct.calcsize('P') != 8)"
+if errorlevel 1 (
+	echo The Spout receiver requires 64-bit Python 3.13.
+	goto getout
+)
+"%SPOUT_PYTHON%" -m pip install -r "%PALETTE_SOURCE%\python\requirements-spout.txt" "pyinstaller==6.19.0"
+if errorlevel 1 goto getout
+"%SPOUT_PYTHON%" "%PALETTE_SOURCE%\python\build_spout_receiver.py" "%bin%"
+if errorlevel 1 goto getout
+if not exist "%bin%\palette_spout_receiver.exe" (
+	echo Spout receiver build did not produce palette_spout_receiver.exe.
+	goto getout
+)
+
 rem ======== Kinect (mmtt_kinect) is only built when PALETTE_MMTT is set
 rem ======== NOTE - this is now NOT done automatically, you need to call build_mmtt manually
 rem if "%PALETTE_MMTT%" == "kinect" call build_mmtt.bat

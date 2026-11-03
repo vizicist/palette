@@ -1645,7 +1645,7 @@ function setAdvancedMode(enabled, shouldLoadPresets = true) {
     document.body.classList.toggle('advanced-mode', enabled);
     document.body.classList.toggle('performance-mode', UIState.guiLevel === 2);
     const level = UIState.guiLevel;
-    guiLevelRequest = guiLevelRequest.then(() => API.setGUILevel(level))
+    guiLevelRequest = guiLevelRequest.then(() => API.setGUILevel(level, spoutWindowBounds()))
         .catch(err => console.error('Could not update Spout display mode:', err));
     if (UIState.guiLevel !== 2) clearPatchPreview();
     const categoryTabs = document.getElementById('category-tabs');
@@ -1680,6 +1680,29 @@ function setAdvancedMode(enabled, shouldLoadPresets = true) {
         }
     }
 }
+
+function spoutWindowBounds() {
+    const surfaces = document.querySelectorAll('.spout-preview-surface');
+    if (surfaces.length !== 2) return {};
+    const scale = window.devicePixelRatio;
+    const top = window.screenY + window.outerHeight - window.innerHeight;
+    const bounds = surface => {
+        const rect = surface.getBoundingClientRect();
+        return [window.screenX + rect.left, top + rect.top, rect.width, rect.height]
+            .map(value => Math.round(value * scale)).join(',');
+    };
+    return { composition: bounds(surfaces[0]), preview: bounds(surfaces[1]) };
+}
+
+let spoutResizeTimer;
+window.addEventListener('resize', () => {
+    if (UIState.guiLevel !== 2) return;
+    clearTimeout(spoutResizeTimer);
+    spoutResizeTimer = setTimeout(() => {
+        guiLevelRequest = guiLevelRequest.then(() => API.setGUILevel(2, spoutWindowBounds()))
+            .catch(err => console.error('Could not resize Spout windows:', err));
+    }, 150);
+});
 
 function setupCategoryTabs() {
     document.querySelectorAll('#category-tabs .tab').forEach(tab => {
