@@ -884,6 +884,11 @@ body.performance-mode #performance-preview {
 .spout-preview {
     flex: 0 1 384px;
     min-width: 0;
+    transform: translateY(-6px);
+}
+
+.spout-preview:first-child {
+    transform: translate(8px, -6px);
 }
 
 .spout-preview-label {
