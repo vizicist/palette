@@ -103,6 +103,7 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"status":               globalStatus,
 	"attract":              globalAttract,
 	"activate":             globalActivate,
+	"guilevel":             globalGUILevel,
 	"load":                 globalLoad,
 	"getboot":              globalGetBoot,
 	"getbootwithprefix":    globalGetBoot,
@@ -134,6 +135,15 @@ var globalAPIHandlers = map[string]globalAPIHandler{
 	"interest_eval":        globalInterestEval,
 	"interest_score":       globalInterestScore,
 	"interest_monitors":    globalInterestMonitors,
+}
+
+// The GUI reports its current level; guidefaultlevel remains a boot preference.
+func globalGUILevel(api string, apiargs map[string]string) (string, error) {
+	level, err := strconv.Atoi(apiargs["level"])
+	if err != nil || level < 0 || level > 2 {
+		return "", fmt.Errorf("global.guilevel requires level=0, 1, or 2")
+	}
+	return "", writeSpoutPerformanceActive(level == 2)
 }
 
 // globalInterestMonitors lists the capturable monitors and which one an
@@ -221,9 +231,16 @@ func globalLoad(api string, apiargs map[string]string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	previewTickets := make(map[*Patch]uint64, len(Patchs))
+	for _, patch := range Patchs {
+		previewTickets[patch] = patch.preview.beginLoad()
+	}
 	err = LoadGlobalParamsFrom(fname, true)
 	if err == nil {
 		rememberPresetSelection("global", "*", fname)
+		for patch, ticket := range previewTickets {
+			patch.startPreviewGesture(ticket)
+		}
 	}
 	return "", err
 }

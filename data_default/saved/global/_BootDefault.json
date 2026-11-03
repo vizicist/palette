@@ -38,7 +38,7 @@
         "global.deltaztrignote":"0.200000",
         "global.deltaztrigcontroller":"0.020000",
         "global.deltaytrig":"0.043000",
-        "global.guidefaultlevel":"0",
+        "global.guidefaultlevel":"2",
         "global.guishowall":"false",
         "global.guisize":"palette",
         "global.helpimage":"sppro_helpscreen.png",

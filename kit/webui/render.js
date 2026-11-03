@@ -9,6 +9,29 @@ export function setupAppTitleFit() {
     }
 }
 
+// Native Spout windows sit above the browser. Keep dialogs above their row.
+export function setupDialogBounds() {
+    const preview = document.getElementById('performance-preview');
+    if (!preview) return;
+
+    const update = () => {
+        if (!document.body.classList.contains('performance-mode')) {
+            document.body.style.removeProperty('--dialog-available-height');
+            return;
+        }
+        const rect = preview.getBoundingClientRect();
+        const height = rect.height > 0 ? Math.max(0, rect.top) : window.innerHeight;
+        document.body.style.setProperty('--dialog-available-height', `${height}px`);
+    };
+    const observer = new ResizeObserver(update);
+    for (const id of ['performance-preview', 'main-container', 'patch-selector', 'controls', 'title-bar']) {
+        const element = document.getElementById(id);
+        if (element) observer.observe(element);
+    }
+    window.addEventListener('resize', update);
+    update();
+}
+
 export function fitAppTitle() {
     const title = document.getElementById('app-title');
     const text = document.getElementById('app-title-text');
@@ -114,7 +137,14 @@ export function updatePresetButtons() {
 
 export function updatePatchButtons() {
     const buttons = document.querySelectorAll('#patch-selector .patch-btn');
-    buttons.forEach(b => b.classList.remove('active'));
+    buttons.forEach(b => {
+        b.classList.remove('active');
+        const preview = UIState.guiLevel === 2 && b.dataset.patch === UIState.previewPatch;
+        b.classList.toggle('preview', preview);
+        const label = b.querySelector('.patch-preview-label');
+        if (label) label.hidden = !preview;
+        b.setAttribute('aria-label', b.dataset.patch === '*' ? 'All patches' : `Patch ${b.dataset.patch}${preview ? ' Preview' : ''}`);
+    });
 
     if (UIState.currentPatch === '*') {
         buttons.forEach(b => b.classList.add('active'));

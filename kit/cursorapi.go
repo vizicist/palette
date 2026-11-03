@@ -69,6 +69,7 @@ func cursorEventAPI(api string, apiargs map[string]string) (string, error) {
 		ce.Area = area
 	}
 
+	stopPreviewGestureForInput(ce)
 	theCursorManager.ExecuteCursorEvent(ce)
 	return JSONObject("gid", fmt.Sprintf("%d", gid)), nil
 }

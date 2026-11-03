@@ -2,6 +2,7 @@ package kit
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -9,10 +10,11 @@ import (
 )
 
 type Patch struct {
-	mutex  sync.RWMutex
-	synth  *Synth
-	name   string
-	params *ParamValues
+	mutex   sync.RWMutex
+	synth   *Synth
+	name    string
+	params  *ParamValues
+	preview previewGestureState
 	// listeners []*PluginInstance
 }
 
@@ -262,6 +264,29 @@ func (patch *Patch) API(api string, apiargs map[string]string) (string, error) {
 
 	switch api {
 
+	case "preview":
+		onoff, err := strconv.ParseBool(apiargs["onoff"])
+		if err != nil {
+			return "", fmt.Errorf("patch.preview requires onoff=true or false")
+		}
+		resolume := TheResolume()
+		_, layer := resolume.PortAndLayerNumForPatch(patch.Name())
+		if layer == 0 {
+			return "", fmt.Errorf("no Resolume layer for patch %s", patch.Name())
+		}
+		wasEnabled := patch.preview.isEnabled()
+		if err := resolume.previewLayer(layer, onoff); err != nil {
+			return "", err
+		}
+		patch.preview.setEnabled(onoff)
+		if err := updateSpoutPreviewDisplay(); err != nil {
+			patch.preview.setEnabled(wasEnabled)
+			_ = resolume.previewLayer(layer, wasEnabled)
+			_ = updateSpoutPreviewDisplay()
+			return "", err
+		}
+		return "", nil
+
 	case "load":
 		filename, okfilename := apiargs["filename"]
 		if !okfilename {
@@ -504,6 +529,7 @@ func (patch *Patch) Load(category string, paramsMap ParamsMap) error {
 }
 
 func (patch *Patch) load(category string, paramsMap ParamsMap, preservedRoute string, preserveRoute bool) error {
+	previewTicket := patch.preview.beginLoad()
 
 	// One resync at the end of the load rather than one per sample parameter.
 	defer SuspendSamplePlaybackSync()()
@@ -554,6 +580,7 @@ func (patch *Patch) load(category string, paramsMap ParamsMap, preservedRoute st
 		patch.restoreStepperRoute(preservedRoute)
 	}
 	patch.RefreshAllPatchValues()
+	patch.startPreviewGesture(previewTicket)
 	return nil
 }
 

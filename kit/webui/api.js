@@ -65,6 +65,12 @@ export const API = {
     setPatchParam(patch, name, value) {
         return this.call('patch.set', { patch, name, value });
     },
+    setPatchPreview(patch, onoff) {
+        return this.call('patch.preview', { patch, onoff: String(onoff) });
+    },
+    setGUILevel(level) {
+        return this.call('global.guilevel', { level: String(level) });
+    },
     // Set multiple params at once (params is an object of name: value pairs)
     setPatchParams(patch, params) {
         return this.call('patch.setparams', { patch, ...params });

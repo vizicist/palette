@@ -85,7 +85,7 @@ func (r *Router) InputListenOnce() {
 	case event := <-r.midiInputChan:
 		r.HandleMidiEvent(event)
 	case event := <-r.cursorInput:
-		ScheduleAt(CurrentClick(), event.Tag, event)
+		r.ScheduleCursorEvent(event)
 	default:
 		time.Sleep(time.Millisecond)
 	}
@@ -93,6 +93,7 @@ func (r *Router) InputListenOnce() {
 }
 
 func (r *Router) ScheduleCursorEvent(ce CursorEvent) {
+	stopPreviewGestureForInput(ce)
 
 	// schedule CursorEvents rather than handle them right away.
 	// This makes it easier to do looping, among other benefits.
@@ -376,6 +377,7 @@ func (r *Router) oscHandleCursor(msg *osc.Message) {
 		LogWarn("Hmmmmmmmm, OSC down/drag cursor event has zero Z?", "ce", ce)
 		ce.Pos.Z = theCursorManager.LoopThreshold
 	}
+	stopPreviewGestureForInput(ce)
 	theCursorManager.ExecuteCursorEvent(ce)
 }
 

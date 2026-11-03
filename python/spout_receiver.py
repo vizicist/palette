@@ -20,6 +20,44 @@ import argparse
 import sys
 
 
+PREVIEW_ACTIVE_EVENT = r"Local\Palette.SpoutPreviewActive"
+PERFORMANCE_ACTIVE_EVENT = r"Local\Palette.SpoutPerformanceActive"
+
+
+class PreviewGate:
+    """Read a Palette display-state event without blocking the render loop."""
+
+    def __init__(self, name=PREVIEW_ACTIVE_EVENT):
+        import ctypes
+        from ctypes import wintypes
+
+        self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        self._kernel32.CreateEventW.argtypes = [
+            ctypes.c_void_p, wintypes.BOOL, wintypes.BOOL, wintypes.LPCWSTR
+        ]
+        self._kernel32.CreateEventW.restype = wintypes.HANDLE
+        self._kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        self._kernel32.WaitForSingleObject.restype = wintypes.DWORD
+        self._kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+        self._kernel32.CloseHandle.restype = wintypes.BOOL
+        self._handle = self._kernel32.CreateEventW(None, True, False, name)
+        if not self._handle:
+            raise RuntimeError("Could not open Palette Preview state")
+
+    def active(self):
+        result = self._kernel32.WaitForSingleObject(self._handle, 0)
+        if result == 0:  # WAIT_OBJECT_0
+            return True
+        if result == 258:  # WAIT_TIMEOUT
+            return False
+        raise RuntimeError("Could not read Palette Preview state")
+
+    def close(self):
+        if self._handle:
+            self._kernel32.CloseHandle(self._handle)
+            self._handle = None
+
+
 def positive_int(value):
     number = int(value)
     if number <= 0:
@@ -45,6 +83,14 @@ def parse_args(argv=None):
     )
     parser.add_argument(
         "--flip-y", action="store_true", help="flip the received image vertically"
+    )
+    parser.add_argument(
+        "--preview-only", action="store_true",
+        help="show black unless a Palette pad is in Preview mode",
+    )
+    parser.add_argument(
+        "--performance-only", action="store_true",
+        help="show the window only while the Palette GUI is in Performance mode",
     )
     args = parser.parse_args(argv)
     if not args.list and (not args.sender or not args.sender.strip()):
@@ -74,7 +120,13 @@ def run(args):
 
     window = None
     texture = 0
+    preview_gate = None
+    performance_gate = None
     try:
+        if args.preview_only:
+            preview_gate = PreviewGate()
+        if args.performance_only:
+            performance_gate = PreviewGate(PERFORMANCE_ACTIVE_EVENT)
         # OpenGL 2.1 provides the compatibility functions used to draw the quad.
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 2)
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 1)
@@ -84,6 +136,8 @@ def run(args):
         )
         # Position the window before showing it to avoid an initial flash elsewhere.
         glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
+        if args.performance_only:
+            glfw.window_hint(glfw.FOCUS_ON_SHOW, glfw.FALSE)
         window = glfw.create_window(
             args.width, args.height, f"Spout: {args.sender}", None, None
         )
@@ -113,7 +167,9 @@ def run(args):
         )
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         GL.glClearColor(0.0, 0.0, 0.0, 1.0)
-        glfw.show_window(window)
+        visible = performance_gate is None or performance_gate.active()
+        if visible:
+            glfw.show_window(window)
 
         print(f"Waiting for Spout sender {args.sender!r}. Escape to quit.", flush=True)
         # Release Spout while its OpenGL context is still current.
@@ -124,6 +180,16 @@ def run(args):
                 glfw.poll_events()
                 if glfw.window_should_close(window):
                     break
+                should_show = performance_gate is None or performance_gate.active()
+                if should_show != visible:
+                    if should_show:
+                        glfw.show_window(window)
+                    else:
+                        glfw.hide_window(window)
+                    visible = should_show
+                if not visible:
+                    glfw.wait_events_timeout(0.05)
+                    continue
                 width, height = glfw.get_framebuffer_size(window)
                 if width == 0 or height == 0:
                     glfw.wait_events_timeout(0.05)
@@ -155,7 +221,7 @@ def run(args):
 
                 GL.glViewport(0, 0, width, height)
                 GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-                if received and connected:
+                if received and connected and (preview_gate is None or preview_gate.active()):
                     # Match SpoutGL's example: texture (0, 0) is at the top left.
                     GL.glMatrixMode(GL.GL_PROJECTION)
                     GL.glLoadIdentity()
@@ -186,6 +252,10 @@ def run(args):
             if window:
                 glfw.destroy_window(window)
             glfw.terminate()
+            if preview_gate is not None:
+                preview_gate.close()
+            if performance_gate is not None:
+                performance_gate.close()
 
 
 def main(argv=None):

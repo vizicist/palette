@@ -862,6 +862,42 @@ body.initial-bss #ritual-nav {
     padding: 0 2px;
 }
 
+/* Reserve space for the two native Spout windows in Performance mode. */
+#performance-preview {
+    display: none;
+    flex: 0 0 250px;
+    height: 250px;
+    min-height: 250px;
+    border-top: 6px solid var(--button-border);
+    padding: 3px 4px;
+    background: #000;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+body.performance-mode #performance-preview {
+    display: flex;
+}
+
+.spout-preview {
+    flex: 0 1 384px;
+    min-width: 0;
+}
+
+.spout-preview-label {
+    margin-bottom: 4px;
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.spout-preview-surface {
+    aspect-ratio: 16 / 9;
+}
+
 /* Patch selector (advanced mode) */
 #patch-selector {
     display: flex;
@@ -889,6 +925,7 @@ body.initial-bss #ritual-nav {
 }
 
 .patch-btn {
+    position: relative;
     background: var(--button-bg);
     color: var(--text);
     border: none;
@@ -913,8 +950,46 @@ body.initial-bss #ritual-nav {
     font-size: 48px;
 }
 
+/* Compact, equal-height virtual pads belong only to Performance mode. */
+body.performance-mode #patch-selector { padding: 7.5px; }
+body.performance-mode .patch-grid { gap: 6px; }
+body.performance-mode .patch-row { gap: 6px; align-items: center; }
+body.performance-mode .patch-btn {
+    padding: 13.5px clamp(9px, 3vw, 30px);
+    font-size: 18px;
+    max-width: 135px;
+}
+body.performance-mode .patch-row-bottom { gap: clamp(12px, 3.75vw, 30px); }
+body.performance-mode .patch-btn[data-patch="*"] {
+    padding: 4.5px 9px;
+    flex-basis: 66px;
+    margin: 9px clamp(7.5px, 3vw, 22.5px);
+    font-size: 36px;
+}
+
 .patch-btn.active {
     background: var(--highlight);
+}
+
+body.performance-mode .patch-btn.preview {
+    box-shadow: inset 0 0 0 2px #ffda5c;
+}
+
+.patch-preview-label {
+    display: none;
+}
+
+body.performance-mode .patch-preview-label:not([hidden]) {
+    display: block;
+    position: absolute;
+    bottom: 2.25px;
+    left: 0;
+    right: 0;
+    font-size: 10.5px;
+    line-height: 1;
+    font-weight: bold;
+    color: #ffda5c;
+    pointer-events: none;
 }
 
 .patch-btn:hover {
@@ -971,6 +1046,10 @@ body.initial-bss #sample-playback-controls-panel {
 
 body.initial-bss.advanced-mode #main-container {
     grid-template-rows: minmax(0, 1fr) auto auto;
+}
+
+body.initial-bss.performance-mode #main-container {
+    grid-template-rows: minmax(0, 1fr) 250px auto auto;
 }
 
 body.initial-bss.advanced-mode #palette-pad-stage,
@@ -1721,6 +1800,40 @@ body:not(.touch-input) #controls button:hover {
     color: #fff;
     background: #067;
     border-color: #0aa;
+}
+
+/* Keep dialogs clear of the native Spout previews in Performance mode. */
+body.performance-mode .modal-overlay,
+body.performance-mode .page-overlay,
+body.performance-mode #help-overlay {
+    padding-bottom: calc(100vh - var(--dialog-available-height, 60vh));
+}
+
+body.performance-mode .keyboard-modal {
+    padding-bottom: calc(24px + 100vh - var(--dialog-available-height, 60vh));
+}
+
+body.performance-mode .modal-overlay > *,
+body.performance-mode .keyboard-dialog {
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+body.performance-mode .keyboard-dialog {
+    gap: 10px;
+    padding: 14px;
+}
+
+body.performance-mode .keyboard-dialog > * {
+    flex-shrink: 0;
+}
+
+body.performance-mode .page-overlay > * {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 .param-list {

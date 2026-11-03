@@ -71,9 +71,9 @@ The native effect class is `InvertRGB` (`A105`); its OSC identifiers are
 
 The numeric controls are floats in the range 0–1. Opacity belongs to the
 outer effect, so its address does **not** include `/effect/`. Alpha inversion
-is left at Resolume's default of zero. The toggle and controls have no Rand
-fields, so randomization leaves them unchanged. Both numbered instances are
-generated automatically, just like Goo above.
+is left at Resolume's default of zero. Invert RGB now participates in Random
+effect selection, with restrained opacity and RGB inversion ranges. Both
+numbered instances are generated automatically, just like Goo above.
 
 After deploying the JSON files and composition and restarting the engine,
 test A with `palette patchset A effect.1-invertrgb true`, then restore bypass
@@ -89,9 +89,10 @@ no effect. Keep the second instance bypassed while checking the first.
 
 The following effects are also registered and included twice on clip 1 of
 each A/B/C/D layer in both standard compositions. Their enable switches
-default to false, and none of their controls participate in Rand. Existing
-effects keep their processing order; these additions occupy their alphabetical
-positions in each effect group.
+default to false. All recent additions participate in Rand with bounded
+parameter ranges; `global.randeffectcount` chooses distinct plugins and enables
+one bank of each selected plugin. Existing effects keep their processing order;
+these additions occupy their alphabetical positions in each effect group.
 
 | Effect | Palette key | Controls in addition to enable and opacity |
 | --- | --- | --- |
@@ -101,6 +102,19 @@ positions in each effect group.
 | Colorize | `colorize` | Hue, saturation, brightness, mode, weighted, keep greys, greys tolerance, invert, contrast |
 | LoRez | `lorezeffect` | Pixel size, bit reduction, dither |
 | Tunnel | `tunnel` | Position, speed, twist, kaleidoscope, rotation, horizontal/vertical turn and wobble, black background |
+| Kuwahara | `kuwahara` | Radius |
+| Shift Glitch | `shiftglitch` | Frequency, vertical/horizontal shift, size, black background |
+| Fish Eye | `fisheye` | FishEye strength, black background |
+| Point Grid | `pointgrid` | Size, smooth start, black background, space, resolution, X/Y/Z rotation |
+| Auto Mask | `automask` | Channel, contrast, invert |
+| Bendoscope | `bendoscope` | Divisions, black background |
+| Color Pass | `colorpass` | Hue 1, hue 2, invert |
+| Cube Tiles | `cubetiles` | Resolution, zoom, amount, X/Y/Z rotation, number of cubes, black background |
+| Dilate | `dilate` | Spread, size, threshold, mode, shape |
+| Heat | `heat` | Heat |
+| Particle System | `particlesystem` | Count, lifetime, spawn mode, position, velocity ranges, rotation/scale ranges, scale/opacity decay, inherited velocity, gravity, wind, friction |
+| Recolor | `recolour` | Palette, floor, ceiling, cycle phase/speed, use alpha |
+| Stripper | `stripper` | Number, mode, direction/spread, movement type, speed/spread, global/min/max width, feather, RGBA background |
 
 Float controls use normalized OSC values from 0 to 1, not necessarily the
 units displayed by Resolume. Shift RGB's R/G/B offsets are neutral at 0.5;
@@ -116,10 +130,43 @@ palette is retained for Palette mode. No packed OSC color or engine change
 is needed. LoRez's native OSC identifier is `lorezeffect`, not its displayed
 name `LoRez`; the second instance is `lorezeffect2`.
 
+Kuwahara's radius uses normalized OSC values: 0 selects radius 1 and 1 selects
+radius 25. Its initial value of approximately 0.166667 selects the factory
+radius of 5. Shift Glitch, Fish Eye, and Point Grid also retain their factory
+control settings. All four start bypassed and participate in Rand. Point
+Grid's rotations use 0.5 as neutral. Their native OSC identifiers are
+`kuwahara`, `shiftglitch`, `fisheye`, and `pointgrid`, with `2` appended for
+the second instance. Both instances on all four patches were verified through
+Palette's API and OSC with REST readback: 160 control checks across 32 effect
+instances, plus both bypass states. The initial values and bypass were restored
+after verification.
+
+Recolor's native OSC identifier uses the spelling `recolour`. Dilate's size
+control is normalized from 0–1 to its native range of 1–10. Its mode choices
+are 0=Light and 1=Dark; shape choices are 0=Rectangle, 1=Circle, 2=Triangle,
+3=Cross. Auto Mask's channel choices are 0=Luminance, 1=Red, 2=Green, 3=Blue.
+Particle System's spawn mode is 0=Auto or 1=Manual. Cube Tiles' one-shot
+Randomize button is not exposed as a persistent Palette parameter.
+
+Random particle counts are limited to 16–64 and lifetimes to 0.8–3.5 seconds;
+spawn mode stays Auto. Black-background switches stay off during Rand, and
+Stripper's background alpha stays zero. Numeric controls retain their full
+manual ranges; only their Rand ranges are restricted. All recent effect
+enable switches still initialize to false, so older presets do not suddenly
+enable the new effects.
+
+The nine additions from Auto Mask through Stripper were checked on both banks
+of A/B/C/D: 72 instances, 592 persistent-control checks, and both bypass
+states, using Palette's API with Resolume REST readback. Initial values and
+bypass were restored afterward. The live Random API was also checked for
+distinct plugin selection, participation of all 20 recent effects, and the
+configured parameter bounds without applying the generated patches.
+
 The initial settings use a restrained bloom, small RGB offsets/delays,
 partial-opacity Colorize and Tunnel, and light LoRez degradation. The effects
-remain bypassed until enabled. Every exposed control and both bypass states
-have been checked through OSC with REST readback on all 48 new instances.
+remain bypassed until enabled. For the initial six additions, every exposed
+control and both bypass states were checked through OSC with REST readback on
+all 48 instances.
 After installing changed config and saving the composition, run
 `palette restart` to reload the definitions and restart Resolume as well.
 
@@ -259,8 +306,10 @@ multi-argument messages, or other special protocols need engine changes unless
 the plugin exposes compatible individual controls.
 
 Randomization is opt-in. For numeric controls, add `randmin`/`randmax` to choose
-an appropriate range. For the parent boolean, `randmax: "0.2"` gives each
-instance a 20% enable probability when randomized. Without random fields the
+an appropriate range. For the parent boolean, `randmax: "0.2"` makes the plugin
+eligible for Random effect selection. The effect-count selector then chooses
+`global.randeffectcount` distinct plugin types and one bank per type; this takes
+precedence over individual enable probabilities. Without random fields the
 control is skipped by Rand. Start conservatively and test the two instances
 together.
 

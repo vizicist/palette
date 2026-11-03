@@ -41,6 +41,9 @@ func InitEngine() {
 		LogIfError(fmt.Errorf("theEngine already exists, there can be only one"))
 		return
 	}
+	// A restarted GUI has no pad in Preview mode, even if a receiver survived.
+	LogIfError(writeSpoutPreviewActive(false))
+	LogIfError(writeSpoutPerformanceActive(false))
 
 	engineSysex.Lock()
 	defer engineSysex.Unlock()

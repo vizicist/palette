@@ -228,17 +228,29 @@
             <main id="preset-grid"></main>
         </section>
 
+        <!-- Reserved for the separate, always-on-top native Spout receivers. -->
+        <section id="performance-preview" aria-label="Spout preview area">
+            <div class="spout-preview">
+                <div class="spout-preview-label">Composition</div>
+                <div class="spout-preview-surface" aria-label="Screen 3"></div>
+            </div>
+            <div class="spout-preview">
+                <div class="spout-preview-label">Preview</div>
+                <div class="spout-preview-surface" aria-label="Screen 2"></div>
+            </div>
+        </section>
+
         <!-- Advanced mode: patch selector -->
         <div id="patch-selector">
             <div class="patch-grid">
                 <div class="patch-row">
-                    <button class="patch-btn" data-patch="A">A</button>
+                    <button class="patch-btn" data-patch="A">A<span class="patch-preview-label" hidden>Preview</span></button>
                     <button class="patch-btn active" data-patch="*">*</button>
-                    <button class="patch-btn" data-patch="D">D</button>
+                    <button class="patch-btn" data-patch="D">D<span class="patch-preview-label" hidden>Preview</span></button>
                 </div>
                 <div class="patch-row patch-row-bottom">
-                    <button class="patch-btn" data-patch="B">B</button>
-                    <button class="patch-btn" data-patch="C">C</button>
+                    <button class="patch-btn" data-patch="B">B<span class="patch-preview-label" hidden>Preview</span></button>
+                    <button class="patch-btn" data-patch="C">C<span class="patch-preview-label" hidden>Preview</span></button>
                 </div>
             </div>
         </div>

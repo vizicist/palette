@@ -9,6 +9,12 @@ produces a patch with no enabled effects; counts above the available plugin type
 are capped. The GUI's Effect Rand respects the existing opt-in randomization
 ranges. Batch generators read the same count when selecting plugins.
 
+The recent built-in effect additions, including Invert RGB, participate in
+this selection pool. Their controls have explicit Rand ranges while preserving
+their full manual ranges and bypassed startup defaults. Particle System uses
+16–64 particles, 0.8–3.5-second lifetimes, and automatic spawning. Black-background
+switches stay off and Stripper's background alpha stays transparent during Rand.
+
 For a complete random patch, randomize Visual and Sound as well as Effect.
 Visual uses Palette's configured Rand ranges and current shape choices. Sound
 selects a registered synth and controller style, then randomizes ordered MIDI

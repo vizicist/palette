@@ -629,7 +629,30 @@ func (r *Resolume) connectClip(layerNum int, clip int) {
 	theEngine.SendOsc(r.resolumeClient, msg)
 }
 
-func (r *Resolume) bypassLayer(layerNum int, onoff bool) {
+// previewLayer hides the layer from the output while selecting it for Preview.
+// Resolume's selection is a trigger, not a boolean: to leave layer Preview,
+// select the composition instead of sending an ineffective layer select=0.
+func (r *Resolume) previewLayer(layerNum int, onoff bool) error {
+	if err := r.bypassLayer(layerNum, onoff); err != nil {
+		return err
+	}
+	addr := "/composition/select"
+	if onoff {
+		addr = fmt.Sprintf("/composition/layers/%d/select", layerNum)
+	}
+	msg := osc.NewMessage(addr)
+	msg.Append(int32(1))
+	if err := r.resolumeClient.Send(msg); err != nil {
+		if onoff {
+			// Avoid leaving a newly hidden layer behind if selection fails.
+			_ = r.bypassLayer(layerNum, false)
+		}
+		return err
+	}
+	return nil
+}
+
+func (r *Resolume) bypassLayer(layerNum int, onoff bool) error {
 	addr := fmt.Sprintf("/composition/layers/%d/bypassed", layerNum)
 	msg := osc.NewMessage(addr)
 	v := 0
@@ -637,7 +660,13 @@ func (r *Resolume) bypassLayer(layerNum int, onoff bool) {
 		v = 1
 	}
 	msg.Append(int32(v))
-	theEngine.SendOsc(r.resolumeClient, msg)
+	if r.resolumeClient == nil {
+		return fmt.Errorf("Resolume OSC client is unavailable")
+	}
+	LogOfType("osc", "Sending to OSC client", "client", r.resolumeClient.IP(), "port", r.resolumeClient.Port(), "msg", msg)
+	err := r.resolumeClient.Send(msg)
+	LogIfError(err)
+	return err
 }
 
 // soloLayer makes a layer the only one that reaches the output, and is how

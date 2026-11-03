@@ -426,17 +426,7 @@ func (cm *CursorManager) LoopedGIDFor(ce CursorEvent, warn bool) int {
 
 var BugFixWarningCount = 0
 
-func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
-
-	fadeThreshold, err := GetParamFloat("global.looping_fadethreshold")
-	if err != nil {
-		LogIfError(err)
-	} else {
-		cm.executeMutex.Lock()
-		theCursorManager.LoopThreshold = fadeThreshold
-		cm.executeMutex.Unlock()
-	}
-
+func transformCursorEvent(ce CursorEvent) CursorEvent {
 	cursorscaley, err := GetParamFloat("global.cursorscaley")
 	if err == nil && cursorscaley > 0.0 {
 		ce.Pos.Y *= cursorscaley
@@ -454,6 +444,20 @@ func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
 	if err == nil {
 		ce.Pos.X += cursoroffsetx
 	}
+	return ce
+}
+
+func (cm *CursorManager) ExecuteCursorEvent(ce CursorEvent) {
+
+	fadeThreshold, err := GetParamFloat("global.looping_fadethreshold")
+	if err != nil {
+		LogIfError(err)
+	} else {
+		cm.executeMutex.Lock()
+		theCursorManager.LoopThreshold = fadeThreshold
+		cm.executeMutex.Unlock()
+	}
+	ce = transformCursorEvent(ce)
 
 	if ce.Ddu == "clear" {
 		if ce.Tag == "" {

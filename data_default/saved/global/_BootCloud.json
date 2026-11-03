@@ -29,7 +29,7 @@
         "global.sampleplaybackcompressed":"true",
         "global.sampleplaybackwords":"4",
         "global.sampleplaybackvolume":"0.25",
-        "global.guidefaultlevel":"0",
+        "global.guidefaultlevel":"2",
         "global.guishowall":"false",
         "global.guisize":"palette",
         "global.helpimage":"sppro_helpscreen.png",

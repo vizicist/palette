@@ -2,6 +2,37 @@
   "host": "127.0.0.1",
   "port": 7000,
   "effects": {
+    "automask": {
+      "on": {
+        "addr": "/automask/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/automask/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/automask/opacity",
+        "channel": "/automask/effect/channel",
+        "contrast": "/automask/effect/contrast",
+        "invert": "/automask/effect/invert"
+      }
+    },
+    "bendoscope": {
+      "on": {
+        "addr": "/bendoscope/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/bendoscope/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/bendoscope/opacity",
+        "divisions": "/bendoscope/effect/divisions",
+        "blackbg": "/bendoscope/effect/blackbg"
+      }
+    },
     "bloom": {
       "on": {
         "addr": "/bloom/bypassed",
@@ -59,6 +90,43 @@
         "brightness": "/colorize/effect/color/brightness"
       }
     },
+    "colorpass": {
+      "on": {
+        "addr": "/colorpass/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/colorpass/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/colorpass/opacity",
+        "hue1": "/colorpass/effect/hue1",
+        "hue2": "/colorpass/effect/hue2",
+        "invert": "/colorpass/effect/invert"
+      }
+    },
+    "cubetiles": {
+      "on": {
+        "addr": "/cubetiles/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/cubetiles/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/cubetiles/opacity",
+        "resolution": "/cubetiles/effect/resolution",
+        "zoom": "/cubetiles/effect/zoom",
+        "amount": "/cubetiles/effect/amount",
+        "rotatex": "/cubetiles/effect/rotatex",
+        "rotatey": "/cubetiles/effect/rotatey",
+        "rotatez": "/cubetiles/effect/rotatez",
+        "numcubes": "/cubetiles/effect/numcubes",
+        "blackbg": "/cubetiles/effect/blackbg"
+      }
+    },
     "delayrgb": {
       "on": {
         "addr": "/delayrgb/bypassed",
@@ -73,6 +141,24 @@
         "rdelay": "/delayrgb/effect/rdelay",
         "gdelay": "/delayrgb/effect/gdelay",
         "bdelay": "/delayrgb/effect/bdelay"
+      }
+    },
+    "dilate": {
+      "on": {
+        "addr": "/dilate/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/dilate/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/dilate/opacity",
+        "spread": "/dilate/effect/spread",
+        "size": "/dilate/effect/size",
+        "threshold": "/dilate/effect/threshold",
+        "mode": "/dilate/effect/mode",
+        "shape": "/dilate/effect/shape"
       }
     },
     "displace": {
@@ -102,6 +188,21 @@
       "params": {
         "mode": "/edgedetection/effect/mode",
         "multiplier": "/edgedetection/effect/multiplier"
+      }
+    },
+    "fisheye": {
+      "on": {
+        "addr": "/fisheye/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/fisheye/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/fisheye/opacity",
+        "fisheye": "/fisheye/effect/fisheye",
+        "blackbg": "/fisheye/effect/blackbg"
       }
     },
     "fragment": {
@@ -139,6 +240,20 @@
         "maxdistortiony": "/goo/effect/maxdistortiony",
         "maxdistortionz": "/goo/effect/maxdistortionz",
         "shade": "/goo/effect/shade"
+      }
+    },
+    "heat": {
+      "on": {
+        "addr": "/heat/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/heat/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/heat/opacity",
+        "heat": "/heat/effect/heat"
       }
     },
    "huerotate": {
@@ -214,6 +329,20 @@
       "off": {
         "addr": "/iterate/bypassed",
         "arg": 1
+      }
+    },
+    "kuwahara": {
+      "on": {
+        "addr": "/kuwahara/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/kuwahara/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/kuwahara/opacity",
+        "radius": "/kuwahara/effect/radius"
       }
     },
     "linearcloner": {
@@ -307,6 +436,62 @@
         "flipy": "/mirrorquad/effect/flipy"
       }
     },
+    "particlesystem": {
+      "on": {
+        "addr": "/particlesystem/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/particlesystem/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/particlesystem/opacity",
+        "particles": "/particlesystem/effect/particles",
+        "lifetime": "/particlesystem/effect/lifetime",
+        "spawnmode": "/particlesystem/effect/spawnmode",
+        "xpos": "/particlesystem/effect/xpos",
+        "ypos": "/particlesystem/effect/ypos",
+        "zpos": "/particlesystem/effect/zpos",
+        "xvelmin": "/particlesystem/effect/xvelmin",
+        "xvelmax": "/particlesystem/effect/xvelmax",
+        "yvelmin": "/particlesystem/effect/yvelmin",
+        "yvelmax": "/particlesystem/effect/yvelmax",
+        "zvelmin": "/particlesystem/effect/zvelmin",
+        "zvelmax": "/particlesystem/effect/zvelmax",
+        "rotatemin": "/particlesystem/effect/rotatemin",
+        "rotatemax": "/particlesystem/effect/rotatemax",
+        "scalemin": "/particlesystem/effect/scalemin",
+        "scalemax": "/particlesystem/effect/scalemax",
+        "scaledelta": "/particlesystem/effect/scaledelta",
+        "opacitydelta": "/particlesystem/effect/opacitydelta",
+        "inheritvel": "/particlesystem/effect/inheritvel",
+        "gravity": "/particlesystem/effect/gravity",
+        "wind": "/particlesystem/effect/wind",
+        "friction": "/particlesystem/effect/friction"
+      }
+    },
+    "pointgrid": {
+      "on": {
+        "addr": "/pointgrid/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/pointgrid/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/pointgrid/opacity",
+        "size": "/pointgrid/effect/size",
+        "smoothstart": "/pointgrid/effect/smoothstart",
+        "blackbg": "/pointgrid/effect/blackbg",
+        "space": "/pointgrid/effect/space",
+        "resolution": "/pointgrid/effect/resolution",
+        "rotatex": "/pointgrid/effect/rotatex",
+        "rotatey": "/pointgrid/effect/rotatey",
+        "rotatez": "/pointgrid/effect/rotatez"
+      }
+    },
     "polarkaleido": {
       "on": {
         "addr": "/polarkaleido/bypassed",
@@ -370,6 +555,25 @@
         "fan": "/radialcloner/effect/fan"
       }
     },
+    "recolour": {
+      "on": {
+        "addr": "/recolour/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/recolour/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/recolour/opacity",
+        "palette": "/recolour/effect/palette",
+        "floor": "/recolour/effect/floor",
+        "ceiling": "/recolour/effect/ceiling",
+        "cyclephase": "/recolour/effect/cyclephase",
+        "cyclespeed": "/recolour/effect/cyclespeed",
+        "usealpha": "/recolour/effect/usealpha"
+      }
+    },
     "ripples": {
       "on": {
         "addr": "/ripples/bypassed",
@@ -384,6 +588,24 @@
         "frequencyv": "/ripples/effect/frequencyv",
         "amplitudeh": "/ripples/effect/amplitudeh",
         "amplitudev": "/ripples/effect/amplitudev"
+      }
+    },
+    "shiftglitch": {
+      "on": {
+        "addr": "/shiftglitch/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/shiftglitch/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/shiftglitch/opacity",
+        "frequency": "/shiftglitch/effect/frequency",
+        "vertical": "/shiftglitch/effect/vertical",
+        "horizontal": "/shiftglitch/effect/horizontal",
+        "size": "/shiftglitch/effect/size",
+        "blackbg": "/shiftglitch/effect/blackbg"
       }
     },
     "shiftrgb": {
@@ -403,6 +625,34 @@
         "g": "/shiftrgb/effect/g",
         "b": "/shiftrgb/effect/b",
         "blackbg": "/shiftrgb/effect/blackbg"
+      }
+    },
+    "stripper": {
+      "on": {
+        "addr": "/stripper/bypassed",
+        "arg": 0
+      },
+      "off": {
+        "addr": "/stripper/bypassed",
+        "arg": 1
+      },
+      "params": {
+        "opacity": "/stripper/opacity",
+        "number": "/stripper/effect/number",
+        "mode": "/stripper/effect/mode",
+        "direction": "/stripper/effect/direction",
+        "directionspread": "/stripper/effect/directionspread",
+        "movementtype": "/stripper/effect/movementtype",
+        "speed": "/stripper/effect/speed",
+        "speedspread": "/stripper/effect/speedspread",
+        "globalwidth": "/stripper/effect/globalwidth",
+        "minwidth": "/stripper/effect/minwidth",
+        "maxwidth": "/stripper/effect/maxwidth",
+        "feather": "/stripper/effect/feather",
+        "red": "/stripper/effect/red",
+        "green": "/stripper/effect/green",
+        "blue": "/stripper/effect/blue",
+        "alpha": "/stripper/effect/alpha"
       }
     },
     "threshold": {

@@ -21,7 +21,7 @@ func uiStatusSnapshot() EngineStatusSnapshot {
 		Hostname:          Hostname(),
 		Presets:           currentPresetSelectionSnapshot(),
 		Mode:              CurrentMode(),
-		GuideDefaultLevel: GetParamWithDefault("global.guidefaultlevel", "0"),
+		GuideDefaultLevel: GetParamWithDefault("global.guidefaultlevel", "2"),
 		AttractAllowGUI:   IsTrueValue(GetParamWithDefault("global.attractallowgui", "false")),
 		ShowThemes:        IsTrueValue(GetParamWithDefault("global.showthemes", "true")),
 		ShowGoatsButton:   IsTrueValue(GetParamWithDefault("global.showgoatsbutton", "true")),

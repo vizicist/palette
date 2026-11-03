@@ -55,7 +55,9 @@ export const UIState = {
     currentPatch: '*',
     currentCategory: 'quad',
     currentTheme: defaultThemeDir,
-    advancedMode: false,
+    guiLevel: 2,
+    previewPatch: null,
+    advancedMode: true,
     lastSinglePatch: 'A',
     showingParams: false,
     activeAdventure: null,
@@ -124,8 +126,14 @@ export const UIState = {
         this.activeAdventure = adventure;
     },
 
+    setGUILevel(level) {
+        const value = Number(level);
+        this.guiLevel = [1, 2].includes(value) ? value : 0;
+        this.advancedMode = this.guiLevel !== 0;
+    },
+
     setAdvancedMode(enabled) {
-        this.advancedMode = !!enabled;
+        this.setGUILevel(enabled ? (this.guiLevel || 1) : 0);
     },
 
     setTheme(dir) {

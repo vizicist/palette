@@ -5,6 +5,7 @@ import { applyUISnapshot, requestUISnapshot, setupUIStateFeed } from './ui_nats.
 import { handleOBSRecordStatus, setupRecording, updateRecordButtonVisibility } from './recorder.js';
 import { setupVirtualKeyboard, showVirtualKeyboard } from './virtual-keyboard.js';
 import { setupActionMenu, showActionMenu } from './action-menu.js';
+import { createPatchSelectionController } from './patch-selection.js';
 import {
     applyAttractVideoResize,
     applyInitialPageMode,
@@ -17,6 +18,7 @@ import {
     renderStepperIndicator,
     setPalettePadActivity,
     setupAppTitleFit,
+    setupDialogBounds,
     showAttract,
     showAttractVideoSource,
     showHelp,
@@ -29,6 +31,31 @@ import {
     updateRitualNav,
     updateStepperIndicator
 } from './render.js';
+
+const patchSelection = createPatchSelectionController(UIState, (patch, onoff) => API.setPatchPreview(patch, onoff));
+let guiLevelRequest = Promise.resolve();
+
+async function clearPatchPreview() {
+    try {
+        await patchSelection.clearPreview();
+        updatePatchButtons();
+        return true;
+    } catch (err) {
+        showToast('Could not restore preview layer: ' + err.message);
+        return false;
+    }
+}
+
+// Best effort when refreshing/closing the GUI: do not leave its preview muted.
+window.addEventListener('pagehide', () => {
+    if (!UIState.previewPatch) return;
+    fetch('/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api: 'patch.preview', patch: UIState.previewPatch, onoff: 'false' }),
+        keepalive: true
+    }).catch(err => console.error('Could not restore preview layer:', err));
+});
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -74,6 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     applyInitialPageMode();
     setupAppTitleFit();
+    setupDialogBounds();
     setupRitualNav();
     setupThemeSelector();
     setupControls();
@@ -139,7 +167,7 @@ function syncInitialPageValue(page) {
 }
 
 function syncStartupMode(status) {
-    UIState.advancedMode = status && (status.guidefaultlevel === '1' || status.guidefaultlevel === 1);
+    UIState.setGUILevel(status?.guidefaultlevel ?? 2);
     UIState.attractAllowGui = !!(status && status.attractallowgui);
     UIState.attractVideos = statusAttractVideos(status);
     UIState.attractVideoDestination = normalizeAttractVideoDestination(status && status.attractvideodestination);
@@ -262,6 +290,7 @@ async function startSpacePalette() {
 }
 
 async function showSigilSequencer() {
+    if (!await clearPatchPreview()) return;
     UIState.setActiveAdventure('sigil');
     updateRitualNav();
     hideAttract();
@@ -330,18 +359,32 @@ function escapeHtml(value) {
 // view switching starts a new load, and any earlier in-flight load discovers
 // its token is outdated and drops its result instead of overwriting.
 let gridLoadToken = 0;
+let patchPresetScrollTop = 0;
+let patchPresetListVisible = false;
 
-async function loadPresets() {
+function rememberPatchPresetPosition(grid) {
+    if (UIState.guiLevel === 2 && patchPresetListVisible) {
+        patchPresetScrollTop = grid.scrollTop;
+    }
+    patchPresetListVisible = false;
+}
+
+async function loadPresets({ preserveScroll = false } = {}) {
     const grid = document.getElementById('preset-grid');
+    rememberPatchPresetPosition(grid);
+    const category = UIState.currentCategory;
+    const restorePatchPosition = UIState.guiLevel === 2 && category === 'patch';
+    const scrollTop = restorePatchPosition ? patchPresetScrollTop : grid.scrollTop;
     const token = ++gridLoadToken;
     grid.classList.add('grid-mode');
     grid.innerHTML = '<div class="loading">Loading...</div>';
 
     try {
-        const list = await API.getSavedList(UIState.savedCategory(UIState.currentCategory));
+        const list = await API.getSavedList(UIState.savedCategory(category));
         if (token !== gridLoadToken) return; // a newer load owns the grid
 
         const presets = savedPresetNamesFromList(list);
+        patchPresetListVisible = category === 'patch';
 
         if (presets.length === 0) {
             grid.innerHTML = '<div class="loading">No presets found</div>';
@@ -358,7 +401,12 @@ async function loadPresets() {
         grid.querySelectorAll('.preset-btn').forEach(bindPresetButton);
         updatePresetButtons();
     } catch (e) {
+        if (token !== gridLoadToken) return;
         grid.innerHTML = `<div class="error">${escapeHtml(e.message)}</div>`;
+    } finally {
+        if ((preserveScroll || (restorePatchPosition && UIState.guiLevel === 2)) && token === gridLoadToken) {
+            grid.scrollTop = scrollTop;
+        }
     }
 }
 
@@ -510,7 +558,7 @@ async function deletePreset(name) {
     try {
         await API.removeSaved(UIState.savedCategory(UIState.currentCategory), name);
         forgetPresetSelection(name);
-        await loadPresets();
+        await loadPresets({ preserveScroll: UIState.guiLevel === 2 });
     } catch (err) {
         console.error('Delete failed:', err);
         showToast('Delete failed: ' + err.message);
@@ -826,6 +874,7 @@ function syncStepperTiming(status) {
 
 async function loadParams() {
     const grid = document.getElementById('preset-grid');
+    rememberPatchPresetPosition(grid);
     const token = ++gridLoadToken;
     grid.classList.remove('grid-mode');
     grid.innerHTML = '<div class="loading">Loading parameters...</div>';
@@ -1380,7 +1429,9 @@ function setupParamHeaderButtons() {
 
 async function handleSaveAs(sourceName = '') {
     try {
-        const presetChoices = ['patch', 'quad'].includes(UIState.currentCategory)
+        const offerPresetNames = UIState.guiLevel >= 1
+            || ['patch', 'quad'].includes(UIState.currentCategory);
+        const presetChoices = offerPresetNames
             ? await savedPresetNamesForCategory(UIState.currentCategory)
             : [];
         const cleanName = await showVirtualKeyboard({
@@ -1396,7 +1447,7 @@ async function handleSaveAs(sourceName = '') {
 
         await saveCurrentParamsAs(cleanName);
         UIState.selectedPresets.set(UIState.presetKey(), cleanName);
-        await loadPresets();
+        await loadPresets({ preserveScroll: true });
         showToast(`Saved "${cleanName}"`);
     } catch (err) {
         if (err && err.cancelled) return;
@@ -1592,9 +1643,17 @@ function setupHelpOverlay() {
 function setAdvancedMode(enabled, shouldLoadPresets = true) {
     UIState.setAdvancedMode(enabled);
     document.body.classList.toggle('advanced-mode', enabled);
+    document.body.classList.toggle('performance-mode', UIState.guiLevel === 2);
+    const level = UIState.guiLevel;
+    guiLevelRequest = guiLevelRequest.then(() => API.setGUILevel(level))
+        .catch(err => console.error('Could not update Spout display mode:', err));
+    if (UIState.guiLevel !== 2) clearPatchPreview();
     const categoryTabs = document.getElementById('category-tabs');
     const patchSelector = document.getElementById('patch-selector');
     const titleBar = document.getElementById('title-bar');
+    titleBar.querySelector('h1').textContent = UIState.guiLevel === 2
+        ? 'Space Palette Pro - Performance'
+        : 'Space Palette Pro';
     // pro2 starts as a clone of pro, so it shares pro's chrome (only bss differs).
     const proInitialPage = UIState.initialPage !== 'bss';
 
@@ -1652,14 +1711,20 @@ function setupPatchSelector() {
         btn.addEventListener('click', async () => {
             const patch = btn.dataset.patch;
 
-            UIState.selectPatch(patch);
-            updatePatchButtons();
-            updatePresetButtons();
+            try {
+                await patchSelection.select(patch);
+                updatePatchButtons();
+                updatePresetButtons();
 
-            // The params view shows the selected patch's values (and, in
-            // * mode, the mixed badges), so a patch change must reload it.
-            if (UIState.showingParams) {
-                await reloadParamsPreservingScroll();
+                // The params view shows the selected patch's values (and, in
+                // * mode, the mixed badges), so a patch change must reload it.
+                if (UIState.showingParams) {
+                    await reloadParamsPreservingScroll();
+                }
+            } catch (err) {
+                showToast('Could not change pad preview: ' + err.message);
+            } finally {
+                updatePatchButtons();
             }
         });
     });
