@@ -51,7 +51,7 @@ function readWebUIFile(name) {
 function checkSyntax(name) {
     const path = join(webuiDir, name);
     try {
-        execFileSync('node', ['--check', path], { stdio: 'pipe' });
+        execFileSync(process.execPath, ['--check', path], { stdio: 'pipe' });
         pass(`${name} parses as JavaScript`);
     } catch (err) {
         fail(`${name} failed node --check\n${String(err.stderr || err.message)}`);
