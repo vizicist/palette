@@ -10,6 +10,13 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+// Shared with python/spout_receiver.py. These manual-reset events carry state
+// across receiver restarts without polling the engine or moving video over HTTP.
+const (
+	spoutPreviewEventName     = `Local\Palette.SpoutPreviewActive`
+	spoutPerformanceEventName = `Local\Palette.SpoutPerformanceActive`
+)
+
 type spoutDisplayEvent struct {
 	once   sync.Once
 	handle windows.Handle
